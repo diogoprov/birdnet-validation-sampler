@@ -1,0 +1,20 @@
+# Dados e saidas do pipeline (ficam no NAS, nao no repositorio)
+*.wav
+*.flac
+*.zip
+manifesto*.csv
+BirdNET_SelectionTable*.txt
+validacao_*/
+clipes/
+pacotes/
+resultados/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+
+# Sistema
+.DS_Store
+Thumbs.db
