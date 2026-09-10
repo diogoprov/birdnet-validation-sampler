@@ -1,5 +1,8 @@
 # Amostragem e validação de predições do BirdNET para PAM de anuros
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22696210.svg)](https://doi.org/10.5281/zenodo.22696210)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 > **EN** — R pipeline to build manually-validatable clip sets from BirdNET custom-classifier
 > predictions in passive acoustic monitoring (PAM). It selects top-scoring predictions per
 > site × species × night-hour, subsamples them under an explicit survey design (night window
@@ -99,8 +102,12 @@ do desenho de protocolo de **Larissa S. M. Sugai** (Cornell Lab of Ornithology) 
 **Liliana Piatti** (UFMS), no âmbito do projeto FrogNet. Código escrito com assistência de
 IA (Claude, Anthropic), com revisão e testes humanos.
 
-Se este código for útil no seu trabalho, cite o repositório (uma citação formal com DOI
-poderá ser adicionada futuramente via release arquivada).
+Se este código for útil no seu trabalho, cite-o (o botão "Cite this repository" do GitHub
+usa o arquivo `CITATION.cff`):
+
+> Provete, D. B. (2026). *birdnet-validation-sampler: sampling and validation of BirdNET
+> predictions for passive acoustic monitoring* (v1.0.0). Zenodo.
+> https://doi.org/10.5281/zenodo.22696210
 
 ## Licença
 
