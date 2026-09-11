@@ -1,13 +1,19 @@
-# Dados e saidas do pipeline (ficam no NAS, nao no repositorio)
+# Dados e saidas do pipeline (ficam no NAS/Box, nao no repositorio)
 *.wav
 *.flac
 *.zip
 manifesto*.csv
 BirdNET_SelectionTable*.txt
 validacao_*/
+validacao_por_clipe*.csv
 clipes/
 pacotes/
 resultados/
+calibracao/
+matrizes_comunidade/
+deteccoes_calibradas_*.csv
+historico_deteccao_noite*.csv
+*.rds
 
 # R
 .Rhistory
