@@ -67,11 +67,16 @@ intercepto por local:espécie:
 tp ~ logit(conf) + (logit(conf) | espécie) + (1 | local:espécie)
 ```
 
-A estrutura hierárquica importa porque o mesmo confidence score corresponde a
-probabilidades de acerto muito diferentes conforme a espécie e o local. Com o melhor
-modelo, o script prevê P(verdadeiro positivo) para **todas** as detecções da base
-completa (não só as validadas), restrita às espécies presentes no conjunto de
-calibração, e agrega por espécie × local × noite com uma regra de repetição
+Converter os confidence scores do BirdNET em probabilidades é a prática recomendada
+pelos próprios autores da ferramenta ([Wood & Kahl 2024, *Journal of Ornithology*](https://doi.org/10.1007/s10336-024-02144-5));
+a calibração por regressão logística em logit(score) é aplicada, por exemplo, em
+[Owens et al. 2026 (bioRxiv)](https://doi.org/10.64898/2026.06.01.729442). Este
+script estende essa abordagem com estrutura **hierárquica multi-espécie**, porque o
+mesmo confidence score corresponde a probabilidades de acerto muito diferentes
+conforme a espécie e o local. Com o melhor modelo, o script prevê P(verdadeiro
+positivo) para **todas** as detecções da base completa (não só as validadas),
+restrita às espécies presentes no conjunto de calibração, e agrega por
+espécie × local × noite com uma regra de repetição
 (≥ k detecções com P(TP) ≥ `p_min` na noite; k = 1/2/3 exportados como sensibilidade).
 Saídas: `deteccoes_calibradas_<local>.csv`, `historico_deteccao_noite.csv`,
 `resumo_deteccao_especie_local.csv`, curvas calibradas por espécie × local (diagnóstico)

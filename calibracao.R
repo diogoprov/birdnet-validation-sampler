@@ -7,7 +7,16 @@
 # pos_validacao.R), e aplica a calibracao a base COMPLETA de predicoes para
 # construir os historicos de deteccao por noite.
 #
-# Fluxo (adaptado do protocolo de calibracao discutido por Larissa e Liliana):
+# Base metodologica: converter confidence scores do BirdNET em
+# probabilidades e pratica recomendada pelos proprios autores do BirdNET
+# (Wood & Kahl 2024, Journal of Ornithology, doi:10.1007/s10336-024-02144-5);
+# a calibracao via regressao logistica binomial em logit(score) e aplicada
+# em Owens et al. 2026 (bioRxiv, doi:10.64898/2026.06.01.729442). Este
+# script estende essa abordagem com estrutura HIERARQUICA multi-especie
+# (slopes aleatorios por especie + intercepto local:especie), comparada
+# por validacao cruzada.
+#
+# Fluxo:
 #   1. Empilhar as validacoes (TP/FP) de todos os locais
 #   2. Ajustar modelos candidatos: TP ~ logit(confidence) com estruturas
 #      hierarquicas crescentes (especie, local, especie x local)
