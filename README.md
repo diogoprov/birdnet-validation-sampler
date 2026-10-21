@@ -32,7 +32,7 @@ The two packages are independent: sheepdog does not depend on crywolf.
 
 ```r
 # install.packages("remotes")
-remotes::install_github("diogoprov/birdnet-validation-sampler")
+remotes::install_github("diogoprov/sheepdog")
 ```
 
 Cutting audio needs [av](https://cran.r-project.org/package=av) (it bundles
@@ -147,7 +147,7 @@ columns and values. `NEWS.md` maps every script setting to its argument and
 every old column to its new name. The package reads manifests, validation
 tables and histories written by v1.2.0, so validated data stay usable. The
 scripts are preserved in the
-[v1.2.0 tag](https://github.com/diogoprov/birdnet-validation-sampler/tree/v1.2.0).
+[v1.2.0 tag](https://github.com/diogoprov/sheepdog/tree/v1.2.0).
 
 ## Authorship and citation
 
