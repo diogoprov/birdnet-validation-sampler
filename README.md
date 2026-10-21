@@ -196,7 +196,7 @@ Se este código for útil no seu trabalho, cite-o (o botão "Cite this repositor
 usa o arquivo `CITATION.cff`):
 
 > Provete, D. B. (2026). *birdnet-validation-sampler: sampling, validation and calibration
-> of BirdNET predictions for passive acoustic monitoring* (v1.1.0). Zenodo.
+> of BirdNET predictions for passive acoustic monitoring* (v1.2.0). Zenodo.
 > https://doi.org/10.5281/zenodo.22696210
 
 ## Licença
