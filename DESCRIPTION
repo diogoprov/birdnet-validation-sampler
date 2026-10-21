@@ -25,7 +25,8 @@ Imports:
     tibble,
     tidyr,
     tools,
-    withr
+    withr,
+    zip
 Suggests:
     av,
     testthat (>= 3.0.0)

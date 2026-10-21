@@ -3,7 +3,7 @@
 #' Applies the sampling design to the predictions read by
 #' [read_selection_tables()] and returns the clip manifest: one row per clip
 #' to cut, with its site, species, night, source audio, start and end. No
-#' audio is read or written; cut the clips with `cut_clips()`.
+#' audio is read or written; cut the clips with [cut_clips()].
 #'
 #' @section Sampling modes:
 #' * `"top"` keeps the `n_top` predictions with the highest confidence per

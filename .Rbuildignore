@@ -9,7 +9,6 @@
 ^\.github$
 ^\.git$
 ^\.gitignore$
-^extrair_clipes_validacao\.R$
 ^pos_validacao\.R$
 ^calibracao\.R$
 ^gerar_matrizes_comunidade\.R$
