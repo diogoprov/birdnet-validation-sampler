@@ -23,5 +23,6 @@ utils::globalVariables(c(
   "Confidence", "Species Code", "Begin Path", "File Offset (s)",
   "auc_mean", "date", "detection_k1", "detection_k2", "detection_k3",
   "faixa", "fold", "hour", "logit_conf", "n_reliable", "p_tp", "prec",
-  "species", "tp"
+  "species", "tp", "included", "month", "n_nights_detected",
+  "n_nights_recorded", "frequency"
 ))
