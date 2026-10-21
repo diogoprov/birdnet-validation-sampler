@@ -114,7 +114,7 @@ A tibble, the clip manifest without \code{status}, with the columns
 \code{recording_hour}, \code{rank}, \code{confidence}, \code{clip_file}, \code{clip_start},
 \code{clip_end}, \code{duration}, \code{source_audio}, \code{begin_path}, \code{sampling_mode},
 \code{occasion_id}, \code{n_detections_occasion} and \code{inclusion_prob}. See
-\code{vignette("crywolf-contract")} for their definitions.
+\code{vignette("crywolf-integration")} for their definitions.
 }
 \description{
 Applies the sampling design to the predictions read by

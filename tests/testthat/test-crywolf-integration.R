@@ -1,4 +1,4 @@
-# Contrato com o crywolf (vignette("crywolf-contract")): colunas, tipos e
+# Integracao com o crywolf (vignette("crywolf-integration")): colunas, tipos e
 # ocasioes dos arquivos de exemplo em inst/extdata
 
 exemplo <- function(f) {

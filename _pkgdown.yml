@@ -60,4 +60,4 @@ articles:
     navbar: ~
     contents:
       - frognet-workflow
-      - crywolf-contract
+      - crywolf-integration
