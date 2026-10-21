@@ -127,7 +127,7 @@ audio is read or written; cut the clips with \code{\link[=cut_clips]{cut_clips()
 \itemize{
 \item \code{"top"} keeps the \code{n_top} predictions with the highest confidence per
 site x species x night x hour. It serves classifier retraining and the
-score-to-probability calibration of \code{calibrate()}. Do not use it to
+score-to-probability calibration of \code{\link[=calibrate]{calibrate()}}. Do not use it to
 estimate false-positive rates: top-score clips hold fewer false
 positives than a random sample.
 \item \code{"random_detections"} draws, at random, \code{n_top} occasions per
