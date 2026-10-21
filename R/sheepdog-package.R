@@ -1,2 +1,22 @@
 #' @keywords internal
 "_PACKAGE"
+
+#' @import dplyr
+#' @import purrr
+#' @import stringr
+#' @import tidyr
+#' @importFrom readr read_csv read_tsv write_csv
+#' @importFrom stats setNames
+#' @importFrom tibble tibble
+NULL
+
+# Colunas usadas via tidy evaluation (evita NOTEs do R CMD check)
+utils::globalVariables(c(
+  ".N", ".dur", ".dia", ".n", ".ordem", ".p1", ".p2", "begin_path",
+  "begin_time", "clip_end", "clip_start", "confidence", "duration",
+  "end_time",
+  "file_offset", "hour_int", "inclusion_prob", "n_detections_occasion",
+  "night", "occasion_id", "pasta", "rank", "recording_date",
+  "recording_hour", "site", "source_audio", "species_code",
+  "species_folder"
+))

@@ -16,9 +16,19 @@ URL: https://github.com/diogoprov/birdnet-validation-sampler
 BugReports: https://github.com/diogoprov/birdnet-validation-sampler/issues
 Depends:
     R (>= 4.2)
-Suggests:
-    testthat (>= 3.0.0),
+Imports:
+    dplyr (>= 1.1.0),
+    purrr (>= 1.0.0),
+    readr,
+    stats,
+    stringr,
+    tibble,
+    tidyr,
+    tools,
     withr
+Suggests:
+    av,
+    testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
