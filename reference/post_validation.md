@@ -1,0 +1,82 @@
+# Summarise the manual validation
+
+Runs the whole post-validation step: classifies the reviewed clips and
+writes, to `output_dir`:
+
+- `validation_by_clip.csv`: manifest + verdict of each clip
+  ([`classify_review()`](https://provetelab.org/birdnet-validation-sampler/reference/classify_review.md));
+
+- `precision_by_bin.csv`: precision by species x confidence bin
+  ([`precision_by_bin()`](https://provetelab.org/birdnet-validation-sampler/reference/precision_by_bin.md));
+
+- `suggested_thresholds.csv`: lowest confidence reaching the target
+  precision, by species
+  ([`suggest_thresholds()`](https://provetelab.org/birdnet-validation-sampler/reference/suggest_thresholds.md));
+
+- `nightly_presence.csv`: confirmed presence by site x species x night
+  ([`nightly_presence()`](https://provetelab.org/birdnet-validation-sampler/reference/nightly_presence.md));
+
+- `retraining_clips.csv`: positive clips for retraining
+  ([`retraining_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/retraining_clips.md));
+
+- `precision_by_bin.png`: precision curves
+  ([`plot_precision()`](https://provetelab.org/birdnet-validation-sampler/reference/plot_precision.md)),
+  when 'ggplot2' is installed.
+
+## Usage
+
+``` r
+post_validation(
+  review_dir,
+  manifest_path,
+  output_dir,
+  positive_pattern = "positiv",
+  negative_pattern = "negativ",
+  bins = seq(0.1, 1, by = 0.1),
+  target_precision = 0.9,
+  min_n = 15
+)
+```
+
+## Arguments
+
+- review_dir:
+
+  Folder with the reviewed clips (the `clips` folder of the validation
+  package, after the review).
+
+- manifest_path:
+
+  Path to the manifest of the same run as the reviewed clips
+  (`clip_manifest.csv`, or a v1.2.0 `manifesto_clipes.csv`).
+
+- output_dir:
+
+  Output folder; created if needed.
+
+- positive_pattern, negative_pattern:
+
+  Regular expressions (case-insensitive) that identify the positive and
+  negative folders in the path of each clip.
+
+- bins:
+
+  Breaks of the confidence bins (left-closed).
+
+- target_precision:
+
+  Target precision.
+
+- min_n:
+
+  Minimum of reviewed clips for a bin to be taken seriously; bins with
+  fewer are flagged in `low_support`.
+
+## Value
+
+A list with the tables `validation`, `precision`, `thresholds`,
+`presence` and `retraining`, invisibly.
+
+## Details
+
+This is the function form of the v1.2.0 script `pos_validacao.R`.
