@@ -7,27 +7,27 @@ complete selection tables and builds the nightly detection history.
 Writes to `output_dir`:
 
 - `model_comparison.csv`
-  ([`compare_calibration_models()`](https://provetelab.org/birdnet-validation-sampler/reference/compare_calibration_models.md));
+  ([`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md));
 
 - `calibration_model.rds` and `calibration_model.txt` (the refitted best
   model and its summary);
 
 - `calibration_curves.png`
-  ([`plot_calibration()`](https://provetelab.org/birdnet-validation-sampler/reference/plot_calibration.md)),
+  ([`plot_calibration()`](https://provetelab.org/sheepdog/reference/plot_calibration.md)),
   when 'ggplot2' is installed;
 
 - `effort_curve.csv`
-  ([`calibration_effort()`](https://provetelab.org/birdnet-validation-sampler/reference/calibration_effort.md)),
+  ([`calibration_effort()`](https://provetelab.org/sheepdog/reference/calibration_effort.md)),
   when `effort_curve` is `TRUE`;
 
 - `calibrated_detections_<site>.csv`, one per site
-  ([`score_detections()`](https://provetelab.org/birdnet-validation-sampler/reference/score_detections.md));
+  ([`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md));
 
 - `nightly_detection_history.csv`
-  ([`detection_history()`](https://provetelab.org/birdnet-validation-sampler/reference/detection_history.md));
+  ([`detection_history()`](https://provetelab.org/sheepdog/reference/detection_history.md));
 
 - `detection_summary.csv`
-  ([`summarise_history()`](https://provetelab.org/birdnet-validation-sampler/reference/summarise_history.md)).
+  ([`summarise_history()`](https://provetelab.org/sheepdog/reference/summarise_history.md)).
 
 ## Usage
 

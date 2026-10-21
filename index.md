@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22696210.svg)](https://doi.org/10.5281/zenodo.22696210)
 [![License:
-MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://provetelab.org/birdnet-validation-sampler/LICENSE.md)
+MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://provetelab.org/sheepdog/LICENSE.md)
 
 In the fable, the boy cries “wolf!” and the villagers have to decide
 whether the wolf is real. **sheepdog** does that check for automated
@@ -40,7 +40,7 @@ The three stages of sheepdog
 ``` r
 
 # install.packages("remotes")
-remotes::install_github("diogoprov/birdnet-validation-sampler")
+remotes::install_github("diogoprov/sheepdog")
 ```
 
 Cutting audio needs [av](https://cran.r-project.org/package=av) (it
@@ -85,15 +85,15 @@ build_community_matrices("calibration/nightly_detection_history.csv",
 ```
 
 Each stage is also available as separate functions:
-[`select_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/select_clips.md)
+[`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md)
 (a pure function that returns the clip manifest without touching audio),
-[`cut_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/cut_clips.md),
-[`classify_review()`](https://provetelab.org/birdnet-validation-sampler/reference/classify_review.md),
-[`compare_calibration_models()`](https://provetelab.org/birdnet-validation-sampler/reference/compare_calibration_models.md),
-[`score_detections()`](https://provetelab.org/birdnet-validation-sampler/reference/score_detections.md),
-[`community_matrices()`](https://provetelab.org/birdnet-validation-sampler/reference/community_matrices.md)
+[`cut_clips()`](https://provetelab.org/sheepdog/reference/cut_clips.md),
+[`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md),
+[`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md),
+[`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md),
+[`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md)
 and others. See
-[`vignette("frognet-workflow")`](https://provetelab.org/birdnet-validation-sampler/articles/frognet-workflow.md)
+[`vignette("frognet-workflow")`](https://provetelab.org/sheepdog/articles/frognet-workflow.md)
 for the complete workflow.
 
 The selection tables must have the standard BirdNET/Raven columns
@@ -103,9 +103,9 @@ The selection tables must have the standard BirdNET/Raven columns
 
 ## Sampling designs
 
-[`select_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/select_clips.md)
+[`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md)
 and
-[`extract_validation_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/extract_validation_clips.md)
+[`extract_validation_clips()`](https://provetelab.org/sheepdog/reference/extract_validation_clips.md)
 take `sampling_mode`:
 
 - `"top"` (default) keeps the *N* predictions with the highest
@@ -141,7 +141,7 @@ by the BirdNET authors ([Wood & Kahl
 2024](https://doi.org/10.1007/s10336-024-02144-5)); calibration by
 logistic regression on logit(score) is applied, for instance, by [Owens
 et al. (2026)](https://doi.org/10.64898/2026.06.01.729442).
-[`calibrate()`](https://provetelab.org/birdnet-validation-sampler/reference/calibrate.md)
+[`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
 extends that approach with a hierarchical multi-species structure,
 
     tp ~ logit(conf) + (logit(conf) | species) + (1 | site:species)
@@ -154,7 +154,7 @@ compared by stratified k-fold cross-validation (AUC).
 
 `clip_manifest.csv` and `validation_by_clip.csv` are the hand-off to
 occupancy models with false positives.
-[`vignette("crywolf-contract")`](https://provetelab.org/birdnet-validation-sampler/articles/crywolf-contract.md)
+[`vignette("crywolf-contract")`](https://provetelab.org/sheepdog/articles/crywolf-contract.md)
 specifies their columns, types and the definition of an occasion;
 example files are in `system.file("extdata", package = "sheepdog")`. Do
 not pass the whole-recording clips of `"random_recordings"`
@@ -170,7 +170,7 @@ output columns and values. `NEWS.md` maps every script setting to its
 argument and every old column to its new name. The package reads
 manifests, validation tables and histories written by v1.2.0, so
 validated data stay usable. The scripts are preserved in the [v1.2.0
-tag](https://github.com/diogoprov/birdnet-validation-sampler/tree/v1.2.0).
+tag](https://github.com/diogoprov/sheepdog/tree/v1.2.0).
 
 ## Authorship and citation
 
@@ -193,4 +193,4 @@ The hex sticker uses a dog silhouette by Mozillian from
 
 ## License
 
-[MIT](https://provetelab.org/birdnet-validation-sampler/LICENSE.md)
+[MIT](https://provetelab.org/sheepdog/LICENSE.md)

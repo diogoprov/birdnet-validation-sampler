@@ -21,12 +21,12 @@ plot_calibration(
 - fit:
 
   Model returned by
-  [`fit_calibration()`](https://provetelab.org/birdnet-validation-sampler/reference/fit_calibration.md).
+  [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md).
 
 - validations:
 
   Table returned by
-  [`read_validations()`](https://provetelab.org/birdnet-validation-sampler/reference/read_validations.md).
+  [`read_validations()`](https://provetelab.org/sheepdog/reference/read_validations.md).
 
 - min_confidence:
 

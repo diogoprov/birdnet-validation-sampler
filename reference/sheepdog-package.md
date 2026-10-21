@@ -12,10 +12,11 @@ histories and effort-standardised community matrices.
 
 Useful links:
 
-- <https://github.com/diogoprov/birdnet-validation-sampler>
+- <https://github.com/diogoprov/sheepdog>
 
-- Report bugs at
-  <https://github.com/diogoprov/birdnet-validation-sampler/issues>
+- <https://provetelab.org/sheepdog/>
+
+- Report bugs at <https://github.com/diogoprov/sheepdog/issues>
 
 ## Author
 

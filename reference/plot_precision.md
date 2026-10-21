@@ -20,7 +20,7 @@ plot_precision(
 - precision:
 
   Table returned by
-  [`precision_by_bin()`](https://provetelab.org/birdnet-validation-sampler/reference/precision_by_bin.md).
+  [`precision_by_bin()`](https://provetelab.org/sheepdog/reference/precision_by_bin.md).
 
 - bins:
 

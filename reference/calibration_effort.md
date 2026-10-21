@@ -23,12 +23,12 @@ calibration_effort(
 - validations:
 
   Table returned by
-  [`read_validations()`](https://provetelab.org/birdnet-validation-sampler/reference/read_validations.md).
+  [`read_validations()`](https://provetelab.org/sheepdog/reference/read_validations.md).
 
 - formula:
 
   Model formula, usually the best one of
-  [`compare_calibration_models()`](https://provetelab.org/birdnet-validation-sampler/reference/compare_calibration_models.md).
+  [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md).
 
 - n_train:
 

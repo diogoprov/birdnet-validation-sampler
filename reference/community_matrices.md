@@ -8,7 +8,7 @@ strict:
 - a species counts as detected on a night only when it had at least
   `k_min` reliable detections that night, i.e. detections with a
   calibrated probability \>= `p_min` of
-  [`calibrate()`](https://provetelab.org/birdnet-validation-sampler/reference/calibrate.md)
+  [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
   (column `detection_k<k_min>` of the history);
 
 - only the core species enter the matrix: species whose calibration is
@@ -29,7 +29,7 @@ community_matrices(history, core_species, k_min = 2, min_nights_month = 5)
 - history:
 
   Nightly detection history, as returned by
-  [`detection_history()`](https://provetelab.org/birdnet-validation-sampler/reference/detection_history.md)
+  [`detection_history()`](https://provetelab.org/sheepdog/reference/detection_history.md)
   (v1.2.0 `historico_deteccao_noite.csv` tables are also accepted).
 
 - core_species:

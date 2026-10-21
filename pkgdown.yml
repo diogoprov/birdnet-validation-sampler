@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   crywolf-contract: crywolf-contract.html
   frognet-workflow: frognet-workflow.html
-last_built: 2026-10-21T23:06Z
+last_built: 2026-10-21T23:34Z
 urls:
-  reference: https://provetelab.org/birdnet-validation-sampler/reference
-  article: https://provetelab.org/birdnet-validation-sampler/articles
+  reference: https://provetelab.org/sheepdog/reference
+  article: https://provetelab.org/sheepdog/articles

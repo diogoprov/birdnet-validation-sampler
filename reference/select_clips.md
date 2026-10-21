@@ -1,11 +1,11 @@
 # Select the clips to validate
 
 Applies the sampling design to the predictions read by
-[`read_selection_tables()`](https://provetelab.org/birdnet-validation-sampler/reference/read_selection_tables.md)
+[`read_selection_tables()`](https://provetelab.org/sheepdog/reference/read_selection_tables.md)
 and returns the clip manifest: one row per clip to cut, with its site,
 species, night, source audio, start and end. No audio is read or
 written; cut the clips with
-[`cut_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/cut_clips.md).
+[`cut_clips()`](https://provetelab.org/sheepdog/reference/cut_clips.md).
 
 ## Usage
 
@@ -43,7 +43,7 @@ select_clips(
 - detections:
 
   Predictions, as returned by
-  [`read_selection_tables()`](https://provetelab.org/birdnet-validation-sampler/reference/read_selection_tables.md).
+  [`read_selection_tables()`](https://provetelab.org/sheepdog/reference/read_selection_tables.md).
 
 - sampling_mode:
 
@@ -165,7 +165,7 @@ A tibble, the clip manifest without `status`, with the columns `site`,
 `recording_hour`, `rank`, `confidence`, `clip_file`, `clip_start`,
 `clip_end`, `duration`, `source_audio`, `begin_path`, `sampling_mode`,
 `occasion_id`, `n_detections_occasion` and `inclusion_prob`. See
-[`vignette("crywolf-contract")`](https://provetelab.org/birdnet-validation-sampler/articles/crywolf-contract.md)
+[`vignette("crywolf-contract")`](https://provetelab.org/sheepdog/articles/crywolf-contract.md)
 for their definitions.
 
 ## Sampling modes
@@ -173,7 +173,7 @@ for their definitions.
 - `"top"` keeps the `n_top` predictions with the highest confidence per
   site x species x night x hour. It serves classifier retraining and the
   score-to-probability calibration of
-  [`calibrate()`](https://provetelab.org/birdnet-validation-sampler/reference/calibrate.md).
+  [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md).
   Do not use it to estimate false-positive rates: top-score clips hold
   fewer false positives than a random sample.
 

@@ -31,7 +31,7 @@ extract_validation_clips(
 - ...:
 
   Sampling design, passed to
-  [`select_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/select_clips.md)
+  [`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md)
   (e.g. `sampling_mode`, `n_top`, `threshold`, `target_total`,
   `remap_from`, `remap_to`).
 

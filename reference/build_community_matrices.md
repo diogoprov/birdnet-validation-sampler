@@ -1,9 +1,9 @@
 # Write the community matrices
 
 Reads the nightly detection history written by
-[`calibrate()`](https://provetelab.org/birdnet-validation-sampler/reference/calibrate.md)
+[`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
 and writes the matrices of
-[`community_matrices()`](https://provetelab.org/birdnet-validation-sampler/reference/community_matrices.md)
+[`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md)
 to `output_dir`: `frequency_matrix_site_month_k<k>.csv`,
 `count_matrix_site_month_k<k>.csv` and `effort_site_month.csv` (which
 also lists the dropped cells). This is the function form of the v1.2.0
@@ -48,5 +48,5 @@ build_community_matrices(
 ## Value
 
 The list returned by
-[`community_matrices()`](https://provetelab.org/birdnet-validation-sampler/reference/community_matrices.md),
+[`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md),
 invisibly.

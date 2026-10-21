@@ -22,7 +22,7 @@ compare_calibration_models(
 - validations:
 
   Table returned by
-  [`read_validations()`](https://provetelab.org/birdnet-validation-sampler/reference/read_validations.md).
+  [`read_validations()`](https://provetelab.org/sheepdog/reference/read_validations.md).
 
 - models:
 

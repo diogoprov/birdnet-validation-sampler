@@ -1,7 +1,7 @@
 # Candidate calibration models
 
 The family of logistic calibration models compared by
-[`compare_calibration_models()`](https://provetelab.org/birdnet-validation-sampler/reference/compare_calibration_models.md),
+[`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md),
 from a single logistic regression on the logit of the confidence score
 to a binomial GLMM with random slopes by species and a site x species
 intercept.

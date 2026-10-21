@@ -18,7 +18,7 @@ cut_clips(manifest, output_dir, simulate = FALSE)
 - manifest:
 
   Clip manifest, as returned by
-  [`select_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/select_clips.md).
+  [`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md).
 
 - output_dir:
 

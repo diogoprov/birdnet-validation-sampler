@@ -12,12 +12,12 @@ data. The scripts are preserved in the `v1.2.0` tag.
 
 | v1.2.0 script | sheepdog |
 |----|----|
-| `extrair_clipes_validacao.R` | [`extract_validation_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/extract_validation_clips.md); steps [`read_selection_tables()`](https://provetelab.org/birdnet-validation-sampler/reference/read_selection_tables.md), [`select_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/select_clips.md), [`cut_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/cut_clips.md), [`pack_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/pack_clips.md) |
-| `pos_validacao.R` | [`post_validation()`](https://provetelab.org/birdnet-validation-sampler/reference/post_validation.md); steps [`classify_review()`](https://provetelab.org/birdnet-validation-sampler/reference/classify_review.md), [`precision_by_bin()`](https://provetelab.org/birdnet-validation-sampler/reference/precision_by_bin.md), [`suggest_thresholds()`](https://provetelab.org/birdnet-validation-sampler/reference/suggest_thresholds.md), [`nightly_presence()`](https://provetelab.org/birdnet-validation-sampler/reference/nightly_presence.md), [`retraining_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/retraining_clips.md), [`plot_precision()`](https://provetelab.org/birdnet-validation-sampler/reference/plot_precision.md) |
-| `calibracao.R` | [`calibrate()`](https://provetelab.org/birdnet-validation-sampler/reference/calibrate.md); steps [`read_validations()`](https://provetelab.org/birdnet-validation-sampler/reference/read_validations.md), [`calibration_models()`](https://provetelab.org/birdnet-validation-sampler/reference/calibration_models.md), [`compare_calibration_models()`](https://provetelab.org/birdnet-validation-sampler/reference/compare_calibration_models.md), [`fit_calibration()`](https://provetelab.org/birdnet-validation-sampler/reference/fit_calibration.md), [`calibration_effort()`](https://provetelab.org/birdnet-validation-sampler/reference/calibration_effort.md), [`score_detections()`](https://provetelab.org/birdnet-validation-sampler/reference/score_detections.md), [`detection_history()`](https://provetelab.org/birdnet-validation-sampler/reference/detection_history.md), [`summarise_history()`](https://provetelab.org/birdnet-validation-sampler/reference/summarise_history.md), [`plot_calibration()`](https://provetelab.org/birdnet-validation-sampler/reference/plot_calibration.md) |
-| `gerar_matrizes_comunidade.R` | [`build_community_matrices()`](https://provetelab.org/birdnet-validation-sampler/reference/build_community_matrices.md); step [`community_matrices()`](https://provetelab.org/birdnet-validation-sampler/reference/community_matrices.md) |
+| `extrair_clipes_validacao.R` | [`extract_validation_clips()`](https://provetelab.org/sheepdog/reference/extract_validation_clips.md); steps [`read_selection_tables()`](https://provetelab.org/sheepdog/reference/read_selection_tables.md), [`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md), [`cut_clips()`](https://provetelab.org/sheepdog/reference/cut_clips.md), [`pack_clips()`](https://provetelab.org/sheepdog/reference/pack_clips.md) |
+| `pos_validacao.R` | [`post_validation()`](https://provetelab.org/sheepdog/reference/post_validation.md); steps [`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md), [`precision_by_bin()`](https://provetelab.org/sheepdog/reference/precision_by_bin.md), [`suggest_thresholds()`](https://provetelab.org/sheepdog/reference/suggest_thresholds.md), [`nightly_presence()`](https://provetelab.org/sheepdog/reference/nightly_presence.md), [`retraining_clips()`](https://provetelab.org/sheepdog/reference/retraining_clips.md), [`plot_precision()`](https://provetelab.org/sheepdog/reference/plot_precision.md) |
+| `calibracao.R` | [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md); steps [`read_validations()`](https://provetelab.org/sheepdog/reference/read_validations.md), [`calibration_models()`](https://provetelab.org/sheepdog/reference/calibration_models.md), [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md), [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md), [`calibration_effort()`](https://provetelab.org/sheepdog/reference/calibration_effort.md), [`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md), [`detection_history()`](https://provetelab.org/sheepdog/reference/detection_history.md), [`summarise_history()`](https://provetelab.org/sheepdog/reference/summarise_history.md), [`plot_calibration()`](https://provetelab.org/sheepdog/reference/plot_calibration.md) |
+| `gerar_matrizes_comunidade.R` | [`build_community_matrices()`](https://provetelab.org/sheepdog/reference/build_community_matrices.md); step [`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md) |
 
-[`select_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/select_clips.md)
+[`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md)
 is a pure function: it returns the clip manifest without reading or
 writing audio.
 
@@ -75,7 +75,7 @@ project-specific lists, which are now required arguments (or `NULL`).
   `effort_site_month`. Folders `clipes/` and `pacotes/` → `clips/` and
   `packages/`.
 - Columns and values of the manifest and the validation table: see
-  [`vignette("crywolf-contract")`](https://provetelab.org/birdnet-validation-sampler/articles/crywolf-contract.md).
+  [`vignette("crywolf-contract")`](https://provetelab.org/sheepdog/articles/crywolf-contract.md).
   Other columns: `especie` → `species`, `data` → `date`, `hora` →
   `hour`, `n_deteccoes` → `n_detections`, `n_confiaveis` → `n_reliable`,
   `deteccao(_k1..k3)` → `detection(_k1..k3)`, `faixa` → `bin`,
@@ -98,13 +98,13 @@ project-specific lists, which are now required arguments (or `NULL`).
 
 ### Reading v1.2.0 files
 
-[`post_validation()`](https://provetelab.org/birdnet-validation-sampler/reference/post_validation.md),
-[`classify_review()`](https://provetelab.org/birdnet-validation-sampler/reference/classify_review.md),
-[`calibrate()`](https://provetelab.org/birdnet-validation-sampler/reference/calibrate.md),
-[`read_validations()`](https://provetelab.org/birdnet-validation-sampler/reference/read_validations.md),
-[`community_matrices()`](https://provetelab.org/birdnet-validation-sampler/reference/community_matrices.md)
+[`post_validation()`](https://provetelab.org/sheepdog/reference/post_validation.md),
+[`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md),
+[`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md),
+[`read_validations()`](https://provetelab.org/sheepdog/reference/read_validations.md),
+[`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md)
 and
-[`build_community_matrices()`](https://provetelab.org/birdnet-validation-sampler/reference/build_community_matrices.md)
+[`build_community_matrices()`](https://provetelab.org/sheepdog/reference/build_community_matrices.md)
 read manifests, validation tables and histories written by v1.2.0 and
 rename them on reading, so validated data stay usable.
 
@@ -114,13 +114,13 @@ rename them on reading, so validated data stay usable.
   [`withr::with_seed()`](https://withr.r-lib.org/reference/with_seed.html):
   the draws are those of v1.2.0, and the global random number generator
   is left as it was.
-- [`suggest_thresholds()`](https://provetelab.org/birdnet-validation-sampler/reference/suggest_thresholds.md)
+- [`suggest_thresholds()`](https://provetelab.org/sheepdog/reference/suggest_thresholds.md)
   returns an empty table when no reviewed clip has a confidence score
   (whole recordings only); v1.2.0 wrote a row of `NA`.
 - The verdict patterns of the review are case-insensitive and only match
   the subfolders below `review_dir`, not the review folder itself.
 - A manifest without a `confidence` column is accepted.
-- [`score_detections()`](https://provetelab.org/birdnet-validation-sampler/reference/score_detections.md)
+- [`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md)
   warns about prediction tables named after a site that is not in the
   calibration, and keeps the site name in the output.
 - The random-effects models of the calibration need ‘lme4’, and the

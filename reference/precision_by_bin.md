@@ -15,7 +15,7 @@ precision_by_bin(validation, bins = seq(0.1, 1, by = 0.1), min_n = 15)
 - validation:
 
   Table returned by
-  [`classify_review()`](https://provetelab.org/birdnet-validation-sampler/reference/classify_review.md).
+  [`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md).
 
 - bins:
 

@@ -22,7 +22,7 @@ score_detections(tables, fit, min_confidence = 0.1, dawn_hour = 12)
 - fit:
 
   Model returned by
-  [`fit_calibration()`](https://provetelab.org/birdnet-validation-sampler/reference/fit_calibration.md).
+  [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md).
 
 - min_confidence:
 

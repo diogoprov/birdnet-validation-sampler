@@ -17,7 +17,7 @@ detection_history(scored, p_min = 0.95, min_detections_night = 1)
 - scored:
 
   Table returned by
-  [`score_detections()`](https://provetelab.org/birdnet-validation-sampler/reference/score_detections.md).
+  [`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md).
 
 - p_min:
 

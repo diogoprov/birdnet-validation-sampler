@@ -48,7 +48,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/diogoprov/birdnet-validation-sampler/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/diogoprov/sheepdog/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -64,7 +64,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>The FrogNet workflow</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/birdnet-validation-sampler/blob/main/vignettes/frognet-workflow.Rmd" class="external-link"><code>vignettes/frognet-workflow.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/vignettes/frognet-workflow.Rmd" class="external-link"><code>vignettes/frognet-workflow.Rmd</code></a></small>
       <div class="d-none name"><code>frognet-workflow.Rmd</code></div>
     </div>
 
@@ -78,7 +78,7 @@ The FrogNet data are not distributed with the package, so the chunks
 that read them are not run; the last section runs on the example files
 shipped with the package.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/diogoprov/birdnet-validation-sampler" class="external-link">sheepdog</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/diogoprov/sheepdog" class="external-link">sheepdog</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="stage-1a-clips-to-validate">Stage 1a: clips to validate<a class="anchor" aria-label="anchor" href="#stage-1a-clips-to-validate"></a>
 </h2>
@@ -223,7 +223,7 @@ out; use them at most in a sensitivity analysis.</p>
 <p>The example validation table shipped with the package comes from
 simulated data:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/diogoprov/birdnet-validation-sampler" class="external-link">sheepdog</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/diogoprov/sheepdog" class="external-link">sheepdog</a></span><span class="op">)</span></span>
 <span><span class="va">val</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"validation_by_clip.csv"</span>, package <span class="op">=</span> <span class="st">"sheepdog"</span><span class="op">)</span>,</span>
 <span>  show_col_types <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>

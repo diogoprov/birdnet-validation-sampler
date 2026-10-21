@@ -2,9 +2,9 @@
 
 sheepdog writes two tables that occupancy models with false positives,
 such as those of the crywolf package, read: `clip_manifest.csv`
-([`extract_validation_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/extract_validation_clips.md))
+([`extract_validation_clips()`](https://provetelab.org/sheepdog/reference/extract_validation_clips.md))
 and `validation_by_clip.csv`
-([`post_validation()`](https://provetelab.org/birdnet-validation-sampler/reference/post_validation.md)).
+([`post_validation()`](https://provetelab.org/sheepdog/reference/post_validation.md)).
 This document fixes their columns, types and the definition of an
 occasion. The two packages are independent: sheepdog does not depend on
 crywolf, and crywolf reads these files without loading sheepdog.

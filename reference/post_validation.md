@@ -4,23 +4,23 @@ Runs the whole post-validation step: classifies the reviewed clips and
 writes, to `output_dir`:
 
 - `validation_by_clip.csv`: manifest + verdict of each clip
-  ([`classify_review()`](https://provetelab.org/birdnet-validation-sampler/reference/classify_review.md));
+  ([`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md));
 
 - `precision_by_bin.csv`: precision by species x confidence bin
-  ([`precision_by_bin()`](https://provetelab.org/birdnet-validation-sampler/reference/precision_by_bin.md));
+  ([`precision_by_bin()`](https://provetelab.org/sheepdog/reference/precision_by_bin.md));
 
 - `suggested_thresholds.csv`: lowest confidence reaching the target
   precision, by species
-  ([`suggest_thresholds()`](https://provetelab.org/birdnet-validation-sampler/reference/suggest_thresholds.md));
+  ([`suggest_thresholds()`](https://provetelab.org/sheepdog/reference/suggest_thresholds.md));
 
 - `nightly_presence.csv`: confirmed presence by site x species x night
-  ([`nightly_presence()`](https://provetelab.org/birdnet-validation-sampler/reference/nightly_presence.md));
+  ([`nightly_presence()`](https://provetelab.org/sheepdog/reference/nightly_presence.md));
 
 - `retraining_clips.csv`: positive clips for retraining
-  ([`retraining_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/retraining_clips.md));
+  ([`retraining_clips()`](https://provetelab.org/sheepdog/reference/retraining_clips.md));
 
 - `precision_by_bin.png`: precision curves
-  ([`plot_precision()`](https://provetelab.org/birdnet-validation-sampler/reference/plot_precision.md)),
+  ([`plot_precision()`](https://provetelab.org/sheepdog/reference/plot_precision.md)),
   when 'ggplot2' is installed.
 
 ## Usage

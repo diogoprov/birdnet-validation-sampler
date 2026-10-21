@@ -13,7 +13,7 @@ summarise_history(history)
 - history:
 
   Table returned by
-  [`detection_history()`](https://provetelab.org/birdnet-validation-sampler/reference/detection_history.md).
+  [`detection_history()`](https://provetelab.org/sheepdog/reference/detection_history.md).
 
 ## Value
 

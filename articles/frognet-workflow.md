@@ -45,7 +45,7 @@ Then rerun with `simulate = FALSE` (the default). The clips go to
 `validation/clip_manifest.csv`. A rerun skips the clips already cut.
 
 The steps can also run one by one.
-[`select_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/select_clips.md)
+[`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md)
 is pure: it returns the manifest without touching audio, which helps to
 try designs.
 
@@ -77,7 +77,7 @@ extract_validation_clips(
 
 Every detection \>= 0.5 of a drawn occasion is cut, and the manifest
 records `inclusion_prob`. See
-[`vignette("crywolf-contract")`](https://provetelab.org/birdnet-validation-sampler/articles/crywolf-contract.md)
+[`vignette("crywolf-contract")`](https://provetelab.org/sheepdog/articles/crywolf-contract.md)
 for the hand-off to occupancy models.
 
 ## Stage 1b: after the review

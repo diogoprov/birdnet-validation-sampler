@@ -15,12 +15,12 @@ pack_clips(manifest, output_dir)
 - manifest:
 
   Clip manifest, as returned by
-  [`cut_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/cut_clips.md).
+  [`cut_clips()`](https://provetelab.org/sheepdog/reference/cut_clips.md).
 
 - output_dir:
 
   The `output_dir` given to
-  [`cut_clips()`](https://provetelab.org/birdnet-validation-sampler/reference/cut_clips.md).
+  [`cut_clips()`](https://provetelab.org/sheepdog/reference/cut_clips.md).
 
 ## Value
 

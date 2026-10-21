@@ -16,7 +16,7 @@ nightly_presence(validation)
 - validation:
 
   Table returned by
-  [`classify_review()`](https://provetelab.org/birdnet-validation-sampler/reference/classify_review.md).
+  [`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md).
 
 ## Value
 
