@@ -16,7 +16,7 @@ utils::globalVariables(c(
   "begin_time", "clip_end", "clip_start", "confidence", "duration",
   "end_time",
   "file_offset", "hour_int", "inclusion_prob", "n_detections_occasion",
-  "night", "occasion_id", "pasta", "rank", "recording_date",
+  "night", "occasion_id", "pasta", "rank", "recording_date", "status",
   "recording_hour", "site", "source_audio", "species_code",
   "species_folder"
 ))

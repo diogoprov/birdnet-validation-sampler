@@ -120,7 +120,7 @@ A tibble, the clip manifest without \code{status}, with the columns
 Applies the sampling design to the predictions read by
 \code{\link[=read_selection_tables]{read_selection_tables()}} and returns the clip manifest: one row per clip
 to cut, with its site, species, night, source audio, start and end. No
-audio is read or written; cut the clips with \code{cut_clips()}.
+audio is read or written; cut the clips with \code{\link[=cut_clips]{cut_clips()}}.
 }
 \section{Sampling modes}{
 
