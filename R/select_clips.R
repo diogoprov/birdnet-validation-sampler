@@ -8,7 +8,7 @@
 #' @section Sampling modes:
 #' * `"top"` keeps the `n_top` predictions with the highest confidence per
 #'   site x species x night x hour. It serves classifier retraining and the
-#'   score-to-probability calibration of `calibrate()`. Do not use it to
+#'   score-to-probability calibration of [calibrate()]. Do not use it to
 #'   estimate false-positive rates: top-score clips hold fewer false
 #'   positives than a random sample.
 #' * `"random_detections"` draws, at random, `n_top` occasions per
