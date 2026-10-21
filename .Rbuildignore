@@ -9,3 +9,6 @@
 ^\.github$
 ^\.git$
 ^\.gitignore$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

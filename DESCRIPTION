@@ -12,7 +12,8 @@ Description: Tools to check whether automated detections from 'BirdNET'
     nightly detection histories and effort-standardised community
     matrices.
 License: MIT + file LICENSE
-URL: https://github.com/diogoprov/birdnet-validation-sampler
+URL: https://github.com/diogoprov/birdnet-validation-sampler,
+    https://provetelab.org/birdnet-validation-sampler/
 BugReports: https://github.com/diogoprov/birdnet-validation-sampler/issues
 Depends:
     R (>= 4.2)
