@@ -26,6 +26,8 @@ BirdNET custom classifier. Its validation outputs feed occupancy models with
 false positives fitted with [crywolf](https://github.com/diogoprov/crywolf).
 The two packages are independent: sheepdog does not depend on crywolf.
 
+![The three stages of sheepdog](man/figures/pipeline.png)
+
 ## Installation
 
 ```r
@@ -102,6 +104,8 @@ and `File Offset (s)`, and the recordings must be named
   minutes) are drawn among all those recorded, with or without predictions,
   for annotation by ear. The clip is the whole recording and `confidence` is
   `NA`.
+
+![The first stage, extract_validation_clips()](man/figures/extraction_flow.png)
 
 The manifest records `occasion_id`, `n_detections_occasion` and
 `inclusion_prob` (the probability that the occasion was drawn). Every draw
