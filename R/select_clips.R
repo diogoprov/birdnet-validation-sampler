@@ -87,7 +87,7 @@
 #'   `recording_hour`, `rank`, `confidence`, `clip_file`, `clip_start`,
 #'   `clip_end`, `duration`, `source_audio`, `begin_path`, `sampling_mode`,
 #'   `occasion_id`, `n_detections_occasion` and `inclusion_prob`. See
-#'   `vignette("crywolf-contract")` for their definitions.
+#'   `vignette("crywolf-integration")` for their definitions.
 #' @export
 select_clips <- function(detections,
                          sampling_mode = c("top", "random_detections",

@@ -81,7 +81,7 @@ extract_validation_clips(
 ```
 
 Every detection >= 0.5 of a drawn occasion is cut, and the manifest records
-`inclusion_prob`. See `vignette("crywolf-contract")` for the hand-off to
+`inclusion_prob`. See `vignette("crywolf-integration")` for the hand-off to
 occupancy models.
 
 ## Stage 1b: after the review

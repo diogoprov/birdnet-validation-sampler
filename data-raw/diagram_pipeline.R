@@ -98,7 +98,7 @@ digraph pipeline {
   prever  -> historico
   historico -> matrizes
   matrizes -> ordenacoes
-  tpfp    -> occupancy [label = " random designs\n (see crywolf contract)", style = dashed]
+  tpfp    -> occupancy [label = " random designs\n (see crywolf integration)", style = dashed]
   posval  -> retreino [style = dashed]
 }
 ')

@@ -1,8 +1,8 @@
 ---
-title: "Contract with crywolf: clip manifest and validation tables"
+title: "Integration with crywolf: clip manifest and validation tables"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Contract with crywolf: clip manifest and validation tables}
+  %\VignetteIndexEntry{Integration with crywolf: clip manifest and validation tables}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

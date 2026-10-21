@@ -1,3 +1,8 @@
+# sheepdog (development version)
+
+- The vignette `crywolf-contract` is now `crywolf-integration`
+  ("Integration with crywolf").
+
 # sheepdog 2.0.0
 
 The four scripts of birdnet-validation-sampler v1.2.0 become the R package
