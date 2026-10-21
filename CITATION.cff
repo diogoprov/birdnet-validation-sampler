@@ -9,8 +9,8 @@ authors:
 version: "2.0.0"
 doi: "10.5281/zenodo.22696210"
 date-released: "2026-10-21"
-url: "https://github.com/diogoprov/birdnet-validation-sampler"
-repository-code: "https://github.com/diogoprov/birdnet-validation-sampler"
+url: "https://provetelab.org/sheepdog/"
+repository-code: "https://github.com/diogoprov/sheepdog"
 license: MIT
 keywords:
   - bioacoustics

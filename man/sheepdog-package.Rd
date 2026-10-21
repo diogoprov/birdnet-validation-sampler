@@ -13,8 +13,9 @@ Tools to check whether automated detections from 'BirdNET' custom classifiers in
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/diogoprov/birdnet-validation-sampler}
-  \item Report bugs at \url{https://github.com/diogoprov/birdnet-validation-sampler/issues}
+  \item \url{https://github.com/diogoprov/sheepdog}
+  \item \url{https://provetelab.org/sheepdog/}
+  \item Report bugs at \url{https://github.com/diogoprov/sheepdog/issues}
 }
 
 }
