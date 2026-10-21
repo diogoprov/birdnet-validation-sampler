@@ -24,7 +24,8 @@ de qualquer classificador customizado do BirdNET.
 
 **`extrair_clipes_validacao.R`** lê as `BirdNET_SelectionTable.txt` (formato Raven, uma
 tabela concatenada por local), seleciona as *N* predições de maior confidence por
-local × espécie × noite × hora, aplica o desenho amostral configurado e corta os clipes
+local × espécie × noite × hora (ou sorteia ocasiões/gravações ao acaso, ver
+[Modos de amostragem](#modos-de-amostragem)), aplica o desenho amostral configurado e corta os clipes
 `.wav` diretamente dos áudios originais, organizando **uma pasta por espécie** — pronta para
 a aba *review* do BirdNET GUI — mais um zip por espécie ("pacotes" de validação leves para
 download) e um `manifesto_clipes.csv` que liga cada clipe a local, espécie, data, noite,
@@ -34,11 +35,16 @@ O desenho amostral é todo declarativo, no bloco `config` do topo do script:
 
 | Parâmetro | O que faz |
 |---|---|
-| `n_top` | Predições de maior confidence por local × espécie × noite × hora (padrão 2) |
-| `conf_minima` | Confidence mínima para uma predição ser candidata (padrão 0.1) |
+| `modo_amostragem` | `"top"` (padrão), `"aleatorio_deteccoes"` ou `"aleatorio_gravacoes"` — ver [Modos de amostragem](#modos-de-amostragem) |
+| `n_top` | `"top"`: predições de maior confidence por local × espécie × noite × hora (padrão 2); `"aleatorio_deteccoes"`: ocasiões sorteadas por local × espécie × noite × hora |
+| `conf_minima` | Confidence mínima para uma predição ser candidata no modo `"top"` (padrão 0.1) |
+| `limiar` | Limiar de confidence da análise de ocupação; define as ocasiões candidatas em `"aleatorio_deteccoes"` e a coluna `n_deteccoes_ocasiao` do manifesto |
+| `unidade_ocasiao` | Ocasião do modelo de ocupação: `"arquivo"` (gravação inteira) ou `"minuto"` (via `File Offset`) |
+| `fracao_gravacoes` / `n_gravacoes_por_local` | `"aleatorio_gravacoes"`: fração das gravações (ou minutos) sorteada por local, proporcional ao esforço (padrão 0.01), ou número fixo por local |
+| `tabela_gravacoes`, `padrao_audio`, `duracao_gravacao` | `"aleatorio_gravacoes"`: lista de todas as gravações (por padrão, `list.files()` nas pastas de áudio da coluna `Begin Path`), padrão dos arquivos de áudio e duração das gravações |
 | `hora_inicio` / `hora_fim` | Janela de horas; cruzando a meia-noite (ex. 16 → 6), o agrupamento passa a ser por **noite** — a madrugada conta como a noite da véspera |
 | `alternar_dias` | "Dia sim, dia não" sobre as noites, ancorado na 1ª noite de cada local |
-| `meta_total` | Meta total de clipes por local, repartida de forma **balanceada** entre as espécies (water-filling: raras entram inteiras, o excedente é redistribuído) |
+| `meta_total` | Meta total de clipes (ocasiões, em `"aleatorio_deteccoes"`) por local, repartida de forma **balanceada** entre as espécies (water-filling: raras entram inteiras, o excedente é redistribuído) |
 | `balancear_por_hora` | Round-robin entre as horas dentro de cada espécie (cobre o ciclo diel) |
 | `especies` | Restringe a uma lista de códigos de espécie |
 | `data_inicio` / `data_fim` | Janela de datas (ex.: período de um data logger) |
@@ -48,6 +54,43 @@ Todos os sorteios usam semente fixa, então re-execuções selecionam exatamente
 conjunto — e o script é **idempotente**: clipes já cortados são pulados, de modo que uma
 rodada interrompida continua de onde parou. Áudios ausentes ou com erro de leitura não
 derrubam a rodada; ficam marcados no manifesto (`status`).
+
+### Modos de amostragem
+
+- **`"top"`** (padrão): as *N* predições de maior confidence por estrato. Serve ao
+  retreino do classificador e à calibração score → P(verdadeiro positivo) do Estágio 2
+  (o modelo é condicional ao score, então selecionar pelo score não enviesa a curva).
+  **Não serve para estimar taxas de falsos positivos** em modelos de ocupação: os clipes
+  de maior score têm menos falsos positivos que uma amostra aleatória, e a taxa estimada
+  sai baixa demais.
+- **`"aleatorio_deteccoes"`** — desenho de confirmação de observações
+  ([Chambert et al. 2015, *Ecology* 96:332–339](https://doi.org/10.1890/14-1507.1)):
+  sorteio aleatório, com semente fixa, de **ocasiões** (arquivo ou minuto) com pelo menos
+  uma predição da espécie com confidence ≥ `limiar`, dentro de estratos que não dependem
+  do score (local, espécie, noite, hora; `meta_total` e `balancear_por_hora` continuam
+  valendo). De cada ocasião sorteada são cortadas **todas** as predições da espécie
+  ≥ `limiar`.
+- **`"aleatorio_gravacoes"`** — desenho de múltiplos métodos
+  ([Miller et al. 2011, *Ecology* 92:1422–1428](https://doi.org/10.1890/10-1396.1)):
+  sorteio de gravações (ou minutos) entre **todas** as gravadas, com ou sem predição,
+  proporcional ao esforço de cada local, para anotação por ouvido independente do
+  classificador. O clipe é a gravação (ou o minuto) inteira, copiada na pasta de cada
+  espécie a anotar; `confidence` fica `NA`.
+
+Nos dois modos aleatórios use o **mesmo** `limiar` da análise de ocupação. O manifesto
+ganha as colunas `modo_amostragem`, `ocasiao_id`, `n_deteccoes_ocasiao` (predições da
+espécie ≥ `limiar` na ocasião) e `prob_inclusao` (probabilidade de a ocasião ser
+sorteada; `NA` no modo `"top"`), mantendo as colunas lidas por
+`crywolf::fp_read_validation()`.
+
+Cuidados: (1) no `"aleatorio_gravacoes"` cada gravação sorteada é copiada uma vez por
+espécie a anotar (todas as espécies com predição, se `especies` for `NULL`) — restrinja
+`especies` para não multiplicar o trabalho de anotação; (2) esses clipes sem confidence
+são o segundo método (dados de anotação manual), não clipes de confirmação de detecções,
+e não devem ir para o argumento `validation` de `crywolf::fp_aggregate()`; (3) com
+`unidade_ocasiao = "minuto"`, a ocasião de cada clipe está em `ocasiao_id` no manifesto,
+mas o casamento com as ocasiões do crywolf precisa ser feito pelo arquivo + minuto de
+`inicio_clipe`.
 
 **`pos_validacao.R`** fecha o ciclo depois da revisão manual no BirdNET GUI: classifica cada
 clipe pelo caminho (subpastas `Positive`/`Negative`, padrões configuráveis), cruza com o

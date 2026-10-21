@@ -118,7 +118,8 @@ val <- map(config$arquivos_validacao, function(f) {
   read_csv(f, show_col_types = FALSE, progress = FALSE)
 }) |>
   list_rbind() |>
-  filter(veredito %in% c("positivo", "negativo")) |>
+  # gravacoes sorteadas (modo "aleatorio_gravacoes") nao tem confidence
+  filter(veredito %in% c("positivo", "negativo"), !is.na(confidence)) |>
   transmute(
     local      = normalizar_local(local, config$normalizar_locais),
     especie    = pasta_especie,

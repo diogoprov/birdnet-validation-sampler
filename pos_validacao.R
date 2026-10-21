@@ -71,6 +71,8 @@ config <- list(
 manifesto <- read_csv(config$caminho_manifesto, show_col_types = FALSE)
 # manifestos antigos nao tem a coluna 'noite'
 if (!"noite" %in% names(manifesto)) manifesto$noite <- manifesto$data_gravacao
+# no modo "aleatorio_gravacoes" a coluna vem toda NA (lida como logica)
+manifesto$confidence <- as.numeric(manifesto$confidence)
 
 wavs <- list.files(config$dir_validado, pattern = "\\.wav$",
                    recursive = TRUE, full.names = TRUE)
@@ -106,6 +108,15 @@ validados <- filter(resultado, veredito %in% c("positivo", "negativo"))
 if (nrow(validados) == 0) {
   stop("Nenhum clipe com veredito positivo/negativo - a revisao ja foi ",
        "feita? Confira padrao_positivo/padrao_negativo.")
+}
+
+# Gravacoes inteiras (modo "aleatorio_gravacoes") nao tem confidence: entram
+# na presenca por noite, mas nao na precisao por faixa nem no threshold
+sem_conf <- sum(is.na(validados$confidence))
+if (sem_conf > 0) {
+  message(sem_conf, " clipe(s) validado(s) sem confidence (gravacoes ",
+          "sorteadas) fora da precisao por faixa e dos thresholds.")
+  validados <- filter(validados, !is.na(confidence))
 }
 
 # -----------------------------------------------------------------------------
@@ -220,7 +231,9 @@ g <- precisao_faixa |>
                          " clipes na faixa")) +
   theme_minimal(base_size = 11)
 
-ggsave(file.path(config$dir_saida, "precisao_por_faixa.png"), g,
-       width = 11, height = 8, dpi = 200)
+if (nrow(precisao_faixa) > 0) {
+  ggsave(file.path(config$dir_saida, "precisao_por_faixa.png"), g,
+         width = 11, height = 8, dpi = 200)
+}
 
 message("\nPronto! Resultados em ", config$dir_saida)

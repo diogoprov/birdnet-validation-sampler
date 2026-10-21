@@ -8,7 +8,9 @@
 #   1. Para cada Local, ler a tabela BirdNET_SelectionTable.txt
 #      (que concatena as predicoes feitas sobre cada audio do local)
 #   2. Para cada Local x Especie x Data+Hora, selecionar as N predicoes
-#      com maior confidence score (padrao: 2)
+#      com maior confidence score (padrao: 2). Para estimar taxas de falsos
+#      positivos ha dois modos aleatorios (config$modo_amostragem): sorteio
+#      de ocasioes com deteccao ou de gravacoes entre todas as gravadas
 #   3. Mapear cada predicao no audio de origem (coluna Begin Path) e cortar
 #      o clipe usando File Offset (s) e a duracao (End Time - Begin Time)
 #   4. Nomear o clipe de forma que se possa recuperar local, especie e
@@ -52,12 +54,56 @@ config <- list(
   #   <dir_saida>/manifesto_clipes.csv
   dir_saida     = "N:/Arara/validacao",
 
-  # Quantas predicoes de maior confidence por Local x Especie x Data+Hora
+  # Como escolher o que vai para a validacao:
+  #   "top"                 - as n_top predicoes de maior confidence por
+  #                           Local x Especie x Data+Hora (padrao; serve ao
+  #                           retreino e a calibracao score -> P(TP))
+  #   "aleatorio_deteccoes" - sorteio de OCASIOES com >= 1 predicao da
+  #                           especie com confidence >= limiar; corta TODAS
+  #                           as predicoes >= limiar da ocasiao sorteada
+  #                           (Chambert et al. 2015)
+  #   "aleatorio_gravacoes" - sorteio de gravacoes/minutos entre TODOS os
+  #                           gravados, com ou sem predicao, para anotacao
+  #                           por ouvido (Miller et al. 2011)
+  # Para estimar taxas de falsos positivos (ex. crywolf), NAO use "top".
+  modo_amostragem = "top",
+
+  # Ocasiao = unidade que entra no modelo de ocupacao: "arquivo" (a
+  # gravacao inteira) ou "minuto" (minuto do arquivo, via File Offset)
+  unidade_ocasiao = "arquivo",
+
+  # Limiar de confidence da analise de ocupacao (o mesmo que sera usado
+  # la!). Define as ocasioes candidatas em "aleatorio_deteccoes" e a
+  # contagem n_deteccoes_ocasiao do manifesto. NULL = nao conta.
+  limiar        = NULL,
+
+  # "top": quantas predicoes de maior confidence por Local x Especie x
+  # Data+Hora. "aleatorio_deteccoes": quantas OCASIOES sorteadas por
+  # Local x Especie x Data+Hora.
   n_top         = 2,
 
-  # Confidence minima para uma predicao ser candidata (pedido da Larissa,
-  # 2026-08-17): sem esse filtro, toda especie acaba com scores bem baixos
-  # "no fundo" mesmo quando nao esta presente. NULL = sem filtro.
+  # "aleatorio_gravacoes": fracao das gravacoes (ou minutos) sorteada em
+  # cada local -- proporcional ao esforco. n_gravacoes_por_local, se
+  # definido, fixa um numero por local no lugar da fracao.
+  fracao_gravacoes      = 0.01,
+  n_gravacoes_por_local = NULL,
+
+  # "aleatorio_gravacoes": de onde vem a lista de TODAS as gravacoes.
+  # NULL = list.files() nas pastas de audio que aparecem na coluna Begin
+  # Path (pastas sem nenhuma predicao ficam de fora!). Ou o caminho de um
+  # .csv com as colunas local e caminho_audio.
+  tabela_gravacoes = NULL,
+  padrao_audio     = "\\.(wav|flac|mp3)$",
+
+  # Duracao das gravacoes (s), para unidade_ocasiao = "minuto" em
+  # "aleatorio_gravacoes" e para o fim_clipe das gravacoes inteiras.
+  # NULL = le de cada arquivo com av::av_media_info() quando precisar.
+  duracao_gravacao = NULL,
+
+  # Confidence minima para uma predicao ser candidata no modo "top"
+  # (pedido da Larissa, 2026-08-17): sem esse filtro, toda especie acaba
+  # com scores bem baixos "no fundo" mesmo quando nao esta presente.
+  # NULL = sem filtro. Nos modos aleatorios vale o 'limiar'.
   conf_minima   = 0.1,
 
   # Rodar so em alguns locais? Util para o piloto de viabilidade do metodo.
@@ -91,6 +137,8 @@ config <- list(
   # repartida de forma balanceada entre as especies -- especies com menos
   # clipes que a cota entram inteiras e o excedente e redistribuido entre
   # as demais. NULL = sem meta. Ex.: 4000
+  # Em "aleatorio_deteccoes" a meta conta OCASIOES (cada uma vira todos os
+  # seus clipes); em "aleatorio_gravacoes" e ignorada (vale a fracao).
   meta_total    = NULL,
 
   # Dentro de cada especie, balancear o sorteio pela hora do dia?
@@ -99,6 +147,7 @@ config <- list(
 
   # Alternativa mais simples a meta_total: limite fixo de clipes por
   # especie (sorteio reprodutivel). Ignorado se meta_total for definida.
+  # Em "aleatorio_deteccoes" conta ocasioes, como meta_total.
   max_por_especie = NULL,
 
   # Remapeamento do prefixo dos caminhos da coluna Begin Path.
@@ -223,10 +272,88 @@ amostrar_clipes <- function(df, n_alvo, por_hora = TRUE) {
   }
 }
 
-# Corta um clipe com o ffmpeg embutido no pacote 'av'
+# Codigo curto da especie para nome de pasta: parte final do rotulo do
+# classificador, ex. "Adenomera diptyx_ade-dip" -> "ade_dip"; se o rotulo
+# ja for curto ("ade-dip"), funciona igual
+pasta_da_especie <- function(species_code) {
+  str_replace_all(str_extract(species_code, "[^_]+$"), "-", "_")
+}
+
+# Identificador da ocasiao: o arquivo (sem extensao) ou arquivo + minuto
+id_ocasiao <- function(caminho_audio, inicio, unidade) {
+  base <- tools::file_path_sans_ext(basename(caminho_audio))
+  if (unidade == "minuto") {
+    sprintf("%s_m%03d", base, as.integer(inicio %/% 60))
+  } else {
+    base
+  }
+}
+
+# Duracao (s) de cada gravacao: config$duracao_gravacao ou lida do arquivo
+duracao_audio <- function(caminhos, fixa = NULL) {
+  if (!is.null(fixa)) return(rep(fixa, length(caminhos)))
+  map_dbl(caminhos, \(f) tryCatch(av::av_media_info(f)$duration,
+                                  error = function(e) NA_real_))
+}
+
+# Filtros de tempo (janela de horas, dia sim/dia nao, janela de datas),
+# sobre uma tabela com local, data_gravacao, hora_int e data_grupo
+filtrar_tempo <- function(df, rotulo = "predicoes") {
+  # Janela de horas; cruzando a meia-noite, agrupa por NOITE
+  if (!is.null(config$hora_inicio) && !is.null(config$hora_fim)) {
+    antes <- nrow(df)
+    hi <- config$hora_inicio; hf <- config$hora_fim
+    if (hi <= hf) {
+      df <- filter(df, hora_int >= hi, hora_int <= hf)
+    } else {
+      df <- df |>
+        filter(hora_int >= hi | hora_int <= hf) |>
+        mutate(data_grupo = if_else(
+          hora_int <= hf,
+          format(as.Date(data_gravacao, "%Y%m%d") - 1, "%Y%m%d"),
+          data_gravacao))
+      message("Janela cruza a meia-noite: agrupando por noite ",
+              "(madrugada conta como a noite da vespera).")
+    }
+    message("Janela de horas ", hi, "h-", hf, "h: ", antes, " -> ",
+            nrow(df), " ", rotulo, ".")
+    if (nrow(df) == 0) stop("Nenhuma linha (", rotulo, ") na janela de horas.")
+  }
+
+  # "Dia sim, dia nao" (por local, sobre a data/noite de agrupamento)
+  if (isTRUE(config$alternar_dias)) {
+    antes <- nrow(df)
+    df <- df |>
+      group_by(local) |>
+      mutate(.dia = as.integer(
+        as.Date(data_grupo, "%Y%m%d") -
+          min(as.Date(data_grupo, "%Y%m%d"), na.rm = TRUE))) |>
+      ungroup() |>
+      filter(.dia %% 2 == 0) |>
+      select(-.dia)
+    message("Dia sim, dia nao: ", antes, " -> ", nrow(df), " ", rotulo, ".")
+  }
+
+  # Janela de datas (ex.: periodo do data logger)
+  if (!is.null(config$data_inicio) || !is.null(config$data_fim)) {
+    antes <- nrow(df)
+    di <- if (is.null(config$data_inicio)) "00000000" else as.character(config$data_inicio)
+    df_ <- if (is.null(config$data_fim))    "99999999" else as.character(config$data_fim)
+    df <- filter(df, !is.na(data_gravacao),
+                 data_gravacao >= di, data_gravacao <= df_)
+    message("Janela de datas ", di, "-", df_, ": ", antes, " -> ",
+            nrow(df), " ", rotulo, ".")
+    if (nrow(df) == 0) stop("Nenhuma linha (", rotulo, ") dentro da janela de datas.")
+  }
+  df
+}
+
+# Corta um clipe com o ffmpeg embutido no pacote 'av' (duracao NA = ate o
+# fim do arquivo)
 cortar_clipe <- function(origem, destino, inicio, duracao) {
   av::av_audio_convert(origem, destino,
-                       start_time = inicio, total_time = duracao,
+                       start_time = inicio,
+                       total_time = if (is.na(duracao)) NULL else duracao,
                        verbose = FALSE)
 }
 
@@ -279,8 +406,17 @@ if (!is.null(config$locais)) {
 }
 
 # -----------------------------------------------------------------------------
-# 4. SELECIONAR AS TOP-N POR LOCAL x ESPECIE x DATA+HORA
+# 4. SELECIONAR (top-N, ocasioes sorteadas ou gravacoes sorteadas)
 # -----------------------------------------------------------------------------
+
+modo <- match.arg(config$modo_amostragem,
+                  c("top", "aleatorio_deteccoes", "aleatorio_gravacoes"))
+unidade <- match.arg(config$unidade_ocasiao, c("arquivo", "minuto"))
+if (modo == "aleatorio_deteccoes" && is.null(config$limiar)) {
+  stop("modo_amostragem = \"aleatorio_deteccoes\" exige config$limiar ",
+       "(o mesmo limiar de confidence da analise de ocupacao).")
+}
+message("Modo de amostragem: ", modo, " (ocasiao = ", unidade, ").")
 
 selecao <- predicoes |>
   mutate(
@@ -288,7 +424,8 @@ selecao <- predicoes |>
                                      config$remap_de, config$remap_para),
     duracao       = end_time - begin_time,
     inicio_clipe  = file_offset,
-    fim_clipe     = file_offset + duracao
+    fim_clipe     = file_offset + duracao,
+    ocasiao_id    = id_ocasiao(caminho_audio, file_offset, unidade)
   )
 selecao <- bind_cols(selecao,
                      extrair_data_hora(basename(selecao$begin_path)))
@@ -302,6 +439,32 @@ if (anyNA(selecao$data_gravacao)) {
 selecao <- mutate(selecao,
                   hora_int   = suppressWarnings(as.integer(hora_gravacao)),
                   data_grupo = data_gravacao)
+
+# Lista de TODAS as gravacoes (so no modo "aleatorio_gravacoes"); o
+# default sao as pastas de audio que aparecem nas tabelas de selecao
+if (modo == "aleatorio_gravacoes") {
+  if (!is.null(config$tabela_gravacoes)) {
+    gravacoes <- read_csv(config$tabela_gravacoes, show_col_types = FALSE) |>
+      transmute(local, caminho_audio = remapear_caminho(
+        caminho_audio, config$remap_de, config$remap_para))
+  } else {
+    gravacoes <- selecao |>
+      distinct(local, pasta = dirname(caminho_audio)) |>
+      mutate(caminho_audio = map(pasta, \(d) list.files(
+        d, pattern = config$padrao_audio, full.names = TRUE,
+        ignore.case = TRUE))) |>
+      unnest(caminho_audio) |>
+      distinct(local, caminho_audio)
+  }
+  if (nrow(gravacoes) == 0) stop("Nenhuma gravacao encontrada - confira ",
+                                 "remap_de/remap_para ou tabela_gravacoes.")
+  gravacoes <- bind_cols(gravacoes,
+                         extrair_data_hora(basename(gravacoes$caminho_audio))) |>
+    mutate(hora_int   = suppressWarnings(as.integer(hora_gravacao)),
+           data_grupo = data_gravacao)
+  message(nrow(gravacoes), " gravacoes listadas em ",
+          n_distinct(gravacoes$local), " local(is).")
+}
 
 # Filtro de especies (codigos curtos)
 if (!is.null(config$especies)) {
@@ -319,83 +482,131 @@ if (!is.null(config$especies)) {
   if (nrow(selecao) == 0) stop("Nenhuma predicao das especies pedidas.")
 }
 
-# Janela de horas; cruzando a meia-noite, agrupa por NOITE
-if (!is.null(config$hora_inicio) && !is.null(config$hora_fim)) {
-  antes <- nrow(selecao)
-  hi <- config$hora_inicio; hf <- config$hora_fim
-  if (hi <= hf) {
-    selecao <- filter(selecao, hora_int >= hi, hora_int <= hf)
-  } else {
-    selecao <- selecao |>
-      filter(hora_int >= hi | hora_int <= hf) |>
-      mutate(data_grupo = if_else(
-        hora_int <= hf,
-        format(as.Date(data_gravacao, "%Y%m%d") - 1, "%Y%m%d"),
-        data_gravacao))
-    message("Janela cruza a meia-noite: agrupando por noite ",
-            "(madrugada conta como a noite da vespera).")
+# Especies a anotar no modo "aleatorio_gravacoes" (antes dos filtros de
+# tempo: a especie entra mesmo sem predicao na janela). Cada gravacao
+# sorteada e copiada uma vez por especie -- restrinja com config$especies
+especies_alvo <- sort(unique(selecao$species_code))
+
+selecao <- filtrar_tempo(selecao, "predicoes")
+
+# Predicoes da especie >= limiar por ocasiao (para conferir que todas as
+# deteccoes de uma ocasiao checada foram cortadas)
+n_det_ocasiao <- if (!is.null(config$limiar)) {
+  selecao |>
+    filter(confidence >= config$limiar) |>
+    count(local, species_code, ocasiao_id, name = "n_deteccoes_ocasiao")
+}
+
+if (modo == "top") {
+  if (!is.null(config$conf_minima)) {
+    antes   <- nrow(selecao)
+    selecao <- filter(selecao, confidence >= config$conf_minima)
+    message(antes - nrow(selecao), " predicoes descartadas pelo filtro de ",
+            "confidence < ", config$conf_minima, ".")
   }
-  message("Janela de horas ", hi, "h-", hf, "h: ", antes, " -> ",
-          nrow(selecao), " predicoes.")
-  if (nrow(selecao) == 0) stop("Nenhuma predicao na janela de horas.")
-}
 
-# "Dia sim, dia nao" (por local, sobre a data/noite de agrupamento)
-if (isTRUE(config$alternar_dias)) {
-  antes <- nrow(selecao)
   selecao <- selecao |>
-    group_by(local) |>
-    mutate(.dia = as.integer(
-      as.Date(data_grupo, "%Y%m%d") -
-        min(as.Date(data_grupo, "%Y%m%d"), na.rm = TRUE))) |>
+    group_by(local, species_code, data_grupo, hora_gravacao) |>
+    arrange(desc(confidence), .by_group = TRUE) |>
+    slice_head(n = config$n_top) |>
+    mutate(rank = row_number()) |>
     ungroup() |>
-    filter(.dia %% 2 == 0) |>
-    select(-.dia)
-  message("Dia sim, dia nao: ", antes, " -> ", nrow(selecao), " predicoes.")
+    mutate(
+      pasta_especie = pasta_da_especie(species_code),
+      arquivo_clipe = nome_clipe(confidence, rank, caminho_audio,
+                                 inicio_clipe, fim_clipe),
+      # selecao pelo score: nao e uma amostra probabilistica
+      prob_inclusao = NA_real_
+    )
+
+  message(nrow(selecao), " clipes selecionados (top ", config$n_top,
+          " por local x especie x data+hora) de ",
+          n_distinct(selecao$species_code), " especie(s).")
+} else if (modo == "aleatorio_deteccoes") {
+  # Candidatas: ocasioes com >= 1 predicao da especie >= limiar. O sorteio
+  # (n_top ocasioes por local x especie x data+hora) nao olha o score.
+  deteccoes <- filter(selecao, confidence >= config$limiar)
+  set.seed(2026)
+  selecao <- deteccoes |>
+    distinct(local, species_code, ocasiao_id,
+             data_gravacao, data_grupo, hora_gravacao) |>
+    group_by(local, species_code, data_grupo, hora_gravacao) |>
+    mutate(.p1 = min(config$n_top, n()) / n()) |>
+    slice_sample(n = config$n_top) |>
+    ungroup()
+  message(nrow(selecao), " ocasioes sorteadas (", config$n_top,
+          " por local x especie x data+hora) entre ",
+          n_distinct(deteccoes[c("local", "species_code", "ocasiao_id")]),
+          " com predicao >= ", config$limiar, ".")
+  ocasioes_candidatas <- selecao
+} else {
+  # Sorteio entre TODAS as gravacoes (ou minutos), com ou sem predicao,
+  # proporcional ao esforco de cada local
+  gravacoes <- filtrar_tempo(gravacoes, "gravacoes")
+  if (unidade == "minuto") {
+    gravacoes <- gravacoes |>
+      mutate(.dur = duracao_audio(caminho_audio, config$duracao_gravacao))
+    if (anyNA(gravacoes$.dur)) {
+      warning(sum(is.na(gravacoes$.dur)), " gravacao(oes) sem duracao ",
+              "legivel - ignoradas. Defina config$duracao_gravacao?")
+    }
+    gravacoes <- gravacoes |>
+      filter(!is.na(.dur)) |>
+      mutate(inicio_clipe = map(.dur, \(d) (seq_len(ceiling(d / 60)) - 1) * 60)) |>
+      unnest(inicio_clipe) |>
+      mutate(fim_clipe = pmin(inicio_clipe + 60, .dur)) |>
+      select(-.dur)
+  } else {
+    gravacoes <- gravacoes |>
+      mutate(inicio_clipe = 0,
+             fim_clipe    = if (is.null(config$duracao_gravacao)) NA_real_
+                            else config$duracao_gravacao)
+  }
+  gravacoes <- mutate(gravacoes,
+                      ocasiao_id = id_ocasiao(caminho_audio, inicio_clipe,
+                                              unidade))
+
+  set.seed(2026)
+  sorteadas <- gravacoes |>
+    group_split(local) |>
+    map(function(g) {
+      n_alvo <- if (!is.null(config$n_gravacoes_por_local)) {
+        min(config$n_gravacoes_por_local, nrow(g))
+      } else {
+        max(1, round(config$fracao_gravacoes * nrow(g)))
+      }
+      slice_sample(g, n = n_alvo) |>
+        mutate(prob_inclusao = n_alvo / nrow(g))
+    }) |>
+    list_rbind()
+  message(nrow(sorteadas), " ", unidade, "(s) sorteado(s) entre ",
+          nrow(gravacoes), " gravado(s), para anotar ",
+          length(especies_alvo), " especie(s).")
+
+  # Uma copia da gravacao/minuto por especie a anotar (o veredito e por
+  # especie, na pasta da especie)
+  selecao <- sorteadas |>
+    cross_join(tibble(species_code = especies_alvo)) |>
+    mutate(
+      begin_path    = caminho_audio,
+      confidence    = NA_real_,
+      rank          = NA_integer_,
+      duracao       = fim_clipe - inicio_clipe,
+      pasta_especie = pasta_da_especie(species_code),
+      arquivo_clipe = paste0("grav_", local, "_", pasta_especie, "_",
+                             ocasiao_id, ".wav")
+    )
 }
-
-# Janela de datas (ex.: periodo do data logger)
-if (!is.null(config$data_inicio) || !is.null(config$data_fim)) {
-  antes <- nrow(selecao)
-  di <- if (is.null(config$data_inicio)) "00000000" else as.character(config$data_inicio)
-  df_ <- if (is.null(config$data_fim))    "99999999" else as.character(config$data_fim)
-  selecao <- filter(selecao, !is.na(data_gravacao),
-                    data_gravacao >= di, data_gravacao <= df_)
-  message("Janela de datas ", di, "-", df_, ": ", antes, " -> ",
-          nrow(selecao), " predicoes.")
-  if (nrow(selecao) == 0) stop("Nenhuma predicao dentro da janela de datas.")
-}
-
-if (!is.null(config$conf_minima)) {
-  antes   <- nrow(selecao)
-  selecao <- filter(selecao, confidence >= config$conf_minima)
-  message(antes - nrow(selecao), " predicoes descartadas pelo filtro de ",
-          "confidence < ", config$conf_minima, ".")
-}
-
-selecao <- selecao |>
-  group_by(local, species_code, data_grupo, hora_gravacao) |>
-  arrange(desc(confidence), .by_group = TRUE) |>
-  slice_head(n = config$n_top) |>
-  mutate(rank = row_number()) |>
-  ungroup() |>
-  mutate(
-    # usa so o codigo curto da especie (parte final do rotulo do
-    # classificador, ex. "Adenomera diptyx_ade-dip" -> "ade_dip");
-    # se o rotulo ja for curto ("ade-dip"), funciona igual
-    pasta_especie = str_replace_all(str_extract(species_code, "[^_]+$"),
-                                    "-", "_"),
-    arquivo_clipe = nome_clipe(confidence, rank, caminho_audio,
-                               inicio_clipe, fim_clipe)
-  )
-
-message(nrow(selecao), " clipes selecionados (top ", config$n_top,
-        " por local x especie x data+hora) de ",
-        n_distinct(selecao$species_code), " especie(s).")
 
 # Meta total balanceada por especie (e, opcionalmente, por hora), ou
-# limite fixo por especie -- sorteios reprodutiveis (seed fixa)
-if (!is.null(config$meta_total)) {
+# limite fixo por especie -- sorteios reprodutiveis (seed fixa). Em
+# "aleatorio_deteccoes" as unidades sorteadas sao ocasioes.
+unid <- if (modo == "aleatorio_deteccoes") "ocasioes" else "clipes"
+if (modo == "aleatorio_gravacoes" &&
+    (!is.null(config$meta_total) || !is.null(config$max_por_especie))) {
+  warning("meta_total/max_por_especie ignorados em \"aleatorio_gravacoes\" ",
+          "(vale fracao_gravacoes ou n_gravacoes_por_local).")
+} else if (!is.null(config$meta_total)) {
   if (!is.null(config$max_por_especie)) {
     warning("meta_total definida - max_por_especie sera ignorado.")
   }
@@ -414,9 +625,9 @@ if (!is.null(config$meta_total)) {
         list_rbind()
     }) |>
     list_rbind()
-  message("Meta de ", config$meta_total, " clipes por local (balanceada ",
+  message("Meta de ", config$meta_total, " ", unid, " por local (balanceada ",
           "por especie", if (config$balancear_por_hora) " e hora", "): ",
-          antes, " -> ", nrow(selecao), " clipes.")
+          antes, " -> ", nrow(selecao), " ", unid, ".")
 } else if (!is.null(config$max_por_especie)) {
   antes <- nrow(selecao)
   set.seed(2026)
@@ -425,8 +636,54 @@ if (!is.null(config$meta_total)) {
     map(\(df) amostrar_clipes(df, config$max_por_especie,
                               config$balancear_por_hora)) |>
     list_rbind()
-  message("Limite de ", config$max_por_especie, " clipes por especie ",
-          "(por local): ", antes, " -> ", nrow(selecao), " clipes.")
+  message("Limite de ", config$max_por_especie, " ", unid, " por especie ",
+          "(por local): ", antes, " -> ", nrow(selecao), " ", unid, ".")
+}
+
+if (modo == "aleatorio_deteccoes") {
+  # Probabilidade de inclusao = sorteio por data+hora (.p1) x sorteio da
+  # meta/limite. A alocacao da meta e deterministica dado o numero de
+  # candidatas, entao a 2a etapa e n/N no estrato (local x especie, x hora
+  # se balancear_por_hora)
+  usou_meta <- !is.null(config$meta_total) || !is.null(config$max_por_especie)
+  estrato   <- c("local", "species_code",
+                 if (usou_meta && config$balancear_por_hora) "hora_gravacao")
+  p2 <- if (usou_meta) {
+    inner_join(count(selecao, across(all_of(estrato)), name = ".n"),
+               count(ocasioes_candidatas, across(all_of(estrato)), name = ".N"),
+               by = estrato) |>
+      mutate(.p2 = .n / .N) |>
+      select(all_of(estrato), .p2)
+  } else {
+    distinct(selecao, across(all_of(estrato))) |> mutate(.p2 = 1)
+  }
+
+  # Cada ocasiao sorteada vira TODAS as suas predicoes >= limiar
+  selecao <- selecao |>
+    left_join(p2, by = estrato) |>
+    transmute(local, species_code, ocasiao_id, prob_inclusao = .p1 * .p2) |>
+    inner_join(deteccoes, by = c("local", "species_code", "ocasiao_id"),
+               relationship = "one-to-many") |>
+    group_by(local, species_code, ocasiao_id) |>
+    arrange(file_offset, .by_group = TRUE) |>
+    mutate(rank = row_number()) |>
+    ungroup() |>
+    mutate(pasta_especie = pasta_da_especie(species_code),
+           arquivo_clipe = nome_clipe(confidence, rank, caminho_audio,
+                                      inicio_clipe, fim_clipe))
+  message(nrow(selecao), " clipes (todas as predicoes >= ", config$limiar,
+          " das ", n_distinct(selecao[c("local", "species_code",
+                                        "ocasiao_id")]),
+          " ocasioes sorteadas).")
+}
+
+selecao <- mutate(selecao, modo_amostragem = modo)
+if (!is.null(n_det_ocasiao)) {
+  selecao <- selecao |>
+    left_join(n_det_ocasiao, by = c("local", "species_code", "ocasiao_id")) |>
+    mutate(n_deteccoes_ocasiao = replace_na(n_deteccoes_ocasiao, 0L))
+} else {
+  selecao$n_deteccoes_ocasiao <- NA_integer_
 }
 
 # -----------------------------------------------------------------------------
@@ -478,7 +735,8 @@ manifesto <- selecao |>
          noite = data_grupo, hora_gravacao,
          rank, confidence, arquivo_clipe, inicio_clipe, fim_clipe, duracao,
          audio_origem = caminho_audio, begin_path_original = begin_path,
-         status)
+         status, modo_amostragem, ocasiao_id, n_deteccoes_ocasiao,
+         prob_inclusao)
 
 caminho_manifesto <- file.path(config$dir_saida, "manifesto_clipes.csv")
 write_csv(manifesto, caminho_manifesto)
