@@ -18,5 +18,6 @@ utils::globalVariables(c(
   "file_offset", "hour_int", "inclusion_prob", "n_detections_occasion",
   "night", "occasion_id", "pasta", "rank", "recording_date", "status",
   "recording_hour", "site", "source_audio", "species_code",
-  "species_folder"
+  "species_folder", "bin", "clip_file", "conf_meio", "low_support", "n_positive",
+  "n_reviewed", "reviewed_path", "subpasta", "verdict"
 ))
