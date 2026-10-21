@@ -5,7 +5,8 @@
 # da BirdNET_SelectionTable.txt de cada Local ate os pacotes de clipes
 # prontos para validacao manual no BirdNET GUI.
 #
-# Uso: rode o script inteiro; o diagrama abre no Viewer do RStudio.
+# Uso: rode o script inteiro a partir da raiz do repositorio; o diagrama
+# abre no Viewer do RStudio.
 # Para exportar em PNG/SVG, veja o bloco final.
 #
 # Dependencias: install.packages("DiagrammeR")
@@ -118,9 +119,9 @@ fluxo  # abre no Viewer
 if (requireNamespace("DiagrammeRsvg", quietly = TRUE) &&
     requireNamespace("rsvg", quietly = TRUE)) {
   svg_txt <- DiagrammeRsvg::export_svg(fluxo)
-  rsvg::rsvg_png(charToRaw(svg_txt), "fluxo_extracao_clipes.png", width = 2400)
-  rsvg::rsvg_svg(charToRaw(svg_txt), "fluxo_extracao_clipes.svg")
-  message("Diagrama exportado: fluxo_extracao_clipes.png / .svg")
+  rsvg::rsvg_png(charToRaw(svg_txt), "man/figures/fluxo_extracao_clipes.png", width = 2400)
+  rsvg::rsvg_svg(charToRaw(svg_txt), "man/figures/fluxo_extracao_clipes.svg")
+  message("Diagrama exportado: man/figures/fluxo_extracao_clipes.png / .svg")
 } else {
   message("Para exportar PNG/SVG: install.packages(c('DiagrammeRsvg', 'rsvg'))")
 }

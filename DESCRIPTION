@@ -1,0 +1,25 @@
+Package: sheepdog
+Title: Sample, Validate and Calibrate 'BirdNET' Detections
+Version: 1.2.0.9000
+Authors@R:
+    person("Diogo B.", "Provete", , "dbprovete@gmail.com", role = c("aut", "cre"))
+Description: Tools to check whether automated detections from 'BirdNET'
+    custom classifiers in passive acoustic monitoring are real. The package
+    builds clip sets for manual validation (top-score, random-occasion or
+    random-recording designs), summarises the reviewed clips, calibrates
+    confidence scores into probabilities of true detection with
+    hierarchical logistic models, and turns calibrated detections into
+    nightly detection histories and effort-standardised community
+    matrices.
+License: MIT + file LICENSE
+URL: https://github.com/diogoprov/birdnet-validation-sampler
+BugReports: https://github.com/diogoprov/birdnet-validation-sampler/issues
+Depends:
+    R (>= 4.2)
+Suggests:
+    testthat (>= 3.0.0),
+    withr
+Config/testthat/edition: 3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.1

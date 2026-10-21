@@ -1,0 +1,10 @@
+local,pasta_especie,threshold,n_suporte,precisao_no_corte
+ARA,boa_ran,0.56,33,0.9090909090909091
+ARA,den_nan,NA,NA,NA
+ARA,sci_nas,NA,NA,NA
+BAI,boa_ran,0.62,33,0.9090909090909091
+BAI,den_nan,0.68,30,0.9
+BAI,sci_nas,0.82,16,0.9375
+XAR,boa_ran,NA,NA,NA
+XAR,den_nan,NA,NA,NA
+XAR,sci_nas,0.77,20,0.9

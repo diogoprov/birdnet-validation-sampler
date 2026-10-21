@@ -1,0 +1,10 @@
+local,especie,noites,noites_k1,noites_k2,noites_k3
+ARA,boa_ran,8,2,2,1
+ARA,den_nan,8,2,1,0
+ARA,sci_nas,8,1,1,0
+BAI,boa_ran,8,4,2,1
+BAI,den_nan,8,8,7,4
+BAI,sci_nas,8,5,3,0
+XAR,boa_ran,8,4,1,0
+XAR,den_nan,8,5,3,1
+XAR,sci_nas,8,0,0,0

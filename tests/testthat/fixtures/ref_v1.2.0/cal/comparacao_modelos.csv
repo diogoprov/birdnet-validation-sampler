@@ -1,0 +1,6 @@
+modelo,formula,auc_media,auc_dp
+m4_especie_x_local,tp ~ logit_conf + (logit_conf | especie) + (1 | local:especie),0.8495551736008429,0.05668601022226984
+m3_mais_local,tp ~ logit_conf + (logit_conf | especie) + (1 | local),0.846423900091305,0.049289669149266475
+m1_int_especie,tp ~ logit_conf + (1 | especie),0.8393985509596666,0.05166265271994291
+m2_slope_especie,tp ~ logit_conf + (logit_conf | especie),0.8384985558476508,0.055238849403410194
+m0_global,tp ~ logit_conf,0.800206012976988,0.053914550891408515
