@@ -7,7 +7,8 @@
 #   3. Produtos (historicos de deteccao, matrizes de comunidade,
 #      diagnostico, retreino V2)
 #
-# Uso: rode o script inteiro; o diagrama abre no Viewer do RStudio.
+# Uso: rode o script inteiro a partir da raiz do repositorio; o diagrama
+# abre no Viewer do RStudio.
 # Dependencias: install.packages("DiagrammeR")
 #   (exportar: install.packages(c("DiagrammeRsvg", "rsvg")))
 # =============================================================================
@@ -110,8 +111,8 @@ fluxo  # abre no Viewer
 if (requireNamespace("DiagrammeRsvg", quietly = TRUE) &&
     requireNamespace("rsvg", quietly = TRUE)) {
   svg_txt <- DiagrammeRsvg::export_svg(fluxo)
-  rsvg::rsvg_png(charToRaw(svg_txt), "pipeline_calibracao.png", width = 2400)
-  message("Diagrama exportado: pipeline_calibracao.png")
+  rsvg::rsvg_png(charToRaw(svg_txt), "man/figures/pipeline_calibracao.png", width = 2400)
+  message("Diagrama exportado: man/figures/pipeline_calibracao.png")
 } else {
   message("Para exportar PNG: install.packages(c('DiagrammeRsvg', 'rsvg'))")
 }

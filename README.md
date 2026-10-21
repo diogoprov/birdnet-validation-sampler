@@ -18,7 +18,7 @@ Cerrado, MS, Brasil) — em primeira instância para a tese de doutorado da Daie
 e para o pipeline de validação do FrogNet — mas desenhado para funcionar com a saída
 de qualquer classificador customizado do BirdNET.
 
-![Pipeline em três estágios](pipeline_calibracao.png)
+![Pipeline em três estágios](man/figures/pipeline_calibracao.png)
 
 ## Estágio 1 — Fábrica de dados de validação
 

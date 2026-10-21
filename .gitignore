@@ -24,3 +24,9 @@ historico_deteccao_noite*.csv
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Pacote: fixtures e exemplos versionados apesar das regras acima
+!tests/testthat/fixtures/**
+!inst/extdata/**
+*.tar.gz
+sheepdog.Rcheck/
