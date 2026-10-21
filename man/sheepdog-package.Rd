@@ -6,6 +6,8 @@
 \alias{sheepdog-package}
 \title{sheepdog: Sample, Validate and Calibrate 'BirdNET' Detections}
 \description{
+\if{html}{\figure{logo.svg}{options: style='float: right' alt='logo' width='120'}}
+
 Tools to check whether automated detections from 'BirdNET' custom classifiers in passive acoustic monitoring are real. The package builds clip sets for manual validation (top-score, random-occasion or random-recording designs), summarises the reviewed clips, calibrates confidence scores into probabilities of true detection with hierarchical logistic models, and turns calibrated detections into nightly detection histories and effort-standardised community matrices.
 }
 \seealso{

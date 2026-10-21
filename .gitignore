@@ -13,10 +13,21 @@ calibracao/
 matrizes_comunidade/
 deteccoes_calibradas_*.csv
 historico_deteccao_noite*.csv
+# nomes da v2.0.0 (sheepdog)
+clip_manifest*.csv
+validation_by_clip*.csv
+clips/
+packages/
+calibrated_detections_*.csv
+nightly_detection_history*.csv
 *.rds
 
 # R
 .Rhistory
+Rplots.pdf
+inst/doc
+doc/
+Meta/
 .RData
 .Rproj.user/
 *.Rproj
