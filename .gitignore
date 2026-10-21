@@ -41,3 +41,4 @@ Thumbs.db
 !inst/extdata/**
 *.tar.gz
 sheepdog.Rcheck/
+docs/

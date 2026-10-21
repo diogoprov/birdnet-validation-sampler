@@ -1,0 +1,63 @@
+url: https://provetelab.org/birdnet-validation-sampler/
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#241042"
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [search, github]
+
+home:
+  sidebar:
+    structure: [links, license, citation, authors, dev]
+
+reference:
+  - title: Stage 1 - Validation data
+    desc: Read BirdNET selection tables, select clips for manual review, and cut and pack them.
+    contents:
+      - extract_validation_clips
+      - read_selection_tables
+      - select_clips
+      - cut_clips
+      - pack_clips
+  - title: Stage 1 - After the review
+    desc: Classify the reviewed clips and summarise precision, thresholds, presence and retraining clips.
+    contents:
+      - post_validation
+      - classify_review
+      - precision_by_bin
+      - suggest_thresholds
+      - nightly_presence
+      - retraining_clips
+      - plot_precision
+  - title: Stage 2 - Calibration
+    desc: Calibrate confidence scores into probabilities of true detection and build nightly detection histories.
+    contents:
+      - calibrate
+      - read_validations
+      - calibration_models
+      - compare_calibration_models
+      - fit_calibration
+      - calibration_effort
+      - score_detections
+      - detection_history
+      - summarise_history
+      - plot_calibration
+  - title: Stage 3 - Community matrices
+    desc: Effort-standardised site x month matrices from calibrated histories.
+    contents:
+      - build_community_matrices
+      - community_matrices
+  - title: Package
+    contents:
+      - sheepdog-package
+
+articles:
+  - title: Articles
+    navbar: ~
+    contents:
+      - frognet-workflow
+      - crywolf-contract
