@@ -71,13 +71,44 @@ as_written <- function(df) {
   read_as_text(f)
 }
 
+# Colunas e valores das tabelas de saida da v1.2.0 que o pacote nunca le
+# (so escreve): o mapa fica aqui, para comparar com as referencias
+ref_columns <- c(
+  faixa = "bin", n_validados = "n_reviewed", n_positivos = "n_positive",
+  precisao = "precision", pouco_suporte = "low_support",
+  n_suporte = "n_support", precisao_no_corte = "precision_at_threshold",
+  n_clipes = "n_clips", presenca = "presence",
+  conf_max_positivo = "max_confidence_positive",
+  modelo = "model", auc_media = "auc_mean", auc_dp = "auc_sd",
+  n_por_celula = "n_per_cell", data = "date", hora = "hour",
+  noites = "nights", noites_k1 = "nights_k1", noites_k2 = "nights_k2",
+  noites_k3 = "nights_k3", mes = "month",
+  n_noites_gravadas = "n_nights_recorded", incluido = "included",
+  n_noites_deteccao = "n_nights_detected", frequencia = "frequency"
+)
+ref_values <- c(
+  confirmada = "confirmed",
+  nao_detectada_nos_validados = "not_detected_in_reviewed",
+  nao_validada = "not_reviewed",
+  m1_int_especie = "m1_species_intercept",
+  m2_slope_especie = "m2_species_slope", m3_mais_local = "m3_plus_site",
+  m4_especie_x_local = "m4_species_x_site"
+)
+
 # Referencia da v1.2.0 convertida para os nomes atuais
-ref_table <- function(...) {
+# rec_prefix = FALSE mantem o prefixo "grav_" (clipes cortados pela v1.2.0)
+ref_table <- function(..., rec_prefix = TRUE) {
   ref <- read_as_text(ref_path(...))
   # recodifica os valores lidos como texto ("NA" continua "NA")
   out <- sheepdog:::from_legacy(ref)
-  if ("clip_file" %in% names(out)) {
+  if (rec_prefix && "clip_file" %in% names(out)) {
     out$clip_file <- sub("^grav_", "rec_", out$clip_file)
+  }
+  velhas <- intersect(names(ref_columns), names(out))
+  names(out)[match(velhas, names(out))] <- ref_columns[velhas]
+  for (col in intersect(c("presence", "model"), names(out))) {
+    x <- out[[col]]
+    out[[col]] <- ifelse(x %in% names(ref_values), ref_values[x], x)
   }
   out
 }

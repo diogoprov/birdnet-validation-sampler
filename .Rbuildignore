@@ -9,6 +9,5 @@
 ^\.github$
 ^\.git$
 ^\.gitignore$
-^pos_validacao\.R$
 ^calibracao\.R$
 ^gerar_matrizes_comunidade\.R$
