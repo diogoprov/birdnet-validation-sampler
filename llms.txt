@@ -150,11 +150,11 @@ because the same score corresponds to very different probabilities of a
 true detection across species and sites. The candidate models are
 compared by stratified k-fold cross-validation (AUC).
 
-## Contract with crywolf
+## Integration with crywolf
 
 `clip_manifest.csv` and `validation_by_clip.csv` are the hand-off to
 occupancy models with false positives.
-[`vignette("crywolf-contract")`](https://provetelab.org/sheepdog/articles/crywolf-contract.md)
+[`vignette("crywolf-integration")`](https://provetelab.org/sheepdog/articles/crywolf-integration.md)
 specifies their columns, types and the definition of an occasion;
 example files are in `system.file("extdata", package = "sheepdog")`. Do
 not pass the whole-recording clips of `"random_recordings"`
@@ -280,5 +280,5 @@ Effort-standardised site x month matrices from calibrated histories.
 
 - [The FrogNet
   workflow](https://provetelab.org/sheepdog/articles/frognet-workflow.md):
-- [Contract with crywolf: clip manifest and validation
-  tables](https://provetelab.org/sheepdog/articles/crywolf-contract.md):
+- [Integration with crywolf: clip manifest and validation
+  tables](https://provetelab.org/sheepdog/articles/crywolf-integration.md):

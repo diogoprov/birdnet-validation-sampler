@@ -165,7 +165,7 @@ A tibble, the clip manifest without `status`, with the columns `site`,
 `recording_hour`, `rank`, `confidence`, `clip_file`, `clip_start`,
 `clip_end`, `duration`, `source_audio`, `begin_path`, `sampling_mode`,
 `occasion_id`, `n_detections_occasion` and `inclusion_prob`. See
-[`vignette("crywolf-contract")`](https://provetelab.org/sheepdog/articles/crywolf-contract.md)
+[`vignette("crywolf-integration")`](https://provetelab.org/sheepdog/articles/crywolf-integration.md)
 for their definitions.
 
 ## Sampling modes

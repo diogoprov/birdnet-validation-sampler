@@ -2,7 +2,7 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
-  crywolf-contract: crywolf-contract.html
+  crywolf-integration: crywolf-integration.html
   frognet-workflow: frognet-workflow.html
 last_built: 2026-10-21T23:34Z
 urls:

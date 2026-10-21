@@ -1,5 +1,10 @@
 # Changelog
 
+## sheepdog (development version)
+
+- The vignette `crywolf-contract` is now `crywolf-integration`
+  (“Integration with crywolf”).
+
 ## sheepdog 2.0.0
 
 The four scripts of birdnet-validation-sampler v1.2.0 become the R
@@ -75,14 +80,14 @@ project-specific lists, which are now required arguments (or `NULL`).
   `effort_site_month`. Folders `clipes/` and `pacotes/` → `clips/` and
   `packages/`.
 - Columns and values of the manifest and the validation table: see
-  [`vignette("crywolf-contract")`](https://provetelab.org/sheepdog/articles/crywolf-contract.md).
-  Other columns: `especie` → `species`, `data` → `date`, `hora` →
-  `hour`, `n_deteccoes` → `n_detections`, `n_confiaveis` → `n_reliable`,
-  `deteccao(_k1..k3)` → `detection(_k1..k3)`, `faixa` → `bin`,
-  `n_validados` → `n_reviewed`, `n_positivos` → `n_positive`, `precisao`
-  → `precision`, `pouco_suporte` → `low_support`, `n_suporte` →
-  `n_support`, `precisao_no_corte` → `precision_at_threshold`,
-  `n_clipes` → `n_clips`, `presenca` → `presence` (`confirmed`,
+  `vignette("crywolf-contract")`. Other columns: `especie` → `species`,
+  `data` → `date`, `hora` → `hour`, `n_deteccoes` → `n_detections`,
+  `n_confiaveis` → `n_reliable`, `deteccao(_k1..k3)` →
+  `detection(_k1..k3)`, `faixa` → `bin`, `n_validados` → `n_reviewed`,
+  `n_positivos` → `n_positive`, `precisao` → `precision`,
+  `pouco_suporte` → `low_support`, `n_suporte` → `n_support`,
+  `precisao_no_corte` → `precision_at_threshold`, `n_clipes` →
+  `n_clips`, `presenca` → `presence` (`confirmed`,
   `not_detected_in_reviewed`, `not_reviewed`), `conf_max_positivo` →
   `max_confidence_positive`, `modelo` → `model`, `auc_media`/`auc_dp` →
   `auc_mean`/`auc_sd`, `n_por_celula` → `n_per_cell`, `noites(_k1..k3)`

@@ -77,7 +77,7 @@ extract_validation_clips(
 
 Every detection \>= 0.5 of a drawn occasion is cut, and the manifest
 records `inclusion_prob`. See
-[`vignette("crywolf-contract")`](https://provetelab.org/sheepdog/articles/crywolf-contract.md)
+[`vignette("crywolf-integration")`](https://provetelab.org/sheepdog/articles/crywolf-integration.md)
 for the hand-off to occupancy models.
 
 ## Stage 1b: after the review

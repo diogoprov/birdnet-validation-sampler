@@ -1,0 +1,147 @@
+# Integration with crywolf: clip manifest and validation tables
+
+sheepdog writes two tables that occupancy models with false positives,
+such as those of the crywolf package, read: `clip_manifest.csv`
+([`extract_validation_clips()`](https://provetelab.org/sheepdog/reference/extract_validation_clips.md))
+and `validation_by_clip.csv`
+([`post_validation()`](https://provetelab.org/sheepdog/reference/post_validation.md)).
+This document fixes their columns, types and the definition of an
+occasion. The two packages are independent: sheepdog does not depend on
+crywolf, and crywolf reads these files without loading sheepdog.
+
+Example files ship with the package:
+
+``` r
+
+library(sheepdog)
+manifest   <- system.file("extdata", "clip_manifest.csv", package = "sheepdog")
+validation <- system.file("extdata", "validation_by_clip.csv",
+                          package = "sheepdog")
+v <- readr::read_csv(validation, show_col_types = FALSE)
+v[, c("site", "occasion_id", "confidence", "n_detections_occasion",
+      "inclusion_prob", "verdict")]
+#> # A tibble: 12 × 6
+#>    site  occasion_id     confidence n_detections_occasion inclusion_prob verdict
+#>    <chr> <chr>                <dbl>                 <dbl>          <dbl> <chr>  
+#>  1 ARA   ARA01_20220110…      0.913                     1          0.25  positi…
+#>  2 ARA   ARA01_20220110…      0.789                     2          0.25  positi…
+#>  3 ARA   ARA01_20220110…      0.938                     2          0.25  positi…
+#>  4 ARA   ARA01_20220111…      0.532                     3          0.25  negati…
+#>  5 ARA   ARA01_20220111…      0.699                     3          0.25  negati…
+#>  6 ARA   ARA01_20220111…      0.622                     3          0.25  positi…
+#>  7 ARA   ARA01_20220111…      0.908                     1          0.167 not_re…
+#>  8 ARA   ARA01_20220115…      0.552                     4          0.167 positi…
+#>  9 ARA   ARA01_20220115…      0.964                     4          0.167 positi…
+#> 10 ARA   ARA01_20220115…      0.723                     4          0.167 positi…
+#> 11 ARA   ARA01_20220115…      0.576                     4          0.167 negati…
+#> 12 ARA   ARA01_20220115…      0.705                     1          0.333 positi…
+```
+
+They come from a `"random_detections"` run (occasion = file, threshold
+0.5) on simulated data (`data-raw/make_extdata.R`).
+
+## Occasion
+
+An occasion is the sampling unit of the occupancy model, set by
+`occasion_unit`:
+
+- `"file"`: one recording. `occasion_id` is the file name without
+  extension, e.g. `ARA01_20220110_193000`.
+- `"minute"`: one minute of a recording, from `file_offset`.
+  `occasion_id` is `<file>_m<minute>`, with the minute zero-based and
+  padded to three digits, e.g. `ARA01_20220110_193000_m002` for 120-180
+  s.
+
+The site, species and occasion (`site`, `species_code`, `occasion_id`)
+identify the detection history cell. With minute occasions, match them
+to the occasions of the model by file and minute of `clip_start`.
+
+## clip_manifest.csv
+
+One row per clip. Columns, in this order:
+
+| column | type | definition |
+|----|----|----|
+| `site` | character | Site: the folder of the selection table, without the `output_` prefix. |
+| `species_code` | character | Classifier label, e.g. `Boana raniceps_boa-ran`. |
+| `species_folder` | character | Short species code used as folder name, e.g. `boa_ran`. |
+| `recording_date` | character `YYYYMMDD` | Date in the recording file name. |
+| `night` | character `YYYYMMDD` | Grouping date: equals `recording_date`, or the day before for small hours when the hour window crosses midnight. |
+| `recording_hour` | character `HH` | Hour in the recording file name. |
+| `rank` | integer | `"top"`: rank by confidence in the site x species x night x hour stratum. `"random_detections"`: order of the clip in its occasion (by `file_offset`). `NA` in `"random_recordings"`. |
+| `confidence` | double | BirdNET confidence score. `NA` for whole-recording clips (`"random_recordings"`). |
+| `clip_file` | character | File name of the clip (`<conf>_<rank>_<recording>_<start>s_<end>s.wav`, or `rec_<site>_<species>_<occasion_id>.wav` for whole recordings). |
+| `clip_start`, `clip_end` | double (s) | Start and end of the clip in the source recording. `clip_end` is `NA` for whole recordings of unknown length. |
+| `duration` | double (s) | `clip_end - clip_start`. |
+| `source_audio` | character | Path of the source recording, after remapping. |
+| `begin_path` | character | Path as written in the selection table (`Begin Path`). |
+| `status` | character | `ok`, `already_exists`, `audio_not_found`, `simulated` or `error: <message>`. |
+| `sampling_mode` | character | `top`, `random_detections` or `random_recordings`. |
+| `occasion_id` | character | Occasion (see above). |
+| `n_detections_occasion` | integer | Predictions of the species with confidence \>= `threshold` in the occasion. `NA` when no `threshold` was given. |
+| `inclusion_prob` | double | Probability that the occasion (or recording) was drawn. `NA` in `"top"`, which is not a probability sample. |
+
+In `"random_detections"`, every prediction \>= `threshold` of a drawn
+occasion is cut, so the number of clips of the occasion equals
+`n_detections_occasion`. This is the assumption of the
+observation-confirmation design (Chambert et al. 2015,
+<https://doi.org/10.1890/14-1507.1>): every detection of a checked
+occasion is checked.
+
+## validation_by_clip.csv
+
+The manifest plus two columns:
+
+| column | type | definition |
+|----|----|----|
+| `verdict` | character | `positive` (true detection), `negative` (false positive), `not_reviewed` (clip found in the review folder, but in no subfolder matching the positive or negative pattern, e.g. still in the species folder) or `clip_missing` (clip not found in the review folder). |
+| `reviewed_path` | character | Path where the reviewed clip was found; `NA` when missing. |
+
+Only `positive` and `negative` are reviewed verdicts. Clips of
+`"random_recordings"` (`confidence = NA`) are the second method of a
+multiple-method design (Miller et al. 2011,
+<https://doi.org/10.1890/10-1396.1>), that is, manual annotation of
+recordings. They are not confirmations of detections and must not go to
+the `validation` argument of `crywolf::fp_aggregate()`.
+
+## Files written by v1.2.0
+
+Up to v1.2.0 the same tables were written in Portuguese
+(`manifesto_clipes.csv`, `validacao_por_clipe.csv`). sheepdog reads them
+and renames on reading. The map is:
+
+| v1.2.0 | v2.0.0 |
+|----|----|
+| `local` | `site` |
+| `pasta_especie` | `species_folder` |
+| `data_gravacao` | `recording_date` |
+| `noite` | `night` |
+| `hora_gravacao` | `recording_hour` |
+| `arquivo_clipe` | `clip_file` |
+| `inicio_clipe`, `fim_clipe`, `duracao` | `clip_start`, `clip_end`, `duration` |
+| `audio_origem` | `source_audio` |
+| `begin_path_original` | `begin_path` |
+| `modo_amostragem` | `sampling_mode` |
+| `ocasiao_id` | `occasion_id` |
+| `n_deteccoes_ocasiao` | `n_detections_occasion` |
+| `prob_inclusao` | `inclusion_prob` |
+| `veredito` | `verdict` |
+| `caminho_wav` | `reviewed_path` |
+
+Values: `aleatorio_deteccoes` and `aleatorio_gravacoes` become
+`random_detections` and `random_recordings`; `positivo`, `negativo`,
+`nao_validado` and `clipe_ausente` become `positive`, `negative`,
+`not_reviewed` and `clip_missing`; `ja_existia`, `audio_nao_encontrado`,
+`simulado` and `erro:` become `already_exists`, `audio_not_found`,
+`simulated` and `error:`. Whole-recording clips cut by v1.2.0 keep their
+`grav_` prefix on disk; new ones use `rec_`.
+
+## Reading the validation in crywolf
+
+``` r
+
+v <- crywolf::fp_read_validation(validation)
+```
+
+`fp_read_validation()` reads the v1.2.0 format; reading the column names
+above needs a crywolf version that supports them.

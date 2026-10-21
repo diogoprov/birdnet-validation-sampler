@@ -42,7 +42,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/frognet-workflow.html">The FrogNet workflow</a></li>
-    <li><a class="dropdown-item" href="articles/crywolf-contract.html">Contract with crywolf: clip manifest and validation tables</a></li>
+    <li><a class="dropdown-item" href="articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -145,9 +145,9 @@
 <p>because the same score corresponds to very different probabilities of a true detection across species and sites. The candidate models are compared by stratified k-fold cross-validation (AUC).</p>
 </div>
 <div class="section level2">
-<h2 id="contract-with-crywolf">Contract with crywolf<a class="anchor" aria-label="anchor" href="#contract-with-crywolf"></a>
+<h2 id="integration-with-crywolf">Integration with crywolf<a class="anchor" aria-label="anchor" href="#integration-with-crywolf"></a>
 </h2>
-<p><code>clip_manifest.csv</code> and <code>validation_by_clip.csv</code> are the hand-off to occupancy models with false positives. <code><a href="articles/crywolf-contract.html">vignette("crywolf-contract")</a></code> specifies their columns, types and the definition of an occasion; example files are in <code>system.file("extdata", package = "sheepdog")</code>. Do not pass the whole-recording clips of <code>"random_recordings"</code> (<code>confidence = NA</code>) to the <code>validation</code> argument of <code>crywolf::fp_aggregate()</code>: they are the second method (manual annotation), not confirmations of detections.</p>
+<p><code>clip_manifest.csv</code> and <code>validation_by_clip.csv</code> are the hand-off to occupancy models with false positives. <code><a href="articles/crywolf-integration.html">vignette("crywolf-integration")</a></code> specifies their columns, types and the definition of an occasion; example files are in <code>system.file("extdata", package = "sheepdog")</code>. Do not pass the whole-recording clips of <code>"random_recordings"</code> (<code>confidence = NA</code>) to the <code>validation</code> argument of <code>crywolf::fp_aggregate()</code>: they are the second method (manual annotation), not confirmations of detections.</p>
 </div>
 <div class="section level2">
 <h2 id="from-the-scripts-v120-to-the-package-v200">From the scripts (v1.2.0) to the package (v2.0.0)<a class="anchor" aria-label="anchor" href="#from-the-scripts-v120-to-the-package-v200"></a>
