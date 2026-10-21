@@ -1,12 +1,12 @@
 cff-version: 1.2.0
-message: "Se este software for útil no seu trabalho, cite-o usando os metadados abaixo. / If this software is useful in your work, please cite it as below."
+message: "If this software is useful in your work, please cite it as below."
 type: software
-title: "birdnet-validation-sampler: sampling, validation and calibration of BirdNET predictions for passive acoustic monitoring"
+title: "sheepdog: sample, validate and calibrate BirdNET detections for passive acoustic monitoring"
 authors:
   - family-names: "Provete"
     given-names: "Diogo B."
     affiliation: "Universidade Federal de Mato Grosso do Sul"
-version: "1.2.0"
+version: "2.0.0"
 doi: "10.5281/zenodo.22696210"
 date-released: "2026-10-21"
 url: "https://github.com/diogoprov/birdnet-validation-sampler"
@@ -22,3 +22,4 @@ keywords:
   - false positives
   - occupancy models
   - R
+  - R package
