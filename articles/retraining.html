@@ -74,7 +74,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>Retraining the classifier with validated clips</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v2.1.0/vignettes/retraining.Rmd" class="external-link"><code>vignettes/retraining.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/vignettes/retraining.Rmd" class="external-link"><code>vignettes/retraining.Rmd</code></a></small>
       <div class="d-none name"><code>retraining.Rmd</code></div>
     </div>
 
@@ -140,10 +140,8 @@ subfolder; here we recreate that folder structure with empty
 read it back with <code><a href="../reference/classify_review.html">classify_review()</a></code>, which records where
 each clip was found (<code>reviewed_path</code>).</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">validation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"validation"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu">readr</span><span class="fu">::</span><span class="va"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span>, show_col_types <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>         col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html" class="external-link">cols</a></span><span class="op">(</span>night <span class="op">=</span> <span class="st">"c"</span>, recording_date <span class="op">=</span> <span class="st">"c"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">validation</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_validation_tables.html">read_validation_tables</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"validation"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">review_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"review"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">review_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -177,11 +175,9 @@ each clip was found (<code>reviewed_path</code>).</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> Pseudis platensis_pse-pla         positive   100</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> Scinax nasicus_sci-nas            negative   161</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> Scinax nasicus_sci-nas            positive   159</span></span></code></pre></div>
-<p><code><a href="../reference/retraining_clips.html">retraining_clips()</a></code> lists the positives; the negatives
-are the reviewed clips with <code>verdict == "negative"</code>.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">positives</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/retraining_clips.html">retraining_clips</a></span><span class="op">(</span><span class="va">reviewed</span><span class="op">)</span></span>
-<span><span class="va">negatives</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">reviewed</span>, <span class="va">verdict</span> <span class="op">==</span> <span class="st">"negative"</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="../reference/read_validation_tables.html">read_validation_tables()</a></code> stacks the
+<code>validation_by_clip.csv</code> tables of several sites or rounds,
+keeping every column and verdict.</p>
 </div>
 <div class="section level2">
 <h2 id="keeping-an-independent-test-set">Keeping an independent test set<a class="anchor" aria-label="anchor" href="#keeping-an-independent-test-set"></a>
@@ -192,45 +188,32 @@ see during training. BirdNET-Analyzer holds out a validation split
 clips from the same site and night share background noise and calling
 individuals, so a random split of clips tends to overstate performance
 (our recommendation, not a statement of the BirdNET documentation). A
-stricter test keeps whole sites (or whole nights) out of training and
-passes them as <code>--test_data</code>.</p>
-<p>Here we hold out one site:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">test_site</span> <span class="op">&lt;-</span> <span class="st">"NHE"</span></span>
-<span><span class="va">split_set</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="va">df</span>, set <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/if_else.html" class="external-link">if_else</a></span><span class="op">(</span><span class="va">site</span> <span class="op">==</span> <span class="va">test_site</span>, <span class="st">"test"</span>, <span class="st">"train"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="va">positives</span> <span class="op">&lt;-</span> <span class="fu">split_set</span><span class="op">(</span><span class="va">positives</span><span class="op">)</span></span>
-<span><span class="va">negatives</span> <span class="op">&lt;-</span> <span class="fu">split_set</span><span class="op">(</span><span class="va">negatives</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">positives</span>, <span class="va">set</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
-<span><span class="co">#&gt;   set       n</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> test    365</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> train  <span style="text-decoration: underline;">1</span>212</span></span></code></pre></div>
+stricter test keeps whole sites out of training and passes them as
+<code>--test_data</code>. Here we hold out one site.</p>
 </div>
 <div class="section level2">
 <h2 id="building-the-training-folders">Building the training folders<a class="anchor" aria-label="anchor" href="#building-the-training-folders"></a>
 </h2>
-<p>The function below copies the clips into the BirdNET layout:
-positives in <code>&lt;set&gt;/&lt;species_code&gt;/</code> and
-negatives in <code>&lt;set&gt;/-&lt;species_code&gt;/</code>. In a real
-project <code>reviewed_path</code> points to the clips where the review
-left them.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">copy_to_training</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">clips</span>, <span class="va">root</span>, <span class="va">negative</span> <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">prefix</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">negative</span><span class="op">)</span> <span class="st">"-"</span> <span class="kw">else</span> <span class="st">""</span></span>
-<span>  <span class="va">to</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">root</span>, <span class="va">clips</span><span class="op">$</span><span class="va">set</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">prefix</span>, <span class="va">clips</span><span class="op">$</span><span class="va">species_code</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="kw">for</span> <span class="op">(</span><span class="va">d</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">to</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">d</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span>  <span class="va">ok</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="va">clips</span><span class="op">$</span><span class="va">reviewed_path</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">to</span>, <span class="va">clips</span><span class="op">$</span><span class="va">clip_file</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">ok</span><span class="op">)</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="va">ok</span><span class="op">)</span>, <span class="st">" clip(s) not copied."</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/invisible.html" class="external-link">invisible</a></span><span class="op">(</span><span class="va">ok</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">training_root</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"birdnet_training"</span><span class="op">)</span></span>
+<p><code><a href="../reference/build_training_set.html">build_training_set()</a></code> copies the reviewed clips into the
+BirdNET layout: positives in
+<code>&lt;set&gt;/&lt;species_code&gt;/</code> and negatives in
+<code>&lt;set&gt;/-&lt;species_code&gt;/</code>, where
+<code>&lt;set&gt;</code> is <code>train</code>, or <code>test</code> for
+the sites in <code>test_sites</code>. It reads each clip from
+<code>reviewed_path</code>, the place where the review left it, leaves
+out whole-recording clips (which have no confidence score), writes the
+table of copied clips to <code>training_set.csv</code>, and warns about
+classes with fewer positive training files than <code>min_files</code>
+(100 by default, the number recommended by the BirdNET
+documentation).</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">training_root</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"birdnet_training"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">training_root</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu">copy_to_training</span><span class="op">(</span><span class="va">positives</span>, <span class="va">training_root</span><span class="op">)</span></span>
-<span><span class="fu">copy_to_training</span><span class="op">(</span><span class="va">negatives</span>, <span class="va">training_root</span>, negative <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">training_set</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_training_set.html">build_training_set</a></span><span class="op">(</span><span class="va">reviewed</span>, <span class="va">training_root</span>,</span>
+<span>                                   test_sites <span class="op">=</span> <span class="st">"NHE"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Class(es) with fewer than 100 positive training files: Leptodactylus</span></span>
+<span><span class="co">#&gt; fuscus_lep-fus (48), Pseudis platensis_pse-pla (76)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">training_root</span>, <span class="st">"train"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "-Boana raniceps_boa-ran"            "-Dendropsophus nanus_den-nan"      </span></span>
@@ -240,39 +223,36 @@ left them.</p>
 <span><span class="co">#&gt;  [9] "Boana raniceps_boa-ran"             "Dendropsophus nanus_den-nan"       </span></span>
 <span><span class="co">#&gt; [11] "Elachistocleis bicolor_ela-bic"     "Leptodactylus fuscus_lep-fus"      </span></span>
 <span><span class="co">#&gt; [13] "Leptodactylus podicipinus_lep-pod"  "Physalaemus cuvieri_phy-cuv"       </span></span>
-<span><span class="co">#&gt; [15] "Pseudis platensis_pse-pla"          "Scinax nasicus_sci-nas"</span></span></code></pre></div>
-<p>How many files each class received, against the 100 files per species
-recommended by the BirdNET documentation:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">n_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
-<span>  folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.dirs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">training_root</span>, <span class="st">"train"</span><span class="op">)</span>,</span>
-<span>                     recursive <span class="op">=</span> <span class="cn">FALSE</span>, full.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">folder</span>, <span class="kw">function</span><span class="op">(</span><span class="va">f</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">training_root</span>, <span class="st">"train"</span>, <span class="va">f</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>    below_100 <span class="op">=</span> <span class="va">n</span> <span class="op">&lt;</span> <span class="fl">100</span><span class="op">)</span></span>
-<span><span class="va">n_files</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 16 × 3</span></span></span>
-<span><span class="co">#&gt;    folder                                 n below_100</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                              <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> -Boana raniceps_boa-ran               43 TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> -Dendropsophus nanus_den-nan         122 FALSE    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> -Elachistocleis bicolor_ela-bic       18 TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> -Leptodactylus fuscus_lep-fus        121 FALSE    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> -Leptodactylus podicipinus_lep-pod    24 TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> -Physalaemus cuvieri_phy-cuv          23 TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> -Pseudis platensis_pse-pla           164 FALSE    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> -Scinax nasicus_sci-nas              100 FALSE    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Boana raniceps_boa-ran               197 FALSE    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Dendropsophus nanus_den-nan          118 FALSE    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> Elachistocleis bicolor_ela-bic       222 FALSE    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> Leptodactylus fuscus_lep-fus          48 TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> Leptodactylus podicipinus_lep-pod    194 FALSE    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> Physalaemus cuvieri_phy-cuv          217 FALSE    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> Pseudis platensis_pse-pla             76 TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> Scinax nasicus_sci-nas               140 FALSE</span></span></code></pre></div>
-<p>With the 2467 reviewed clips of the example, 2 of the 8 positive
-classes have fewer than 100 training files. Classes with few positives
-are the ones that most need clips from further review rounds before
+<span><span class="co">#&gt; [15] "Pseudis platensis_pse-pla"          "Scinax nasicus_sci-nas"</span></span>
+<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">training_set</span>, <span class="va">set</span>, <span class="va">verdict</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 3</span></span></span>
+<span><span class="co">#&gt;   set   verdict      n</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> test  negative   275</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> test  positive   365</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> train negative   615</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> train positive  <span style="text-decoration: underline;">1</span>212</span></span></code></pre></div>
+<p>How many positive training files each class received:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">n_pos</span> <span class="op">&lt;-</span> <span class="va">training_set</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">set</span> <span class="op">==</span> <span class="st">"train"</span>, <span class="va">verdict</span> <span class="op">==</span> <span class="st">"positive"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">species_code</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>below_100 <span class="op">=</span> <span class="va">n</span> <span class="op">&lt;</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="va">n_pos</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 3</span></span></span>
+<span><span class="co">#&gt;   species_code                          n below_100</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Boana raniceps_boa-ran              197 FALSE    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Dendropsophus nanus_den-nan         118 FALSE    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Elachistocleis bicolor_ela-bic      222 FALSE    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Leptodactylus fuscus_lep-fus         48 TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Leptodactylus podicipinus_lep-pod   194 FALSE    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Physalaemus cuvieri_phy-cuv         217 FALSE    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> Pseudis platensis_pse-pla            76 TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> Scinax nasicus_sci-nas              140 FALSE</span></span></code></pre></div>
+<p>With the 2467 reviewed clips of the example, 2 of the 8 classes have
+fewer than 100 positive training files. Classes with few positives are
+the ones that most need clips from further review rounds before
 retraining.</p>
 </div>
 <div class="section level2">
@@ -311,12 +291,12 @@ annotated calls into 3 s clips before using them as positives.</li>
 <p>Training runs in a Python environment with BirdNET-Analyzer
 installed. The commands below follow the example of the documentation
 (they are not run here):</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> birdnet_analyzer.train birdnet_training/train <span class="dt">\</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">--test_data</span> birdnet_training/test <span class="dt">\</span></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">-o</span> checkpoints/custom/Custom_Classifier.tflite</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> birdnet_analyzer.analyze recordings/ <span class="dt">\</span></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">--classifier</span> checkpoints/custom/Custom_Classifier.tflite</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> birdnet_analyzer.train birdnet_training/train <span class="dt">\</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">--test_data</span> birdnet_training/test <span class="dt">\</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">-o</span> checkpoints/custom/Custom_Classifier.tflite</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> birdnet_analyzer.analyze recordings/ <span class="dt">\</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">--classifier</span> checkpoints/custom/Custom_Classifier.tflite</span></code></pre></div>
 <p>Use <code>--model_format raven</code> (or <code>both</code>) if the
 classifier will also be used in Raven. Hyperparameters such as
 <code>--hidden_units</code>, <code>--learning_rate</code>,
@@ -338,10 +318,18 @@ classifier was trained on.</li>
 <li>Recalibrate (stage 2, <code><a href="../articles/calibration.html">vignette("calibration")</a></code>) and
 rebuild the detection histories and community matrices (stage 3).</li>
 </ol>
-<p>Keeping track of which reviewed clips went into training (for
-example, by saving the tables <code>positives</code> and
-<code>negatives</code> above with the classifier version) makes it
-possible to exclude them from later validation rounds.</p>
+<p>Keep <code>training_set.csv</code> with the new classifier. Before
+reviewing the detections of the retrained classifier,
+<code><a href="../reference/exclude_training_clips.html">exclude_training_clips()</a></code> drops from the new manifest the
+clips that overlap, for the same species and recording, a clip used in
+training:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">manifest_v2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">detections_v2</span>, <span class="va">...</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/exclude_training_clips.html">exclude_training_clips</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">training_root</span>, <span class="st">"training_set.csv"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="../reference/extract_validation_clips.html">extract_validation_clips()</a></code> records the
+<code>classifier</code> label in <code>extraction_info.csv</code>, so
+each validation round can be traced to the classifier that produced its
+clips.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

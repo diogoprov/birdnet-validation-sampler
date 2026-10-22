@@ -14,7 +14,8 @@ extract_validation_clips(
   ...,
   table_pattern = "^BirdNET_SelectionTable\\.txt$",
   make_zip = TRUE,
-  simulate = FALSE
+  simulate = FALSE,
+  classifier = NULL
 )
 ```
 
@@ -49,6 +50,12 @@ extract_validation_clips(
   created), but `status` tells what would be done. Useful to check a
   selection before cutting.
 
+- classifier:
+
+  Label of the classifier that produced the selection tables (e.g.
+  `"FrogNet v2, BirdNET-Analyzer 2.4.0"`), recorded in
+  `extraction_info.csv`. `NULL` records `NA`.
+
 ## Value
 
 The manifest written to `clip_manifest.csv`, invisibly.
@@ -60,6 +67,16 @@ Output structure:
     <output_dir>/clips/<species_folder>/*.wav
     <output_dir>/packages/<species_folder>.zip
     <output_dir>/clip_manifest.csv
+    <output_dir>/extraction_info.csv
+
+`extraction_info.csv` records the provenance of the run (one `key`,
+`value` row per item): the date, the versions of sheepdog and R, the
+folder of the selection tables, the `classifier` label and every
+argument passed to
+[`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md).
+Keep it with the manifest: it tells later rounds which classifier
+produced the clips (for instance, to leave out of a validation round the
+clips used to retrain that classifier).
 
 ## Examples
 

@@ -74,7 +74,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>Choosing a sampling design</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v2.1.0/vignettes/sampling-designs.Rmd" class="external-link"><code>vignettes/sampling-designs.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/vignettes/sampling-designs.Rmd" class="external-link"><code>vignettes/sampling-designs.Rmd</code></a></small>
       <div class="d-none name"><code>sampling-designs.Rmd</code></div>
     </div>
 
@@ -244,12 +244,29 @@ occasions scored as detections in the model.</p>
 recording, so each stratum contains at most one candidate file and the
 first-stage draw keeps all of them (<code>inclusion_prob</code> = 1).
 The same applies to any recording schedule with one file per hour.
-Subsampling then requires either minute occasions or the limits
-described under <a href="#limiting-the-effort">Limiting the
+Subsampling then requires a coarser stratum, minute occasions or the
+limits described under <a href="#limiting-the-effort">Limiting the
 effort</a>.</p>
+<p>The <code>strata</code> argument sets the stratum of the draw:
+<code>"night_hour"</code> (the default), <code>"night"</code> or
+<code>"site_species"</code>. With <code>strata = "night"</code>, the
+files of a night compete with each other, and one is drawn per site ×
+species × night:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rd_night</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">pred</span>, sampling_mode <span class="op">=</span> <span class="st">"random_detections"</span>,</span>
+<span>                         occasion_unit <span class="op">=</span> <span class="st">"file"</span>, threshold <span class="op">=</span> <span class="va">threshold</span>,</span>
+<span>                         n_top <span class="op">=</span> <span class="fl">1</span>, strata <span class="op">=</span> <span class="st">"night"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Sampling mode: random_detections (occasion = file).</span></span>
+<span><span class="co">#&gt; 1343 occasions drawn (1 per site x species x night) among 1876 with a prediction &gt;= 0.5.</span></span>
+<span><span class="co">#&gt; 3339 clips (every prediction &gt;= 0.5 of the 1343 occasions drawn).</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">rd_night</span><span class="op">$</span><span class="va">inclusion_prob</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span><span class="co">#&gt;  0.5000  0.5000  1.0000  0.7929  1.0000  1.0000</span></span></code></pre></div>
+<p>The strata must still not depend on the score; any of the three is
+compatible with the observation-confirmation design.</p>
 <p>With <code>occasion_unit = "minute"</code>, a stratum holds up to
 five candidate minutes per recording, and one is drawn:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">pred</span>, sampling_mode <span class="op">=</span> <span class="st">"random_detections"</span>,</span>
 <span>                   occasion_unit <span class="op">=</span> <span class="st">"minute"</span>, threshold <span class="op">=</span> <span class="va">threshold</span>,</span>
 <span>                   n_top <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -261,7 +278,7 @@ five candidate minutes per recording, and one is drawn:</p>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≥</mo><annotation encoding="application/x-tex">\geq</annotation></semantics></math><code>threshold</code> of the species in it, and
 <code>inclusion_prob</code> is the probability that the occasion was
 drawn:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rd</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">site</span>, <span class="va">species_code</span>, <span class="va">occasion_id</span>, <span class="va">rank</span>, <span class="va">confidence</span>,</span>
 <span>         <span class="va">n_detections_occasion</span>, <span class="va">inclusion_prob</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -290,7 +307,7 @@ where
 is the number of candidate occasions in the stratum. Because every
 detection of a drawn occasion is cut, the number of clips per occasion
 equals <code>n_detections_occasion</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">per_occasion</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">rd</span>, <span class="va">site</span>, <span class="va">species_code</span>, <span class="va">occasion_id</span>,</span>
 <span>                      <span class="va">n_detections_occasion</span>, name <span class="op">=</span> <span class="st">"n_clips"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">per_occasion</span><span class="op">$</span><span class="va">n_clips</span> <span class="op">==</span> <span class="va">per_occasion</span><span class="op">$</span><span class="va">n_detections_occasion</span><span class="op">)</span></span>
@@ -318,7 +335,7 @@ by listing the audio folders that appear in <code>Begin Path</code>,
 which omits folders without any prediction and fails here because the
 audio files do not exist. The <code>recordings</code> argument supplies
 the list instead:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">pred</span>, sampling_mode <span class="op">=</span> <span class="st">"random_recordings"</span>,</span>
 <span>                   recordings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"recordings.csv"</span><span class="op">)</span>,</span>
 <span>                   recording_fraction <span class="op">=</span> <span class="fl">0.1</span>, recording_duration <span class="op">=</span> <span class="fl">300</span>,</span>
@@ -362,7 +379,7 @@ is copied once per species to annotate, so that each copy receives a
 verdict for one species in that species’ folder. Without
 <code>species</code>, every species with predictions is included, which
 multiplies the listening effort by the number of species:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rr_all</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">pred</span>, sampling_mode <span class="op">=</span> <span class="st">"random_recordings"</span>,</span>
 <span>               recordings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"recordings.csv"</span><span class="op">)</span>,</span>
@@ -386,7 +403,7 @@ clips they select. The reference is the distribution of all predictions
 history. Clips from <code>"random_detections"</code> are weighted by
 <code>1 / inclusion_prob</code> (design weights), because occasions in
 strata with many candidates have a lower probability of being drawn.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">wquantile</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">w</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                      <span class="va">probs</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">o</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
@@ -412,7 +429,7 @@ false positives receive lower scores than true detections, as they do on
 average in the simulated data (although the two distributions overlap),
 a false-positive rate estimated from the <code>"top"</code> clips is
 biased low.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">wecdf</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">w</span>, <span class="va">design</span><span class="op">)</span> <span class="op">{</span></span>
@@ -430,7 +447,7 @@ biased low.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Confidence"</span>, y <span class="op">=</span> <span class="st">"Cumulative proportion"</span>, colour <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="sampling-designs_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="Empirical cumulative distribution of confidence for all detections, random_detections clips and top clips." width="576"></p>
+<p><img src="sampling-designs_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="Empirical cumulative distribution of confidence for all detections, random_detections clips and top clips." width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="limiting-the-effort">Limiting the effort<a class="anchor" aria-label="anchor" href="#limiting-the-effort"></a>
@@ -457,7 +474,7 @@ the diel cycle.</li>
 <code>target_total</code> and <code>max_per_species</code> are ignored
 with a warning.</li>
 </ul>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">target</span> <span class="op">&lt;-</span> <span class="fl">40</span></span>
 <span><span class="va">top_cap</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">pred</span>, sampling_mode <span class="op">=</span> <span class="st">"top"</span>, n_top <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>                        min_confidence <span class="op">=</span> <span class="va">threshold</span>, target_total <span class="op">=</span> <span class="va">target</span><span class="op">)</span></span>
@@ -472,7 +489,7 @@ with a warning.</li>
 <span><span class="co">#&gt; 1876 occasions drawn (1 per site x species x night x hour) among 3824 with a prediction &gt;= 0.5.</span></span>
 <span><span class="co">#&gt; Target of 40 occasions per site (balanced by species and hour): 1876 -&gt; 160 occasions.</span></span>
 <span><span class="co">#&gt; 191 clips (every prediction &gt;= 0.5 of the 160 occasions drawn).</span></span></code></pre></div>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rd_cap</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="va">site</span>, <span class="va">species_code</span>, <span class="va">occasion_id</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">site</span>, name <span class="op">=</span> <span class="st">"occasions"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -493,7 +510,7 @@ Plan the target in occasions and expect a larger number of clips.</p>
 the product of the first-stage probability and the fraction of candidate
 occasions kept in the stratum (site × species, and hour when
 <code>balance_by_hour = TRUE</code>):</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">rd_cap</span><span class="op">$</span><span class="va">inclusion_prob</span><span class="op">)</span></span>
 <span><span class="co">#&gt;     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. </span></span>
 <span><span class="co">#&gt; 0.009615 0.029040 0.047619 0.080117 0.076923 1.000000</span></span></code></pre></div>
@@ -502,7 +519,7 @@ higher inclusion probabilities than common ones: the unweighted pool of
 clips over-represents them, and estimates pooled across species must
 weight the clips by <code>1 / inclusion_prob</code>.</p>
 <p>In <code>"random_recordings"</code> the cap is not applied:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">pred</span>, sampling_mode <span class="op">=</span> <span class="st">"random_recordings"</span>,</span>
 <span>               recordings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"recordings.csv"</span><span class="op">)</span>,</span>

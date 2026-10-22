@@ -42,6 +42,8 @@ calibrate(
   min_detections_night = 1,
   dawn_hour = 12,
   k_folds = 5,
+  select = c("best_auc", "one_se_logloss"),
+  uncorrelated = FALSE,
   effort_curve = FALSE,
   effort_n = c(5, 10, 15, 20, 25, 30),
   effort_reps = 50,
@@ -92,6 +94,17 @@ calibrate(
 
   Number of folds.
 
+- select:
+
+  Rule to choose the model; see
+  [`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md).
+
+- uncorrelated:
+
+  Include the m4 variant without the species intercept-slope correlation
+  among the candidates; see
+  [`calibration_models()`](https://provetelab.org/sheepdog/reference/calibration_models.md).
+
 - effort_curve:
 
   Draw the effort curve (slow).
@@ -112,12 +125,15 @@ A list with `comparison`, `fit`, `effort` (or `NULL`), `scored` and
 
 ## Details
 
-The best model is the one with the highest mean AUC. When its refit is
-singular,
+The model is chosen by
+[`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md)
+with the rule `select`: the highest mean AUC by default, or the simplest
+model within one standard error of the lowest log-loss, leaving out
+singular fits (`"one_se_logloss"`, the default from 3.0.0). When the
+refit is singular,
 [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)
 warns; read `calibration_model.txt` and the comparison before using the
-probabilities, since a simpler model within the cross-validation spread
-may be preferable.
+probabilities.
 
 Converting BirdNET confidence scores into probabilities is recommended
 by the BirdNET authors (Wood & Kahl 2024,

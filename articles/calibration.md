@@ -163,26 +163,81 @@ correct nine times in ten). Two models with equal AUC can still give
 different probabilities, so the comparison is a first filter, not the
 whole decision.
 
-When the leading models are close, a simple heuristic is to keep the
-least complex model whose mean AUC is within one standard deviation of
-the best one. This is a judgement call, not a rule implemented by the
-package:
+### Scoring the probabilities and choosing a model
+
+The comparison also scores the predicted probabilities themselves on the
+held-out folds. The log-loss and the Brier score are proper scoring
+rules: their expected value is best when the predicted probabilities are
+the true ones, so they reward correct probabilities and not only their
+ranking (Gneiting & Raftery 2007). The log-loss penalises confident
+mistakes heavily, which is where `p_min` operates. The calibration
+intercept and slope come from a logistic regression of the verdicts on
+the logit of the predicted probabilities in each test fold: a well
+calibrated model has intercept 0 and slope 1, and a slope below 1 means
+probabilities that are too extreme. `prop_singular` is the share of fold
+fits that were singular.
 
 ``` r
 
-complexity <- match(cv$model, names(models))
-within_1sd <- cv$auc_mean >= cv$auc_mean[1] - cv$auc_sd[1]
-parsimonious <- cv$model[within_1sd][which.min(complexity[within_1sd])]
-parsimonious
-#> [1] "m4_species_x_site"
+cv |>
+  select(model, logloss_mean, logloss_sd, brier_mean, cal_intercept,
+         cal_slope, prop_singular)
+#> # A tibble: 5 × 7
+#>   model logloss_mean logloss_sd brier_mean cal_intercept cal_slope prop_singular
+#>   <chr>        <dbl>      <dbl>      <dbl>         <dbl>     <dbl>         <dbl>
+#> 1 m4_s…        0.291    0.0103      0.0941      0.00430      0.994           1  
+#> 2 m3_p…        0.317    0.0119      0.104      -0.00268      0.991           0.2
+#> 3 m2_s…        0.337    0.0102      0.112      -0.000235     0.987           0.2
+#> 4 m1_s…        0.379    0.00934     0.123      -0.00279      0.992           0  
+#> 5 m0_g…        0.436    0.0172      0.142      -0.000629     1.00            0
 ```
 
-The wrapper
+[`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md)
+applies a selection rule to this table. `"best_auc"` takes the highest
+mean AUC, the rule
 [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
-takes the first row of the table (m4_species_x_site); the heuristic
-retains m4_species_x_site. In the example the two agree, because no
-simpler model comes within one standard deviation of the best. Whether
-the retained model is a sound fit is a separate question, taken up next.
+uses by default in 2.x. `"one_se_logloss"` leaves out the models that
+are singular in most folds and, among the rest, keeps the simplest one
+whose mean log-loss is within one standard error of the lowest; it will
+be the default from 3.0.0.
+
+``` r
+
+select_calibration_model(cv, "best_auc")
+#> [1] "m4_species_x_site"
+select_calibration_model(cv, "one_se_logloss", k_folds = 5)
+#> [1] "m3_plus_site"
+```
+
+Here the highest AUC belongs to m4_species_x_site, singular in 100 % of
+the folds, and the log-loss rule retains m3_plus_site.
+`calibration_models(uncorrelated = TRUE)` adds a sixth candidate, the m4
+structure without the correlation between the species intercepts and
+slopes, which is the term that makes m4 singular (see the next section):
+
+``` r
+
+models_u <- calibration_models(uncorrelated = TRUE)
+cv_u <- compare_calibration_models(val, models_u, k_folds = 5)
+#> Cross-validation (5 folds) of 6 models...
+cv_u |> select(model, auc_mean, logloss_mean, logloss_sd, prop_singular)
+#> # A tibble: 6 × 5
+#>   model                          auc_mean logloss_mean logloss_sd prop_singular
+#>   <chr>                             <dbl>        <dbl>      <dbl>         <dbl>
+#> 1 m4_species_x_site                 0.942        0.291    0.0103            1  
+#> 2 m5_species_x_site_uncorrelated    0.941        0.292    0.0112            0  
+#> 3 m3_plus_site                      0.928        0.317    0.0119            0.2
+#> 4 m2_species_slope                  0.916        0.337    0.0102            0.2
+#> 5 m1_species_intercept              0.902        0.379    0.00934           0  
+#> 6 m0_global                         0.862        0.436    0.0172            0
+select_calibration_model(cv_u, "one_se_logloss", k_folds = 5)
+#> [1] "m5_species_x_site_uncorrelated"
+```
+
+[`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
+takes the rule in `select` and the extra candidate with
+`uncorrelated = TRUE`. Whether the retained model is a sound fit is a
+separate question, taken up next.
 
 ## Fitting the calibration model
 
@@ -262,7 +317,7 @@ The dashed line marks `p_min`.
 plot_calibration(fit_full, val, p_min = 0.95, model_name = "m4_species_x_site")
 ```
 
-![](calibration_files/figure-html/unnamed-chunk-11-1.png)
+![](calibration_files/figure-html/unnamed-chunk-14-1.png)
 
 Look for:
 
@@ -610,17 +665,17 @@ scored one in noise or in species composition.
 
 [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
 runs the whole stage in one call. It reads the clips, compares the
-candidate models, refits the best one by mean AUC, plots the calibration
-curves (if ggplot2 is installed), scores every detection, builds the
-detection history and writes all the outputs to `output_dir`. It refits
-the model with the highest mean AUC; when that refit is singular, as m4
-is here, it warns (through
+candidate models, refits the one chosen by the rule in `select`, plots
+the calibration curves (if ggplot2 is installed), scores every
+detection, builds the detection history and writes all the outputs to
+`output_dir`. With the default `select = "best_auc"` it refits the model
+with the highest mean AUC; when that refit is singular, as m4 is here,
+it warns (through
 [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md))
-but keeps the model. Read the comparison, `calibration_model.txt` and
-the curves it writes before using its output, and refit a simpler model
-with
-[`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)
-if the comparison supports it.
+but keeps the model. With `select = "one_se_logloss"` and
+`uncorrelated = TRUE` it applies the rule of the previous sections. Read
+the comparison, `calibration_model.txt` and the curves it writes before
+using its output.
 
 ``` r
 
@@ -628,14 +683,11 @@ out_dir <- file.path(tempdir(), "calibration")
 res <- calibrate(validation_files  = val_files,
                  prediction_tables = tables,
                  output_dir        = out_dir,
+                 select = "one_se_logloss", uncorrelated = TRUE,
                  p_min = 0.95, min_detections_night = 1, k_folds = 5) |>
   suppressMessages()
-#> Warning: Singular fit (boundary) of the calibration model tp ~ logit_conf +
-#> (logit_conf | species) + (1 | site:species): a variance component is estimated
-#> at zero or a correlation at +-1. Check lme4::VarCorr(fit) and consider a
-#> simpler model.
-res$comparison$model[1]  # the model calibrate() refitted
-#> [1] "m4_species_x_site"
+deparse1(res$fit@call$formula)  # the model calibrate() refitted
+#> [1] "tp ~ logit_conf + (1 | species) + (0 + logit_conf | species) + (1 | site:species)"
 list.files(out_dir)
 #>  [1] "calibrated_detections_ARA.csv" "calibrated_detections_BAI.csv"
 #>  [3] "calibrated_detections_NHE.csv" "calibrated_detections_XAR.csv"
@@ -652,6 +704,10 @@ thousands of clips and many species takes longer, and
 `effort_curve = TRUE` adds the effort curve.
 
 ## References
+
+Gneiting, T., & Raftery, A. E. (2007). Strictly proper scoring rules,
+prediction, and estimation. *Journal of the American Statistical
+Association*, 102, 359–378. <https://doi.org/10.1198/016214506000001437>
 
 Owens, G., Wood, C. M., Hunt, T. J., Bussolini, L. T., Kreisl, A.,
 Alves, F., & Stojanovic, D. (2026). Passive acoustic monitoring of the

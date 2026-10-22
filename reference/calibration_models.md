@@ -9,10 +9,26 @@ intercept.
 ## Usage
 
 ``` r
-calibration_models()
+calibration_models(uncorrelated = FALSE)
 ```
+
+## Arguments
+
+- uncorrelated:
+
+  Add `m5_species_x_site_uncorrelated`, the m4 structure without the
+  correlation between the species intercepts and slopes. It avoids the
+  singular fits of m4 when that correlation is estimated at +-1. `FALSE`
+  keeps the candidates of 2.0.0.
 
 ## Value
 
 A named list of formulas: `m0_global`, `m1_species_intercept`,
-`m2_species_slope`, `m3_plus_site` and `m4_species_x_site`.
+`m2_species_slope`, `m3_plus_site`, `m4_species_x_site` and, with
+`uncorrelated = TRUE`, `m5_species_x_site_uncorrelated`.
+
+## Details
+
+The list goes from the simplest to the most complex model; that order is
+the complexity used by
+[`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md).

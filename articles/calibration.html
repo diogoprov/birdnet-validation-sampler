@@ -74,7 +74,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>Calibrating confidence scores</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v2.1.0/vignettes/calibration.Rmd" class="external-link"><code>vignettes/calibration.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/vignettes/calibration.Rmd" class="external-link"><code>vignettes/calibration.Rmd</code></a></small>
       <div class="d-none name"><code>calibration.Rmd</code></div>
     </div>
 
@@ -236,21 +236,70 @@ than false ones), not calibration (whether a predicted probability of
 0.9 is correct nine times in ten). Two models with equal AUC can still
 give different probabilities, so the comparison is a first filter, not
 the whole decision.</p>
-<p>When the leading models are close, a simple heuristic is to keep the
-least complex model whose mean AUC is within one standard deviation of
-the best one. This is a judgement call, not a rule implemented by the
-package:</p>
+<div class="section level3">
+<h3 id="scoring-the-probabilities-and-choosing-a-model">Scoring the probabilities and choosing a model<a class="anchor" aria-label="anchor" href="#scoring-the-probabilities-and-choosing-a-model"></a>
+</h3>
+<p>The comparison also scores the predicted probabilities themselves on
+the held-out folds. The log-loss and the Brier score are proper scoring
+rules: their expected value is best when the predicted probabilities are
+the true ones, so they reward correct probabilities and not only their
+ranking (Gneiting &amp; Raftery 2007). The log-loss penalises confident
+mistakes heavily, which is where <code>p_min</code> operates. The
+calibration intercept and slope come from a logistic regression of the
+verdicts on the logit of the predicted probabilities in each test fold:
+a well calibrated model has intercept 0 and slope 1, and a slope below 1
+means probabilities that are too extreme. <code>prop_singular</code> is
+the share of fold fits that were singular.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">complexity</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">cv</span><span class="op">$</span><span class="va">model</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">models</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">within_1sd</span> <span class="op">&lt;-</span> <span class="va">cv</span><span class="op">$</span><span class="va">auc_mean</span> <span class="op">&gt;=</span> <span class="va">cv</span><span class="op">$</span><span class="va">auc_mean</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">cv</span><span class="op">$</span><span class="va">auc_sd</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
-<span><span class="va">parsimonious</span> <span class="op">&lt;-</span> <span class="va">cv</span><span class="op">$</span><span class="va">model</span><span class="op">[</span><span class="va">within_1sd</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.min.html" class="external-link">which.min</a></span><span class="op">(</span><span class="va">complexity</span><span class="op">[</span><span class="va">within_1sd</span><span class="op">]</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="va">parsimonious</span></span>
-<span><span class="co">#&gt; [1] "m4_species_x_site"</span></span></code></pre></div>
-<p>The wrapper <code><a href="../reference/calibrate.html">calibrate()</a></code> takes the first row of the table
-(m4_species_x_site); the heuristic retains m4_species_x_site. In the
-example the two agree, because no simpler model comes within one
-standard deviation of the best. Whether the retained model is a sound
-fit is a separate question, taken up next.</p>
+<code class="sourceCode R"><span><span class="va">cv</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">logloss_mean</span>, <span class="va">logloss_sd</span>, <span class="va">brier_mean</span>, <span class="va">cal_intercept</span>,</span>
+<span>         <span class="va">cal_slope</span>, <span class="va">prop_singular</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 7</span></span></span>
+<span><span class="co">#&gt;   model logloss_mean logloss_sd brier_mean cal_intercept cal_slope prop_singular</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> m4_s…        0.291    0.010<span style="text-decoration: underline;">3</span>      0.094<span style="text-decoration: underline;">1</span>      0.004<span style="text-decoration: underline;">30</span>      0.994           1  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> m3_p…        0.317    0.011<span style="text-decoration: underline;">9</span>      0.104      -<span style="color: #BB0000;">0.002</span><span style="color: #BB0000; text-decoration: underline;">68</span>      0.991           0.2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> m2_s…        0.337    0.010<span style="text-decoration: underline;">2</span>      0.112      -<span style="color: #BB0000;">0.000</span><span style="color: #BB0000; text-decoration: underline;">235</span>     0.987           0.2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> m1_s…        0.379    0.009<span style="text-decoration: underline;">34</span>     0.123      -<span style="color: #BB0000;">0.002</span><span style="color: #BB0000; text-decoration: underline;">79</span>      0.992           0  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> m0_g…        0.436    0.017<span style="text-decoration: underline;">2</span>      0.142      -<span style="color: #BB0000;">0.000</span><span style="color: #BB0000; text-decoration: underline;">629</span>     1.00            0</span></span></code></pre></div>
+<p><code><a href="../reference/select_calibration_model.html">select_calibration_model()</a></code> applies a selection rule to
+this table. <code>"best_auc"</code> takes the highest mean AUC, the rule
+<code><a href="../reference/calibrate.html">calibrate()</a></code> uses by default in 2.x.
+<code>"one_se_logloss"</code> leaves out the models that are singular in
+most folds and, among the rest, keeps the simplest one whose mean
+log-loss is within one standard error of the lowest; it will be the
+default from 3.0.0.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/select_calibration_model.html">select_calibration_model</a></span><span class="op">(</span><span class="va">cv</span>, <span class="st">"best_auc"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "m4_species_x_site"</span></span>
+<span><span class="fu"><a href="../reference/select_calibration_model.html">select_calibration_model</a></span><span class="op">(</span><span class="va">cv</span>, <span class="st">"one_se_logloss"</span>, k_folds <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "m3_plus_site"</span></span></code></pre></div>
+<p>Here the highest AUC belongs to m4_species_x_site, singular in 100 %
+of the folds, and the log-loss rule retains m3_plus_site.
+<code>calibration_models(uncorrelated = TRUE)</code> adds a sixth
+candidate, the m4 structure without the correlation between the species
+intercepts and slopes, which is the term that makes m4 singular (see the
+next section):</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">models_u</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calibration_models.html">calibration_models</a></span><span class="op">(</span>uncorrelated <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">cv_u</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compare_calibration_models.html">compare_calibration_models</a></span><span class="op">(</span><span class="va">val</span>, <span class="va">models_u</span>, k_folds <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Cross-validation (5 folds) of 6 models...</span></span>
+<span><span class="va">cv_u</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">auc_mean</span>, <span class="va">logloss_mean</span>, <span class="va">logloss_sd</span>, <span class="va">prop_singular</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
+<span><span class="co">#&gt;   model                          auc_mean logloss_mean logloss_sd prop_singular</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> m4_species_x_site                 0.942        0.291    0.010<span style="text-decoration: underline;">3</span>            1  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> m5_species_x_site_uncorrelated    0.941        0.292    0.011<span style="text-decoration: underline;">2</span>            0  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> m3_plus_site                      0.928        0.317    0.011<span style="text-decoration: underline;">9</span>            0.2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> m2_species_slope                  0.916        0.337    0.010<span style="text-decoration: underline;">2</span>            0.2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> m1_species_intercept              0.902        0.379    0.009<span style="text-decoration: underline;">34</span>           0  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> m0_global                         0.862        0.436    0.017<span style="text-decoration: underline;">2</span>            0</span></span>
+<span><span class="fu"><a href="../reference/select_calibration_model.html">select_calibration_model</a></span><span class="op">(</span><span class="va">cv_u</span>, <span class="st">"one_se_logloss"</span>, k_folds <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "m5_species_x_site_uncorrelated"</span></span></code></pre></div>
+<p><code><a href="../reference/calibrate.html">calibrate()</a></code> takes the rule in <code>select</code> and
+the extra candidate with <code>uncorrelated = TRUE</code>. Whether the
+retained model is a sound fit is a separate question, taken up next.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="fitting-the-calibration-model">Fitting the calibration model<a class="anchor" aria-label="anchor" href="#fitting-the-calibration-model"></a>
@@ -260,7 +309,7 @@ and stores the species and site levels with it, for
 <code><a href="../reference/score_detections.html">score_detections()</a></code> and <code><a href="../reference/plot_calibration.html">plot_calibration()</a></code>. We
 fit every candidate, because whether a GLMM is singular is part of the
 choice:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">models</span>, <span class="kw">function</span><span class="op">(</span><span class="va">f</span><span class="op">)</span> <span class="fu"><a href="../reference/fit_calibration.html">fit_calibration</a></span><span class="op">(</span><span class="va">val</span>, <span class="va">f</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: Singular fit (boundary) of the calibration model tp ~ logit_conf +</span></span>
 <span><span class="co">#&gt; (logit_conf | species) + (1 | site:species): a variance component is estimated</span></span>
@@ -271,7 +320,7 @@ choice:</p>
 <span><span class="co">#&gt;                FALSE                FALSE                FALSE </span></span>
 <span><span class="co">#&gt;    m4_species_x_site </span></span>
 <span><span class="co">#&gt;                 TRUE</span></span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_global</span> <span class="op">&lt;-</span> <span class="va">fits</span><span class="op">$</span><span class="va">m0_global</span></span>
 <span><span class="va">fit_full</span>   <span class="op">&lt;-</span> <span class="va">fits</span><span class="op">$</span><span class="va">m4_species_x_site</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit_global</span><span class="op">)</span></span>
@@ -315,9 +364,9 @@ against the score, one panel per species and one line per site. The
 points give the observed precision of the reviewed clips in 0.1-wide
 score bins, sized by the number of clips. The dashed line marks
 <code>p_min</code>.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_calibration.html">plot_calibration</a></span><span class="op">(</span><span class="va">fit_full</span>, <span class="va">val</span>, p_min <span class="op">=</span> <span class="fl">0.95</span>, model_name <span class="op">=</span> <span class="st">"m4_species_x_site"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="calibration_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="100%"></p>
+<p><img src="calibration_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="100%"></p>
 <p>Look for:</p>
 <ul>
 <li>
@@ -356,7 +405,7 @@ reviewed clips.</p>
 <p>The practical consequence is the score at which each site x species
 reaches <code>p_min</code>. Under the global model this score is the
 same everywhere:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">grid</span> <span class="op">&lt;-</span> <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">expand_grid</a></span><span class="op">(</span></span>
 <span>  species    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">val</span><span class="op">$</span><span class="va">species</span><span class="op">)</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">val</span><span class="op">$</span><span class="va">species</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  site       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">val</span><span class="op">$</span><span class="va">site</span><span class="op">)</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">val</span><span class="op">$</span><span class="va">site</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -430,7 +479,7 @@ the names must match the sites of the calibration. A site absent from
 the calibration is scored with the species effects only, with a warning.
 The night of a detection is its recording date, or the day before for
 recordings that start before <code>dawn_hour</code>.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sites</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ARA"</span>, <span class="st">"XAR"</span>, <span class="st">"BAI"</span>, <span class="st">"NHE"</span><span class="op">)</span></span>
 <span><span class="va">tables</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"birdnet"</span>, <span class="va">sites</span>,</span>
 <span>                             <span class="st">"BirdNET_SelectionTable.txt"</span><span class="op">)</span>, <span class="va">sites</span><span class="op">)</span></span>
@@ -463,7 +512,7 @@ k reliable detections (<code>min_detections_night</code>, the repetition
 rule). The columns <code>detection_k1</code> to
 <code>detection_k3</code> give the same rule with k = 1, 2 and 3;
 <code>detection</code> uses the chosen k.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">history</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/detection_history.html">detection_history</a></span><span class="op">(</span><span class="va">scored</span>, p_min <span class="op">=</span> <span class="fl">0.95</span>, min_detections_night <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">history</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 872 × 10</span></span></span>
@@ -538,7 +587,7 @@ lenient rule, whereas analyses with no false-positive component (for
 example, ordinations of community matrices) call for a strict one. The
 sensitivity of the number of nights with a detection to both settings is
 cheap to check:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sensitivity</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.80</span>, <span class="fl">0.90</span>, <span class="fl">0.95</span>, <span class="fl">0.99</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">p</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="../reference/detection_history.html">detection_history</a></span><span class="op">(</span><span class="va">scored</span>, p_min <span class="op">=</span> <span class="va">p</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>p_min <span class="op">=</span> <span class="va">p</span>, k1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">detection_k1</span><span class="op">)</span>, k2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">detection_k2</span><span class="op">)</span>,</span>
@@ -560,7 +609,7 @@ more than one setting.</p>
 <p>The same check applies to the choice of model. Scoring with the
 global model and comparing the histories shows how many site x species x
 nights change, and for which species:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">history_global</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/score_detections.html">score_detections</a></span><span class="op">(</span><span class="va">tables</span>, <span class="va">fit_global</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/detection_history.html">detection_history</a></span><span class="op">(</span>p_min <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span></span>
@@ -618,7 +667,7 @@ singular, as it did for m4 above, and convergence warnings of
 <code><a href="../reference/compare_calibration_models.html">compare_calibration_models()</a></code> drops a fold whose fit fails
 from the mean AUC, warns about it and counts it in
 <code>n_failed</code>. Inspect the refitted model directly:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">lme4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/lme4/man/isSingular.html" class="external-link">isSingular</a></span><span class="op">(</span><span class="va">fit_full</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="va">fit_full</span><span class="op">@</span><span class="va">optinfo</span><span class="op">$</span><span class="va">conv</span><span class="op">$</span><span class="va">lme4</span><span class="op">$</span><span class="va">messages</span></span>
@@ -651,28 +700,27 @@ scored one in noise or in species composition.</p>
 <h2 id="the-calibrate-wrapper">The calibrate() wrapper<a class="anchor" aria-label="anchor" href="#the-calibrate-wrapper"></a>
 </h2>
 <p><code><a href="../reference/calibrate.html">calibrate()</a></code> runs the whole stage in one call. It reads
-the clips, compares the candidate models, refits the best one by mean
-AUC, plots the calibration curves (if ggplot2 is installed), scores
-every detection, builds the detection history and writes all the outputs
-to <code>output_dir</code>. It refits the model with the highest mean
-AUC; when that refit is singular, as m4 is here, it warns (through
-<code><a href="../reference/fit_calibration.html">fit_calibration()</a></code>) but keeps the model. Read the
-comparison, <code>calibration_model.txt</code> and the curves it writes
-before using its output, and refit a simpler model with
-<code><a href="../reference/fit_calibration.html">fit_calibration()</a></code> if the comparison supports it.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+the clips, compares the candidate models, refits the one chosen by the
+rule in <code>select</code>, plots the calibration curves (if ggplot2 is
+installed), scores every detection, builds the detection history and
+writes all the outputs to <code>output_dir</code>. With the default
+<code>select = "best_auc"</code> it refits the model with the highest
+mean AUC; when that refit is singular, as m4 is here, it warns (through
+<code><a href="../reference/fit_calibration.html">fit_calibration()</a></code>) but keeps the model. With
+<code>select = "one_se_logloss"</code> and
+<code>uncorrelated = TRUE</code> it applies the rule of the previous
+sections. Read the comparison, <code>calibration_model.txt</code> and
+the curves it writes before using its output.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">out_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"calibration"</span><span class="op">)</span></span>
 <span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calibrate.html">calibrate</a></span><span class="op">(</span>validation_files  <span class="op">=</span> <span class="va">val_files</span>,</span>
 <span>                 prediction_tables <span class="op">=</span> <span class="va">tables</span>,</span>
 <span>                 output_dir        <span class="op">=</span> <span class="va">out_dir</span>,</span>
+<span>                 select <span class="op">=</span> <span class="st">"one_se_logloss"</span>, uncorrelated <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                 p_min <span class="op">=</span> <span class="fl">0.95</span>, min_detections_night <span class="op">=</span> <span class="fl">1</span>, k_folds <span class="op">=</span> <span class="fl">5</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Singular fit (boundary) of the calibration model tp ~ logit_conf +</span></span>
-<span><span class="co">#&gt; (logit_conf | species) + (1 | site:species): a variance component is estimated</span></span>
-<span><span class="co">#&gt; at zero or a correlation at +-1. Check lme4::VarCorr(fit) and consider a</span></span>
-<span><span class="co">#&gt; simpler model.</span></span>
-<span><span class="va">res</span><span class="op">$</span><span class="va">comparison</span><span class="op">$</span><span class="va">model</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>  <span class="co"># the model calibrate() refitted</span></span>
-<span><span class="co">#&gt; [1] "m4_species_x_site"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/deparse.html" class="external-link">deparse1</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">fit</span><span class="op">@</span><span class="va">call</span><span class="op">$</span><span class="va">formula</span><span class="op">)</span>  <span class="co"># the model calibrate() refitted</span></span>
+<span><span class="co">#&gt; [1] "tp ~ logit_conf + (1 | species) + (0 + logit_conf | species) + (1 | site:species)"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">out_dir</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "calibrated_detections_ARA.csv" "calibrated_detections_BAI.csv"</span></span>
 <span><span class="co">#&gt;  [3] "calibrated_detections_NHE.csv" "calibrated_detections_XAR.csv"</span></span>
@@ -689,6 +737,9 @@ effort curve.</p>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
+<p>Gneiting, T., &amp; Raftery, A. E. (2007). Strictly proper scoring
+rules, prediction, and estimation. <em>Journal of the American
+Statistical Association</em>, 102, 359–378. <a href="https://doi.org/10.1198/016214506000001437" class="external-link uri">https://doi.org/10.1198/016214506000001437</a></p>
 <p>Owens, G., Wood, C. M., Hunt, T. J., Bussolini, L. T., Kreisl, A.,
 Alves, F., &amp; Stojanovic, D. (2026). Passive acoustic monitoring of
 the rare orange-bellied parrot: automated detection using BirdNET-based

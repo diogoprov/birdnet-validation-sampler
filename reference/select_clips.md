@@ -16,6 +16,7 @@ select_clips(
   occasion_unit = c("file", "minute"),
   threshold = NULL,
   n_top = 2,
+  strata = c("night_hour", "night", "site_species"),
   recording_fraction = 0.01,
   n_recordings_per_site = NULL,
   recordings = NULL,
@@ -64,8 +65,18 @@ select_clips(
 - n_top:
 
   `"top"`: predictions kept per site x species x night x hour.
-  `"random_detections"`: occasions drawn per site x species x night x
-  hour.
+  `"random_detections"`: occasions drawn per stratum (`strata`).
+
+- strata:
+
+  `"random_detections"`: the strata of the occasion draw. `"night_hour"`
+  (site x species x night x hour, the rule of 2.0.0), `"night"` (site x
+  species x night) or `"site_species"`. With one recording per hour and
+  `occasion_unit = "file"`, `"night_hour"` holds a single occasion per
+  stratum and draws nothing (every `inclusion_prob` is 1); a coarser
+  stratum makes the draw random. With a coarser stratum and
+  `balance_by_hour = TRUE` under `target_total` or `max_per_species`,
+  `inclusion_prob` is conditional on the first draw (a warning says so).
 
 - recording_fraction:
 
@@ -183,11 +194,12 @@ for their definitions.
   Do not use it to estimate false-positive rates: top-score clips hold
   fewer false positives than a random sample.
 
-- `"random_detections"` draws, at random, `n_top` occasions per site x
-  species x night x hour among the occasions with at least one
-  prediction of the species with confidence \>= `threshold`, and keeps
-  every prediction \>= `threshold` of each drawn occasion. This is the
-  observation-confirmation design of Chambert et al. (2015,
+- `"random_detections"` draws, at random, `n_top` occasions per stratum
+  (by default site x species x night x hour; see `strata`) among the
+  occasions with at least one prediction of the species with confidence
+  \>= `threshold`, and keeps every prediction \>= `threshold` of each
+  drawn occasion. This is the observation-confirmation design of
+  Chambert et al. (2015,
   [doi:10.1890/14-1507.1](https://doi.org/10.1890/14-1507.1) ).
 
 - `"random_recordings"` draws recordings (or minutes) among all those

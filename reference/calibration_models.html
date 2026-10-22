@@ -49,7 +49,7 @@ by species and a site x species intercept."><meta property="og:image" content="h
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Candidate calibration models</h1>
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v2.1.0/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
       <div class="d-none name"><code>calibration_models.Rd</code></div>
     </div>
 
@@ -62,13 +62,30 @@ by species and a site x species intercept.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">calibration_models</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">calibration_models</span><span class="op">(</span>uncorrelated <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
+    <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
+
+
+<dl><dt id="arg-uncorrelated">uncorrelated<a class="anchor" aria-label="anchor" href="#arg-uncorrelated"></a></dt>
+<dd><p>Add <code>m5_species_x_site_uncorrelated</code>, the m4
+structure without the correlation between the species intercepts and
+slopes. It avoids the singular fits of m4 when that correlation is
+estimated at +-1. <code>FALSE</code> keeps the candidates of 2.0.0.</p></dd>
+
+</dl></div>
+    <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named list of formulas: <code>m0_global</code>, <code>m1_species_intercept</code>,
-<code>m2_species_slope</code>, <code>m3_plus_site</code> and <code>m4_species_x_site</code>.</p>
+<code>m2_species_slope</code>, <code>m3_plus_site</code>, <code>m4_species_x_site</code> and, with
+<code>uncorrelated = TRUE</code>, <code>m5_species_x_site_uncorrelated</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The list goes from the simplest to the most complex model; that order is
+the complexity used by <code><a href="select_calibration_model.html">select_calibration_model()</a></code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

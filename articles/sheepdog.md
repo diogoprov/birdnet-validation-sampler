@@ -108,7 +108,6 @@ man <- select_clips(det,
 #> Sampling mode: top (occasion = file).
 #> The hour window crosses midnight: grouping by night (small hours count as the night before).
 #> Hour window 18h-2h: 7553 -> 7553 predictions.
-#> 0 predictions dropped by the filter confidence < 0.1.
 #> 4099 clips selected (top 2 per site x species x night x hour) of 8 species.
 #> Limit of 40 clips per species (per site): 4099 -> 1273 clips.
 dplyr::count(man, site, species_folder) |>

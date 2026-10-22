@@ -21,7 +21,13 @@ strict:
 ## Usage
 
 ``` r
-community_matrices(history, core_species, k_min = 2, min_nights_month = 5)
+community_matrices(
+  history,
+  core_species,
+  k_min = 2,
+  min_nights_month = 5,
+  drop_empty = FALSE
+)
 ```
 
 ## Arguments
@@ -45,12 +51,22 @@ community_matrices(history, core_species, k_min = 2, min_nights_month = 5)
   Site x month cells with fewer recorded nights are dropped from the
   matrices (unstable frequencies) and flagged in `effort`.
 
+- drop_empty:
+
+  Drop the site x month rows in which no core species was detected.
+  Distances such as Bray-Curtis are undefined for them.
+
 ## Value
 
-A list with three tibbles: `frequency` and `counts` (one row per site x
+A list with three tibbles, `frequency` and `counts` (one row per site x
 month, with `site`, `month`, `n_nights_recorded` and one column per core
 species) and `effort` (`site`, `month`, `n_nights_recorded`,
-`included`).
+`included`), plus `trials`: a numeric matrix with the dimensions of the
+species columns of `counts` holding the nights recorded, the `Ntrials`
+of a binomial model of the counts (e.g.
+[`gllvm::gllvm()`](https://jenniniku.github.io/gllvm/reference/gllvm.html),
+which needs a matrix when effort varies among samples). The row names of
+`trials` are `<site>_<month>`.
 
 ## Details
 

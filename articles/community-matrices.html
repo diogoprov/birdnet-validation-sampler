@@ -74,7 +74,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>From detections to community analyses</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v2.1.0/vignettes/community-matrices.Rmd" class="external-link"><code>vignettes/community-matrices.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/vignettes/community-matrices.Rmd" class="external-link"><code>vignettes/community-matrices.Rmd</code></a></small>
       <div class="d-none name"><code>community-matrices.Rmd</code></div>
     </div>
 
@@ -163,16 +163,66 @@ unstable frequencies and are dropped.</li>
 <div class="section level2">
 <h2 id="choosing-the-core-species">Choosing the core species<a class="anchor" aria-label="anchor" href="#choosing-the-core-species"></a>
 </h2>
-<p>The choice of core species is made by the user, from the calibration
-diagnostics written by <code><a href="../reference/calibrate.html">calibrate()</a></code>
-(e.g. <code>calibration_curves.png</code>); the package does not make it
-automatically. <code><a href="../reference/summarise_history.html">summarise_history()</a></code> gives a complementary
-view: the number of nights with a reliable detection per site and
-species under each repetition rule (shown below for
-<code>k_min = 1</code>).</p>
+<p>A species with no reliable detection at a site may be absent there,
+or the calibration may fail there: the classifier may detect it, but
+never with a calibrated probability that reaches <code>p_min</code>.
+Only the first case allows a zero in the matrix.
+<code><a href="../reference/cell_status.html">cell_status()</a></code> separates the two from the calibration model
+and the reviewed clips. Each site × species cell is</p>
+<ul>
+<li>
+<code>"reliable"</code>: the calibrated curve reaches
+<code>p_min</code> within the reviewed scores, with at least
+<code>min_n</code> reviewed clips;</li>
+<li>
+<code>"probably_absent"</code>: clips were reviewed, but none was a
+true positive;</li>
+<li>
+<code>"unreliable"</code>: true positives were reviewed, but the
+curve never reaches <code>p_min</code> (or too few clips were
+reviewed).</li>
+</ul>
+<p>Here the calibration model is refitted to the reviewed clips shipped
+with the example (the model <code><a href="../reference/calibrate.html">calibrate()</a></code> refits; see
+<code><a href="../articles/calibration.html">vignette("calibration")</a></code>):</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">by_site</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summarise_history.html">summarise_history</a></span><span class="op">(</span><span class="va">history</span><span class="op">)</span></span>
-<span><span class="va">by_site</span> <span class="op">|&gt;</span></span>
+<code class="sourceCode R"><span><span class="va">val_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"validation"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">val</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="fu"><a href="../reference/read_validations.html">read_validations</a></span><span class="op">(</span><span class="va">val_files</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co"># m4 is singular on these data; the warning is discussed in the calibration</span></span>
+<span><span class="co"># article</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="../reference/fit_calibration.html">fit_calibration</a></span><span class="op">(</span><span class="va">val</span>,</span>
+<span>                                        <span class="fu"><a href="../reference/calibration_models.html">calibration_models</a></span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">m4_species_x_site</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">status</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cell_status.html">cell_status</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">val</span>, p_min <span class="op">=</span> <span class="fl">0.95</span>, min_n <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span>
+<span><span class="va">status</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">species</span>, <span class="va">site</span>, <span class="va">status</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">pivot_wider</a></span><span class="op">(</span>names_from <span class="op">=</span> <span class="va">site</span>, values_from <span class="op">=</span> <span class="va">status</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 5</span></span></span>
+<span><span class="co">#&gt;   species ARA             BAI             NHE        XAR       </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> boa_ran reliable        reliable        reliable   reliable  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> den_nan reliable        reliable        reliable   unreliable</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> ela_bic reliable        reliable        reliable   reliable  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> lep_fus probably_absent probably_absent reliable   unreliable</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> lep_pod reliable        reliable        reliable   reliable  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> phy_cuv reliable        reliable        reliable   reliable  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> pse_pla unreliable      unreliable      unreliable unreliable</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> sci_nas reliable        unreliable      unreliable reliable</span></span></code></pre></div>
+<p><code><a href="../reference/suggest_core_species.html">suggest_core_species()</a></code> keeps the species with no
+unreliable cell:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">core</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/suggest_core_species.html">suggest_core_species</a></span><span class="op">(</span><span class="va">status</span><span class="op">)</span></span>
+<span><span class="va">core</span></span>
+<span><span class="co">#&gt; [1] "boa_ran" "ela_bic" "lep_pod" "phy_cuv"</span></span></code></pre></div>
+<p>Species with at least one unreliable cell (den_nan, lep_fus, pse_pla,
+sci_nas) stay out. Cells classified as probably absent (lep_fus ARA,
+lep_fus BAI) do not exclude a species: a zero there is a plausible
+absence, not a failure of the classifier. The choice remains the
+analyst’s; the table is the evidence for it.</p>
+<p><code><a href="../reference/summarise_history.html">summarise_history()</a></code> gives a complementary view: the
+number of nights with a reliable detection per site and species (shown
+here for <code>k_min = 1</code>):</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/summarise_history.html">summarise_history</a></span><span class="op">(</span><span class="va">history</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">site</span>, <span class="va">species</span>, <span class="va">nights_k1</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">pivot_wider</a></span><span class="op">(</span>names_from <span class="op">=</span> <span class="va">site</span>, values_from <span class="op">=</span> <span class="va">nights_k1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 5</span></span></span>
@@ -186,33 +236,18 @@ species under each repetition rule (shown below for
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> phy_cuv    21    20    25    15</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> pse_pla     0     0     0     0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> sci_nas    11     0     0     2</span></span></code></pre></div>
-<p>Some species have no reliable detection anywhere (pse_pla): their
-calibrated probabilities rarely reach <code>p_min</code>, because their
-false-positive scores overlap those of true detections. Others are
-reliably detected at some sites only (den_nan, lep_fus, sci_nas); they
-are the case the core rule targets, because their absence from a site
-may reflect the classifier rather than the community. Here the core
-species are taken as those with at least one night with a reliable
-detection at every site. This is a convenient proxy for the example;
-with real data the decision rests on the calibration diagnostics, and a
-species that is truly absent from some sites should not be excluded on
-this criterion alone.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">core</span> <span class="op">&lt;-</span> <span class="va">n_sites_ok</span><span class="op">$</span><span class="va">species</span><span class="op">[</span><span class="va">n_sites_ok</span><span class="op">$</span><span class="va">n</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">sites</span><span class="op">)</span><span class="op">]</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">core</span></span>
-<span><span class="co">#&gt; [1] "boa_ran" "ela_bic" "lep_pod" "phy_cuv"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="building-the-matrices">Building the matrices<a class="anchor" aria-label="anchor" href="#building-the-matrices"></a>
 </h2>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/community_matrices.html">community_matrices</a></span><span class="op">(</span><span class="va">history</span>, core_species <span class="op">=</span> <span class="va">core</span>, k_min <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>                           min_nights_month <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mats</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "frequency" "counts"    "effort"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "frequency" "counts"    "effort"    "trials"</span></span></code></pre></div>
 <p>The effort table lists the recorded nights per site x month and
 whether the cell entered the matrices.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mats</span><span class="op">$</span><span class="va">effort</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 24 × 4</span></span></span>
 <span><span class="co">#&gt;    site  month   n_nights_recorded included</span></span>
@@ -242,7 +277,7 @@ of the site for any species, which is adequate when detections are
 dense, as here.</p>
 <p>The count matrix holds the number of nights with detection, and the
 frequency matrix divides it by the recorded nights:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mats</span><span class="op">$</span><span class="va">counts</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 23 × 7</span></span></span>
 <span><span class="co">#&gt;    site  month   n_nights_recorded boa_ran ela_bic lep_pod phy_cuv</span></span>
@@ -280,7 +315,7 @@ frequency matrix divides it by the recorded nights:</p>
 <p>The repetition rule trades false positives against missed detections.
 The mean frequency of each core species across cells shows how the
 matrix changes with <code>k_min</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sens</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="kw">function</span><span class="op">(</span><span class="va">k</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="../reference/community_matrices.html">community_matrices</a></span><span class="op">(</span><span class="va">history</span>, <span class="va">core</span>, k_min <span class="op">=</span> <span class="va">k</span><span class="op">)</span><span class="op">$</span><span class="va">frequency</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/across.html" class="external-link">across</a></span><span class="op">(</span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/all_of.html" class="external-link">all_of</a></span><span class="op">(</span><span class="va">core</span><span class="op">)</span>, <span class="va">mean</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -306,13 +341,13 @@ should be reported. <code>k_min = 2</code> is the default.</p>
 <code>nightly_detection_history.csv</code>, calls
 <code><a href="../reference/community_matrices.html">community_matrices()</a></code> and writes the frequency and count
 matrices and the effort table as CSV files:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"community_matrices"</span><span class="op">)</span></span>
 <span><span class="va">mats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_community_matrices.html">build_community_matrices</a></span><span class="op">(</span><span class="va">history_file</span>, <span class="va">out</span>, core_species <span class="op">=</span> <span class="va">core</span>,</span>
 <span>                                 k_min <span class="op">=</span> <span class="fl">2</span>, min_nights_month <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Matrix: 23 rows (site x month) x 4 species | rule k &gt;= 2</span></span>
 <span><span class="co">#&gt; Effort: 23 site x month cells included; 1 dropped for having &lt; 5 recorded nights (see effort_site_month.csv)</span></span>
-<span><span class="co">#&gt; Files in: /tmp/RtmpUxXQYF/community_matrices</span></span>
+<span><span class="co">#&gt; Files in: /tmp/RtmpDsRIFF/community_matrices</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "count_matrix_site_month_k2.csv"     "effort_site_month.csv"             </span></span>
 <span><span class="co">#&gt; [3] "frequency_matrix_site_month_k2.csv"</span></span></code></pre></div>
@@ -321,20 +356,20 @@ matrices and the effort table as CSV files:</p>
 <h2 id="preparing-the-samples">Preparing the samples<a class="anchor" aria-label="anchor" href="#preparing-the-samples"></a>
 </h2>
 <p>Both analyses below use the same samples. Samples in which no core
-species was detected are removed first: their Bray–Curtis dissimilarity
-is undefined, and they carry no information on species co-occurrence.
-Season is coded as rainy (November to February) or dry.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="va">mats</span><span class="op">$</span><span class="va">counts</span> <span class="op">|&gt;</span></span>
+species was detected are removed first (<code>drop_empty = TRUE</code>):
+their Bray–Curtis dissimilarity is undefined, and they carry no
+information on species co-occurrence. Season is coded as rainy (November
+to February) or dry.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mats_ord</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/community_matrices.html">community_matrices</a></span><span class="op">(</span><span class="va">history</span>, core_species <span class="op">=</span> <span class="va">core</span>, k_min <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>                               min_nights_month <span class="op">=</span> <span class="fl">5</span>, drop_empty <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; 1 site x month row(s) without any core species dropped: BAI 2021-10</span></span>
+<span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="va">mats_ord</span><span class="op">$</span><span class="va">counts</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    season <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">month</span>, <span class="fl">6</span>, <span class="fl">7</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"11"</span>, <span class="st">"12"</span>, <span class="st">"01"</span>, <span class="st">"02"</span><span class="op">)</span>,</span>
 <span>                           <span class="st">"rainy"</span>, <span class="st">"dry"</span><span class="op">)</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dry"</span>, <span class="st">"rainy"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    site <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">site</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="va">empty</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">samples</span><span class="op">[</span>, <span class="va">core</span><span class="op">]</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">site</span>, <span class="va">samples</span><span class="op">$</span><span class="va">month</span><span class="op">)</span><span class="op">[</span><span class="va">empty</span><span class="op">]</span> <span class="co"># samples removed</span></span>
-<span><span class="co">#&gt; [1] "BAI 2021-10"</span></span>
-<span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="va">samples</span><span class="op">[</span><span class="op">!</span><span class="va">empty</span>, <span class="op">]</span></span>
 <span><span class="va">freq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">samples</span><span class="op">[</span>, <span class="va">core</span><span class="op">]</span><span class="op">)</span> <span class="op">/</span> <span class="va">samples</span><span class="op">$</span><span class="va">n_nights_recorded</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">freq</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">site</span>, <span class="va">samples</span><span class="op">$</span><span class="va">month</span><span class="op">)</span></span></code></pre></div>
 <p>1 sample(s) removed; 22 samples x 4 species remain. The example has
@@ -353,7 +388,7 @@ principal coordinates analysis (PCoA) of it produces negative
 eigenvalues, which have no geometric representation. Its square root is
 Euclidean (Legendre &amp; Legendre 2012), and we use it below. The PCoA
 is computed with <code><a href="https://rdrr.io/pkg/ape/man/pcoa.html" class="external-link">ape::pcoa()</a></code>.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bc</span>      <span class="op">&lt;-</span> <span class="fu">vegan</span><span class="fu">::</span><span class="fu"><a href="https://vegandevs.github.io/vegan/reference/vegdist.html" class="external-link">vegdist</a></span><span class="op">(</span><span class="va">freq</span>, method <span class="op">=</span> <span class="st">"bray"</span><span class="op">)</span></span>
 <span><span class="va">pcoa_bc</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/pcoa.html" class="external-link">pcoa</a></span><span class="op">(</span><span class="va">bc</span><span class="op">)</span></span>
 <span><span class="va">pcoa_sq</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/pcoa.html" class="external-link">pcoa</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">bc</span><span class="op">)</span><span class="op">)</span></span>
@@ -369,7 +404,7 @@ Cailliez corrections offered by <code><a href="https://rdrr.io/pkg/ape/man/pcoa.
 (<code>correction = "lingoes"</code> or
 <code>correction = "cailliez"</code>); both are described by Legendre
 &amp; Legendre (2012).</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pcoa_sq</span><span class="op">$</span><span class="va">values</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Eigenvalues"</span>, <span class="st">"Relative_eig"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Eigenvalues Relative_eig</span></span>
 <span><span class="co">#&gt; 1   2.0806090    0.5464268</span></span>
@@ -378,7 +413,7 @@ Cailliez corrections offered by <code><a href="https://rdrr.io/pkg/ape/man/pcoa.
 <span><span class="va">scores_pcoa</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">samples</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"site"</span>, <span class="st">"month"</span>, <span class="st">"season"</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>                          PCo1 <span class="op">=</span> <span class="va">pcoa_sq</span><span class="op">$</span><span class="va">vectors</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>,</span>
 <span>                          PCo2 <span class="op">=</span> <span class="va">pcoa_sq</span><span class="op">$</span><span class="va">vectors</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># amostras com frequencias identicas cairiam no mesmo ponto: um pequeno</span></span>
 <span><span class="co"># deslocamento aleatorio deixa todas visiveis</span></span>
 <span><span class="va">jit</span> <span class="op">&lt;-</span> <span class="fl">0.02</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/diff.html" class="external-link">diff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">scores_pcoa</span><span class="op">$</span><span class="va">PCo1</span><span class="op">)</span><span class="op">)</span></span>
@@ -392,7 +427,7 @@ Cailliez corrections offered by <code><a href="https://rdrr.io/pkg/ape/man/pcoa.
 <span>    colour <span class="op">=</span> <span class="st">"Site"</span>, shape <span class="op">=</span> <span class="st">"Season"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="community-matrices_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="PCoA of the site x month samples on square-root Bray-Curtis, coloured by site, with shape by season." width="576"></p>
+<p><img src="community-matrices_files/figure-html/unnamed-chunk-22-1.png" class="r-plt" alt="PCoA of the site x month samples on square-root Bray-Curtis, coloured by site, with shape by season." width="576"></p>
 <p>Samples with identical frequencies would share a single point; the
 points are jittered slightly so that all of them are visible.</p>
 </div>
@@ -411,17 +446,18 @@ the mean–variance relationship, and the latent variables give a
 model-based ordination of the samples (Warton et al. 2015; Niku et
 al. 2019). Jupke &amp; Schäfer (2020) compare model- and distance-based
 multivariate methods.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">Y</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">samples</span><span class="op">[</span>, <span class="va">core</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mode.html" class="external-link">storage.mode</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"double"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">freq</span><span class="op">)</span></span>
-<span><span class="va">Nt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">n_nights_recorded</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><code>Ntrials</code> is given as a matrix with the dimensions of the
-response, because effort varies among samples. With 4 species, the
-default starting values of <code>gllvm()</code> fail for two latent
-variables, so the model starts from zero
+<span><span class="va">Nt</span> <span class="op">&lt;-</span> <span class="va">mats_ord</span><span class="op">$</span><span class="va">trials</span></span></code></pre></div>
+<p><code>Ntrials</code> must be a matrix with the dimensions of the
+response when effort varies among samples;
+<code><a href="../reference/community_matrices.html">community_matrices()</a></code> returns it as <code>trials</code>.
+With 4 species, the default starting values of <code>gllvm()</code> fail
+for two latent variables, so the model starts from zero
 (<code>starting.val = "zero"</code>).</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_lv</span> <span class="op">&lt;-</span> <span class="fu">gllvm</span><span class="fu">::</span><span class="fu"><a href="https://jenniniku.github.io/gllvm/reference/gllvm.html" class="external-link">gllvm</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">Y</span>, family <span class="op">=</span> <span class="st">"binomial"</span>, Ntrials <span class="op">=</span> <span class="va">Nt</span>,</span>
 <span>                       num.lv <span class="op">=</span> <span class="fl">2</span>, starting.val <span class="op">=</span> <span class="st">"zero"</span>, seed <span class="op">=</span> <span class="fl">2026</span><span class="op">)</span></span>
 <span><span class="va">fit_lv</span></span>
@@ -438,7 +474,7 @@ variables, so the model starts from zero
 <span><span class="co">#&gt; AIC:  314.2305 </span></span>
 <span><span class="co">#&gt; AICc:  317.7042 </span></span>
 <span><span class="co">#&gt; BIC:  341.4812</span></span></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">samples</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"site"</span>, <span class="st">"season"</span><span class="op">)</span><span class="op">]</span>, <span class="fu">gllvm</span><span class="fu">::</span><span class="fu"><a href="https://jenniniku.github.io/gllvm/reference/getLV.gllvm.html" class="external-link">getLV</a></span><span class="op">(</span><span class="va">fit_lv</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">ld</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>species <span class="op">=</span> <span class="va">core</span>, <span class="fu">gllvm</span><span class="fu">::</span><span class="fu"><a href="https://jenniniku.github.io/gllvm/reference/getLoadings.gllvm.html" class="external-link">getLoadings</a></span><span class="op">(</span><span class="va">fit_lv</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">k</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">lv</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"LV1"</span>, <span class="st">"LV2"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">ld</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"LV1"</span>, <span class="st">"LV2"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
@@ -455,11 +491,11 @@ variables, so the model starts from zero
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"Site"</span>, shape <span class="op">=</span> <span class="st">"Season"</span>,</span>
 <span>                caption <span class="op">=</span> <span class="st">"Species loadings (labels) rescaled to the LV range; points jittered slightly"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="community-matrices_files/figure-html/unnamed-chunk-23-1.png" class="r-plt" alt="Latent variables of the binomial GLLVM for the site x month samples, coloured by site, with shape by season; species loadings shown as labels." width="576"></p>
+<p><img src="community-matrices_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" alt="Latent variables of the binomial GLLVM for the site x month samples, coloured by site, with shape by season; species loadings shown as labels." width="576"></p>
 <p>The residual correlations among species, induced by the latent
 variables, summarise which species tend to be detected in the same
 samples:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">gllvm</span><span class="fu">::</span><span class="fu"><a href="https://jenniniku.github.io/gllvm/reference/getResidualCor.gllvm.html" class="external-link">getResidualCor</a></span><span class="op">(</span><span class="va">fit_lv</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         boa_ran ela_bic lep_pod phy_cuv</span></span>
 <span><span class="co">#&gt; boa_ran    1.00    0.56   -0.66    0.37</span></span>
@@ -489,7 +525,7 @@ species x site preferences not captured by the site intercept).</li>
 </ul>
 <p>The test is a likelihood-ratio test between this model and the same
 model without season (<code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> on the two fits).</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">X</span>      <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>season <span class="op">=</span> <span class="va">samples</span><span class="op">$</span><span class="va">season</span><span class="op">)</span></span>
 <span><span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>site <span class="op">=</span> <span class="va">samples</span><span class="op">$</span><span class="va">site</span><span class="op">)</span></span>
 <span><span class="va">fit_season</span> <span class="op">&lt;-</span> <span class="fu">gllvm</span><span class="fu">::</span><span class="fu"><a href="https://jenniniku.github.io/gllvm/reference/gllvm.html" class="external-link">gllvm</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">Y</span>, X <span class="op">=</span> <span class="va">X</span>, formula <span class="op">=</span> <span class="op">~</span> <span class="va">season</span>,</span>
@@ -510,7 +546,7 @@ the shared site effect is negligible once the species-specific terms are
 in the model.</p>
 <p>The species-specific season coefficients (rainy relative to dry, on
 the logit scale) and their 95% Wald intervals:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ci</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit_season</span>, parm <span class="op">=</span> <span class="st">"Xcoef"</span><span class="op">)</span></span>
 <span><span class="va">season_coef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>species <span class="op">=</span> <span class="va">core</span>,</span>
 <span>                          estimate <span class="op">=</span> <span class="va">fit_season</span><span class="op">$</span><span class="va">params</span><span class="op">$</span><span class="va">Xcoef</span><span class="op">[</span>, <span class="st">"seasonrainy"</span><span class="op">]</span>,</span>

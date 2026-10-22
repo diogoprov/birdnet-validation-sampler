@@ -77,7 +77,7 @@ detection_summary.csv (summarise_history()).
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Calibrate confidence scores and build detection histories</h1>
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v2.1.0/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
       <div class="d-none name"><code>calibrate.Rd</code></div>
     </div>
 
@@ -111,6 +111,8 @@ installed;</p></li>
 <span>  min_detections_night <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  dawn_hour <span class="op">=</span> <span class="fl">12</span>,</span>
 <span>  k_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"best_auc"</span>, <span class="st">"one_se_logloss"</span><span class="op">)</span>,</span>
+<span>  uncorrelated <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  effort_curve <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  effort_n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">10</span>, <span class="fl">15</span>, <span class="fl">20</span>, <span class="fl">25</span>, <span class="fl">30</span><span class="op">)</span>,</span>
 <span>  effort_reps <span class="op">=</span> <span class="fl">50</span>,</span>
@@ -165,6 +167,17 @@ night before.</p></dd>
 <dd><p>Number of folds.</p></dd>
 
 
+<dt id="arg-select">select<a class="anchor" aria-label="anchor" href="#arg-select"></a></dt>
+<dd><p>Rule to choose the model; see
+<code><a href="select_calibration_model.html">select_calibration_model()</a></code>.</p></dd>
+
+
+<dt id="arg-uncorrelated">uncorrelated<a class="anchor" aria-label="anchor" href="#arg-uncorrelated"></a></dt>
+<dd><p>Include the m4 variant without the species
+intercept-slope correlation among the candidates; see
+<code><a href="calibration_models.html">calibration_models()</a></code>.</p></dd>
+
+
 <dt id="arg-effort-curve">effort_curve<a class="anchor" aria-label="anchor" href="#arg-effort-curve"></a></dt>
 <dd><p>Draw the effort curve (slow).</p></dd>
 
@@ -186,10 +199,12 @@ and <code>history</code>, invisibly.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The best model is the one with the highest mean AUC. When its refit is
-singular, <code><a href="fit_calibration.html">fit_calibration()</a></code> warns; read <code>calibration_model.txt</code> and
-the comparison before using the probabilities, since a simpler model
-within the cross-validation spread may be preferable.</p>
+    <p>The model is chosen by <code><a href="select_calibration_model.html">select_calibration_model()</a></code> with the rule
+<code>select</code>: the highest mean AUC by default, or the simplest model within
+one standard error of the lowest log-loss, leaving out singular fits
+(<code>"one_se_logloss"</code>, the default from 3.0.0). When the refit is singular,
+<code><a href="fit_calibration.html">fit_calibration()</a></code> warns; read <code>calibration_model.txt</code> and the
+comparison before using the probabilities.</p>
 <p>Converting BirdNET confidence scores into probabilities is recommended
 by the BirdNET authors (Wood &amp; Kahl 2024, <a href="https://doi.org/10.1007/s10336-024-02144-5" class="external-link">doi:10.1007/s10336-024-02144-5</a>
 );

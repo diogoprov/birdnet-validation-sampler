@@ -148,9 +148,30 @@ max(files_per_stratum$n)
 In the example data each site × night × hour holds at most 1 recording,
 so each stratum contains at most one candidate file and the first-stage
 draw keeps all of them (`inclusion_prob` = 1). The same applies to any
-recording schedule with one file per hour. Subsampling then requires
-either minute occasions or the limits described under [Limiting the
-effort](#limiting-the-effort).
+recording schedule with one file per hour. Subsampling then requires a
+coarser stratum, minute occasions or the limits described under
+[Limiting the effort](#limiting-the-effort).
+
+The `strata` argument sets the stratum of the draw: `"night_hour"` (the
+default), `"night"` or `"site_species"`. With `strata = "night"`, the
+files of a night compete with each other, and one is drawn per site ×
+species × night:
+
+``` r
+
+rd_night <- select_clips(pred, sampling_mode = "random_detections",
+                         occasion_unit = "file", threshold = threshold,
+                         n_top = 1, strata = "night")
+#> Sampling mode: random_detections (occasion = file).
+#> 1343 occasions drawn (1 per site x species x night) among 1876 with a prediction >= 0.5.
+#> 3339 clips (every prediction >= 0.5 of the 1343 occasions drawn).
+summary(rd_night$inclusion_prob)
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>  0.5000  0.5000  1.0000  0.7929  1.0000  1.0000
+```
+
+The strata must still not depend on the score; any of the three is
+compatible with the observation-confirmation design.
 
 With `occasion_unit = "minute"`, a stratum holds up to five candidate
 minutes per recording, and one is drawn:
@@ -353,7 +374,7 @@ ggplot(curves, aes(confidence, ecdf, colour = design)) +
 
 ![Empirical cumulative distribution of confidence for all detections,
 random_detections clips and top
-clips.](sampling-designs_files/figure-html/unnamed-chunk-14-1.png)
+clips.](sampling-designs_files/figure-html/unnamed-chunk-15-1.png)
 
 ## Limiting the effort
 

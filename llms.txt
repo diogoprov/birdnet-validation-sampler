@@ -247,6 +247,26 @@ presence and retraining clips.
   : Positive clips for retraining
 - [`plot_precision()`](https://provetelab.org/sheepdog/reference/plot_precision.md)
   : Plot the precision curves
+- [`read_validation_tables()`](https://provetelab.org/sheepdog/reference/read_validation_tables.md)
+  : Read and stack the validation tables
+- [`build_training_set()`](https://provetelab.org/sheepdog/reference/build_training_set.md)
+  : Build the training folders for BirdNET-Analyzer
+- [`exclude_training_clips()`](https://provetelab.org/sheepdog/reference/exclude_training_clips.md)
+  : Leave the training clips out of a manifest
+
+## Stage 1 - Several reviewers
+
+Split the clips among reviewers, measure their agreement and combine
+their verdicts.
+
+- [`assign_reviewers()`](https://provetelab.org/sheepdog/reference/assign_reviewers.md)
+  : Assign the clips to several reviewers
+- [`split_by_reviewer()`](https://provetelab.org/sheepdog/reference/split_by_reviewer.md)
+  : Copy each reviewer's clips to their own folder
+- [`reviewer_agreement()`](https://provetelab.org/sheepdog/reference/reviewer_agreement.md)
+  : Agreement between reviewers
+- [`consensus_verdicts()`](https://provetelab.org/sheepdog/reference/consensus_verdicts.md)
+  : Consensus verdicts of several reviewers
 
 ## Stage 2 - Calibration
 
@@ -261,6 +281,8 @@ build nightly detection histories.
   : Candidate calibration models
 - [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md)
   : Compare calibration models by cross-validation
+- [`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md)
+  : Select the calibration model
 - [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)
   : Fit the calibration model
 - [`calibration_effort()`](https://provetelab.org/sheepdog/reference/calibration_effort.md)
@@ -282,6 +304,10 @@ Effort-standardised site x month matrices from calibrated histories.
   : Write the community matrices
 - [`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md)
   : Community matrices from the detection history
+- [`cell_status()`](https://provetelab.org/sheepdog/reference/cell_status.md)
+  : Status of each site x species cell for the community matrices
+- [`suggest_core_species()`](https://provetelab.org/sheepdog/reference/suggest_core_species.md)
+  : Suggest the core species of the community matrices
 
 ## Package
 

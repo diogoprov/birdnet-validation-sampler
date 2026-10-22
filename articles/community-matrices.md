@@ -85,20 +85,75 @@ therefore applies three filters.
 
 ## Choosing the core species
 
-The choice of core species is made by the user, from the calibration
-diagnostics written by
+A species with no reliable detection at a site may be absent there, or
+the calibration may fail there: the classifier may detect it, but never
+with a calibrated probability that reaches `p_min`. Only the first case
+allows a zero in the matrix.
+[`cell_status()`](https://provetelab.org/sheepdog/reference/cell_status.md)
+separates the two from the calibration model and the reviewed clips.
+Each site × species cell is
+
+- `"reliable"`: the calibrated curve reaches `p_min` within the reviewed
+  scores, with at least `min_n` reviewed clips;
+- `"probably_absent"`: clips were reviewed, but none was a true
+  positive;
+- `"unreliable"`: true positives were reviewed, but the curve never
+  reaches `p_min` (or too few clips were reviewed).
+
+Here the calibration model is refitted to the reviewed clips shipped
+with the example (the model
 [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
-(e.g. `calibration_curves.png`); the package does not make it
-automatically.
-[`summarise_history()`](https://provetelab.org/sheepdog/reference/summarise_history.md)
-gives a complementary view: the number of nights with a reliable
-detection per site and species under each repetition rule (shown below
-for `k_min = 1`).
+refits; see
+[`vignette("calibration")`](https://provetelab.org/sheepdog/articles/calibration.md)):
 
 ``` r
 
-by_site <- summarise_history(history)
-by_site |>
+val_files <- list.files(file.path(ex, "validation"), full.names = TRUE)
+val <- suppressMessages(read_validations(val_files))
+# m4 is singular on these data; the warning is discussed in the calibration
+# article
+fit <- suppressWarnings(fit_calibration(val,
+                                        calibration_models()$m4_species_x_site))
+status <- cell_status(fit, val, p_min = 0.95, min_n = 15)
+status |>
+  dplyr::select(species, site, status) |>
+  tidyr::pivot_wider(names_from = site, values_from = status)
+#> # A tibble: 8 × 5
+#>   species ARA             BAI             NHE        XAR       
+#>   <chr>   <chr>           <chr>           <chr>      <chr>     
+#> 1 boa_ran reliable        reliable        reliable   reliable  
+#> 2 den_nan reliable        reliable        reliable   unreliable
+#> 3 ela_bic reliable        reliable        reliable   reliable  
+#> 4 lep_fus probably_absent probably_absent reliable   unreliable
+#> 5 lep_pod reliable        reliable        reliable   reliable  
+#> 6 phy_cuv reliable        reliable        reliable   reliable  
+#> 7 pse_pla unreliable      unreliable      unreliable unreliable
+#> 8 sci_nas reliable        unreliable      unreliable reliable
+```
+
+[`suggest_core_species()`](https://provetelab.org/sheepdog/reference/suggest_core_species.md)
+keeps the species with no unreliable cell:
+
+``` r
+
+core <- suggest_core_species(status)
+core
+#> [1] "boa_ran" "ela_bic" "lep_pod" "phy_cuv"
+```
+
+Species with at least one unreliable cell (den_nan, lep_fus, pse_pla,
+sci_nas) stay out. Cells classified as probably absent (lep_fus ARA,
+lep_fus BAI) do not exclude a species: a zero there is a plausible
+absence, not a failure of the classifier. The choice remains the
+analyst’s; the table is the evidence for it.
+
+[`summarise_history()`](https://provetelab.org/sheepdog/reference/summarise_history.md)
+gives a complementary view: the number of nights with a reliable
+detection per site and species (shown here for `k_min = 1`):
+
+``` r
+
+summarise_history(history) |>
   dplyr::select(site, species, nights_k1) |>
   tidyr::pivot_wider(names_from = site, values_from = nights_k1)
 #> # A tibble: 8 × 5
@@ -114,25 +169,6 @@ by_site |>
 #> 8 sci_nas    11     0     0     2
 ```
 
-Some species have no reliable detection anywhere (pse_pla): their
-calibrated probabilities rarely reach `p_min`, because their
-false-positive scores overlap those of true detections. Others are
-reliably detected at some sites only (den_nan, lep_fus, sci_nas); they
-are the case the core rule targets, because their absence from a site
-may reflect the classifier rather than the community. Here the core
-species are taken as those with at least one night with a reliable
-detection at every site. This is a convenient proxy for the example;
-with real data the decision rests on the calibration diagnostics, and a
-species that is truly absent from some sites should not be excluded on
-this criterion alone.
-
-``` r
-
-core <- n_sites_ok$species[n_sites_ok$n == length(sites)] |> sort()
-core
-#> [1] "boa_ran" "ela_bic" "lep_pod" "phy_cuv"
-```
-
 ## Building the matrices
 
 ``` r
@@ -140,7 +176,7 @@ core
 mats <- community_matrices(history, core_species = core, k_min = 2,
                            min_nights_month = 5)
 names(mats)
-#> [1] "frequency" "counts"    "effort"
+#> [1] "frequency" "counts"    "effort"    "trials"
 ```
 
 The effort table lists the recorded nights per site x month and whether
@@ -257,7 +293,7 @@ mats <- build_community_matrices(history_file, out, core_species = core,
                                  k_min = 2, min_nights_month = 5)
 #> Matrix: 23 rows (site x month) x 4 species | rule k >= 2
 #> Effort: 23 site x month cells included; 1 dropped for having < 5 recorded nights (see effort_site_month.csv)
-#> Files in: /tmp/RtmpUxXQYF/community_matrices
+#> Files in: /tmp/RtmpDsRIFF/community_matrices
 list.files(out)
 #> [1] "count_matrix_site_month_k2.csv"     "effort_site_month.csv"             
 #> [3] "frequency_matrix_site_month_k2.csv"
@@ -266,22 +302,22 @@ list.files(out)
 ## Preparing the samples
 
 Both analyses below use the same samples. Samples in which no core
-species was detected are removed first: their Bray–Curtis dissimilarity
-is undefined, and they carry no information on species co-occurrence.
-Season is coded as rainy (November to February) or dry.
+species was detected are removed first (`drop_empty = TRUE`): their
+Bray–Curtis dissimilarity is undefined, and they carry no information on
+species co-occurrence. Season is coded as rainy (November to February)
+or dry.
 
 ``` r
 
-samples <- mats$counts |>
+mats_ord <- community_matrices(history, core_species = core, k_min = 2,
+                               min_nights_month = 5, drop_empty = TRUE)
+#> 1 site x month row(s) without any core species dropped: BAI 2021-10
+samples <- mats_ord$counts |>
   dplyr::mutate(
     season = factor(ifelse(substr(month, 6, 7) %in% c("11", "12", "01", "02"),
                            "rainy", "dry"), levels = c("dry", "rainy")),
     site = factor(site)
   )
-empty <- rowSums(samples[, core]) == 0
-paste(samples$site, samples$month)[empty] # samples removed
-#> [1] "BAI 2021-10"
-samples <- samples[!empty, ]
 freq <- as.matrix(samples[, core]) / samples$n_nights_recorded
 rownames(freq) <- paste(samples$site, samples$month)
 ```
@@ -353,7 +389,7 @@ ggplot2::ggplot(scores_pcoa,
 
 ![PCoA of the site x month samples on square-root Bray-Curtis, coloured
 by site, with shape by
-season.](community-matrices_files/figure-html/unnamed-chunk-20-1.png)
+season.](community-matrices_files/figure-html/unnamed-chunk-22-1.png)
 
 Samples with identical frequencies would share a single point; the
 points are jittered slightly so that all of them are visible.
@@ -377,13 +413,15 @@ the samples (Warton et al. 2015; Niku et al. 2019). Jupke & Schäfer
 Y  <- as.matrix(samples[, core])
 storage.mode(Y) <- "double"
 rownames(Y) <- rownames(freq)
-Nt <- matrix(samples$n_nights_recorded, nrow(Y), ncol(Y))
+Nt <- mats_ord$trials
 ```
 
-`Ntrials` is given as a matrix with the dimensions of the response,
-because effort varies among samples. With 4 species, the default
-starting values of `gllvm()` fail for two latent variables, so the model
-starts from zero (`starting.val = "zero"`).
+`Ntrials` must be a matrix with the dimensions of the response when
+effort varies among samples;
+[`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md)
+returns it as `trials`. With 4 species, the default starting values of
+`gllvm()` fail for two latent variables, so the model starts from zero
+(`starting.val = "zero"`).
 
 ``` r
 
@@ -427,7 +465,7 @@ ggplot2::ggplot(lv, ggplot2::aes(LV1, LV2)) +
 
 ![Latent variables of the binomial GLLVM for the site x month samples,
 coloured by site, with shape by season; species loadings shown as
-labels.](community-matrices_files/figure-html/unnamed-chunk-23-1.png)
+labels.](community-matrices_files/figure-html/unnamed-chunk-25-1.png)
 
 The residual correlations among species, induced by the latent
 variables, summarise which species tend to be detected in the same

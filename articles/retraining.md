@@ -61,10 +61,8 @@ which records where each clip was found (`reviewed_path`).
 
 ``` r
 
-validation <- list.files(file.path(ex, "validation"), full.names = TRUE) |>
-  lapply(readr::read_csv, show_col_types = FALSE,
-         col_types = readr::cols(night = "c", recording_date = "c")) |>
-  bind_rows()
+validation <- read_validation_tables(
+  list.files(file.path(ex, "validation"), full.names = TRUE))
 
 review_dir <- file.path(tempdir(), "review")
 unlink(review_dir, recursive = TRUE)
@@ -100,15 +98,9 @@ count(reviewed, species_code, verdict)
 #> 16 Scinax nasicus_sci-nas            positive   159
 ```
 
-[`retraining_clips()`](https://provetelab.org/sheepdog/reference/retraining_clips.md)
-lists the positives; the negatives are the reviewed clips with
-`verdict == "negative"`.
-
-``` r
-
-positives <- retraining_clips(reviewed)
-negatives <- filter(reviewed, verdict == "negative")
-```
+[`read_validation_tables()`](https://provetelab.org/sheepdog/reference/read_validation_tables.md)
+stacks the `validation_by_clip.csv` tables of several sites or rounds,
+keeping every column and verdict.
 
 ## Keeping an independent test set
 
@@ -118,49 +110,30 @@ during training. BirdNET-Analyzer holds out a validation split
 the same site and night share background noise and calling individuals,
 so a random split of clips tends to overstate performance (our
 recommendation, not a statement of the BirdNET documentation). A
-stricter test keeps whole sites (or whole nights) out of training and
-passes them as `--test_data`.
-
-Here we hold out one site:
-
-``` r
-
-test_site <- "NHE"
-split_set <- function(df) {
-  mutate(df, set = if_else(site == test_site, "test", "train"))
-}
-positives <- split_set(positives)
-negatives <- split_set(negatives)
-count(positives, set)
-#> # A tibble: 2 × 2
-#>   set       n
-#>   <chr> <int>
-#> 1 test    365
-#> 2 train  1212
-```
+stricter test keeps whole sites out of training and passes them as
+`--test_data`. Here we hold out one site.
 
 ## Building the training folders
 
-The function below copies the clips into the BirdNET layout: positives
-in `<set>/<species_code>/` and negatives in `<set>/-<species_code>/`. In
-a real project `reviewed_path` points to the clips where the review left
-them.
+[`build_training_set()`](https://provetelab.org/sheepdog/reference/build_training_set.md)
+copies the reviewed clips into the BirdNET layout: positives in
+`<set>/<species_code>/` and negatives in `<set>/-<species_code>/`, where
+`<set>` is `train`, or `test` for the sites in `test_sites`. It reads
+each clip from `reviewed_path`, the place where the review left it,
+leaves out whole-recording clips (which have no confidence score),
+writes the table of copied clips to `training_set.csv`, and warns about
+classes with fewer positive training files than `min_files` (100 by
+default, the number recommended by the BirdNET documentation).
 
 ``` r
 
-copy_to_training <- function(clips, root, negative = FALSE) {
-  prefix <- if (negative) "-" else ""
-  to <- file.path(root, clips$set, paste0(prefix, clips$species_code))
-  for (d in unique(to)) dir.create(d, recursive = TRUE, showWarnings = FALSE)
-  ok <- file.copy(clips$reviewed_path, file.path(to, clips$clip_file))
-  if (!all(ok)) warning(sum(!ok), " clip(s) not copied.")
-  invisible(ok)
-}
-
 training_root <- file.path(tempdir(), "birdnet_training")
 unlink(training_root, recursive = TRUE)
-copy_to_training(positives, training_root)
-copy_to_training(negatives, training_root, negative = TRUE)
+training_set <- build_training_set(reviewed, training_root,
+                                   test_sites = "NHE") |>
+  suppressMessages()
+#> Warning: Class(es) with fewer than 100 positive training files: Leptodactylus
+#> fuscus_lep-fus (48), Pseudis platensis_pse-pla (76)
 
 list.files(file.path(training_root, "train"))
 #>  [1] "-Boana raniceps_boa-ran"            "-Dendropsophus nanus_den-nan"      
@@ -171,44 +144,42 @@ list.files(file.path(training_root, "train"))
 #> [11] "Elachistocleis bicolor_ela-bic"     "Leptodactylus fuscus_lep-fus"      
 #> [13] "Leptodactylus podicipinus_lep-pod"  "Physalaemus cuvieri_phy-cuv"       
 #> [15] "Pseudis platensis_pse-pla"          "Scinax nasicus_sci-nas"
+count(training_set, set, verdict)
+#> # A tibble: 4 × 3
+#>   set   verdict      n
+#>   <chr> <chr>    <int>
+#> 1 test  negative   275
+#> 2 test  positive   365
+#> 3 train negative   615
+#> 4 train positive  1212
 ```
 
-How many files each class received, against the 100 files per species
-recommended by the BirdNET documentation:
+How many positive training files each class received:
 
 ``` r
 
-n_files <- tibble(
-  folder = list.dirs(file.path(training_root, "train"),
-                     recursive = FALSE, full.names = FALSE)) |>
-  mutate(n = vapply(folder, function(f) length(list.files(
-    file.path(training_root, "train", f))), integer(1)),
-    below_100 = n < 100)
-n_files
-#> # A tibble: 16 × 3
-#>    folder                                 n below_100
-#>    <chr>                              <int> <lgl>    
-#>  1 -Boana raniceps_boa-ran               43 TRUE     
-#>  2 -Dendropsophus nanus_den-nan         122 FALSE    
-#>  3 -Elachistocleis bicolor_ela-bic       18 TRUE     
-#>  4 -Leptodactylus fuscus_lep-fus        121 FALSE    
-#>  5 -Leptodactylus podicipinus_lep-pod    24 TRUE     
-#>  6 -Physalaemus cuvieri_phy-cuv          23 TRUE     
-#>  7 -Pseudis platensis_pse-pla           164 FALSE    
-#>  8 -Scinax nasicus_sci-nas              100 FALSE    
-#>  9 Boana raniceps_boa-ran               197 FALSE    
-#> 10 Dendropsophus nanus_den-nan          118 FALSE    
-#> 11 Elachistocleis bicolor_ela-bic       222 FALSE    
-#> 12 Leptodactylus fuscus_lep-fus          48 TRUE     
-#> 13 Leptodactylus podicipinus_lep-pod    194 FALSE    
-#> 14 Physalaemus cuvieri_phy-cuv          217 FALSE    
-#> 15 Pseudis platensis_pse-pla             76 TRUE     
-#> 16 Scinax nasicus_sci-nas               140 FALSE
+n_pos <- training_set |>
+  filter(set == "train", verdict == "positive") |>
+  count(species_code) |>
+  mutate(below_100 = n < 100)
+n_pos
+#> # A tibble: 8 × 3
+#>   species_code                          n below_100
+#>   <chr>                             <int> <lgl>    
+#> 1 Boana raniceps_boa-ran              197 FALSE    
+#> 2 Dendropsophus nanus_den-nan         118 FALSE    
+#> 3 Elachistocleis bicolor_ela-bic      222 FALSE    
+#> 4 Leptodactylus fuscus_lep-fus         48 TRUE     
+#> 5 Leptodactylus podicipinus_lep-pod   194 FALSE    
+#> 6 Physalaemus cuvieri_phy-cuv         217 FALSE    
+#> 7 Pseudis platensis_pse-pla            76 TRUE     
+#> 8 Scinax nasicus_sci-nas              140 FALSE
 ```
 
-With the 2467 reviewed clips of the example, 2 of the 8 positive classes
-have fewer than 100 training files. Classes with few positives are the
-ones that most need clips from further review rounds before retraining.
+With the 2467 reviewed clips of the example, 2 of the 8 classes have
+fewer than 100 positive training files. Classes with few positives are
+the ones that most need clips from further review rounds before
+retraining.
 
 ## Which clips to add
 
@@ -271,7 +242,19 @@ that was estimated from the scores of the old one no longer applies:
     and rebuild the detection histories and community matrices (stage
     3).
 
-Keeping track of which reviewed clips went into training (for example,
-by saving the tables `positives` and `negatives` above with the
-classifier version) makes it possible to exclude them from later
-validation rounds.
+Keep `training_set.csv` with the new classifier. Before reviewing the
+detections of the retrained classifier,
+[`exclude_training_clips()`](https://provetelab.org/sheepdog/reference/exclude_training_clips.md)
+drops from the new manifest the clips that overlap, for the same species
+and recording, a clip used in training:
+
+``` r
+
+manifest_v2 <- select_clips(detections_v2, ...) |>
+  exclude_training_clips(file.path(training_root, "training_set.csv"))
+```
+
+[`extract_validation_clips()`](https://provetelab.org/sheepdog/reference/extract_validation_clips.md)
+records the `classifier` label in `extraction_info.csv`, so each
+validation round can be traced to the classifier that produced its
+clips.

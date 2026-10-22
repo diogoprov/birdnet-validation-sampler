@@ -49,7 +49,7 @@ audio is read or written; cut the clips with cut_clips()."><meta property="og:im
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Select the clips to validate</h1>
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v2.1.0/R/select_clips.R" class="external-link"><code>R/select_clips.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/R/select_clips.R" class="external-link"><code>R/select_clips.R</code></a></small>
       <div class="d-none name"><code>select_clips.Rd</code></div>
     </div>
 
@@ -68,6 +68,7 @@ audio is read or written; cut the clips with <code><a href="cut_clips.html">cut_
 <span>  occasion_unit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file"</span>, <span class="st">"minute"</span><span class="op">)</span>,</span>
 <span>  threshold <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_top <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  strata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"night_hour"</span>, <span class="st">"night"</span>, <span class="st">"site_species"</span><span class="op">)</span>,</span>
 <span>  recording_fraction <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  n_recordings_per_site <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  recordings <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -117,8 +118,19 @@ defines the candidate occasions of <code>"random_detections"</code> and the
 
 <dt id="arg-n-top">n_top<a class="anchor" aria-label="anchor" href="#arg-n-top"></a></dt>
 <dd><p><code>"top"</code>: predictions kept per site x species x night x
-hour. <code>"random_detections"</code>: occasions drawn per site x species x
-night x hour.</p></dd>
+hour. <code>"random_detections"</code>: occasions drawn per stratum (<code>strata</code>).</p></dd>
+
+
+<dt id="arg-strata">strata<a class="anchor" aria-label="anchor" href="#arg-strata"></a></dt>
+<dd><p><code>"random_detections"</code>: the strata of the occasion draw.
+<code>"night_hour"</code> (site x species x night x hour, the rule of 2.0.0),
+<code>"night"</code> (site x species x night) or <code>"site_species"</code>. With one
+recording per hour and <code>occasion_unit = "file"</code>, <code>"night_hour"</code> holds
+a single occasion per stratum and draws nothing (every
+<code>inclusion_prob</code> is 1); a coarser stratum makes the draw random.
+With a coarser stratum and <code>balance_by_hour = TRUE</code> under
+<code>target_total</code> or <code>max_per_species</code>, <code>inclusion_prob</code> is conditional
+on the first draw (a warning says so).</p></dd>
 
 
 <dt id="arg-recording-fraction">recording_fraction<a class="anchor" aria-label="anchor" href="#arg-recording-fraction"></a></dt>
@@ -237,7 +249,8 @@ score-to-probability calibration of <code><a href="calibrate.html">calibrate()</
 estimate false-positive rates: top-score clips hold fewer false
 positives than a random sample.</p></li>
 <li><p><code>"random_detections"</code> draws, at random, <code>n_top</code> occasions per
-site x species x night x hour among the occasions with at least one
+stratum (by default site x species x night x hour; see <code>strata</code>)
+among the occasions with at least one
 prediction of the species with confidence &gt;= <code>threshold</code>, and keeps
 every prediction &gt;= <code>threshold</code> of each drawn occasion. This is the
 observation-confirmation design of Chambert et al. (2015,

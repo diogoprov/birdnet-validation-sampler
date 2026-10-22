@@ -1,5 +1,108 @@
 # Changelog
 
+## sheepdog (development version)
+
+### Calibration
+
+- [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md)
+  also scores the predicted probabilities on the held-out folds:
+  log-loss and Brier score (proper scoring rules), calibration intercept
+  and slope, the share of singular fold fits (`prop_singular`) and the
+  position of each model (`complexity`).
+- New
+  [`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md),
+  with the rules `"best_auc"` (the rule of 2.x) and `"one_se_logloss"`
+  (the simplest model within one standard error of the lowest log-loss,
+  leaving out singular fits).
+  [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
+  takes the rule in `select`; the default stays `"best_auc"` until
+  3.0.0, when it becomes `"one_se_logloss"`.
+- `calibration_models(uncorrelated = TRUE)` adds
+  `m5_species_x_site_uncorrelated`, the m4 structure without the
+  correlation between the species intercepts and slopes, which avoids
+  the singular fits of m4;
+  [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
+  takes it with `uncorrelated = TRUE`.
+
+### Sampling
+
+- [`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md)
+  gains `strata` (`"night_hour"`, the rule of 2.0.0, `"night"` or
+  `"site_species"`) for the occasion draw of `"random_detections"`. With
+  one recording per hour, the default stratum holds a single occasion
+  and draws nothing; a coarser stratum makes the draw random. A coarser
+  stratum combined with `balance_by_hour = TRUE` under a target or limit
+  warns that `inclusion_prob` is conditional on the first draw.
+- [`extract_validation_clips()`](https://provetelab.org/sheepdog/reference/extract_validation_clips.md)
+  writes `extraction_info.csv` with the provenance of the run (date,
+  versions of sheepdog and R, folder of the tables, the new `classifier`
+  label and every argument of
+  [`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md)).
+- The message on predictions dropped by `min_confidence` is no longer
+  printed when none is dropped.
+
+### Review and retraining
+
+- New
+  [`read_validation_tables()`](https://provetelab.org/sheepdog/reference/read_validation_tables.md):
+  stacks the `validation_by_clip.csv` tables of several sites or rounds
+  with every column and verdict (unlike
+  [`read_validations()`](https://provetelab.org/sheepdog/reference/read_validations.md),
+  which keeps only what the calibration needs).
+- New
+  [`build_training_set()`](https://provetelab.org/sheepdog/reference/build_training_set.md):
+  copies the reviewed clips into the training layout of BirdNET-Analyzer
+  (positives in `<species_code>/`, negatives in `-<species_code>/`),
+  with the sites in `test_sites` in a separate `test` folder for
+  `--test_data`; writes `training_set.csv` and warns about classes with
+  fewer positive files than `min_files`.
+- New
+  [`exclude_training_clips()`](https://provetelab.org/sheepdog/reference/exclude_training_clips.md):
+  drops from a manifest the clips that overlap a clip used in training
+  (same species and recording).
+- [`vignette("retraining")`](https://provetelab.org/sheepdog/articles/retraining.md)
+  uses the new functions.
+
+### Community matrices
+
+- New
+  [`cell_status()`](https://provetelab.org/sheepdog/reference/cell_status.md):
+  classifies each site x species cell of the calibration as `"reliable"`
+  (the calibrated curve reaches `p_min` within the reviewed scores, with
+  at least `min_n` clips), `"probably_absent"` (no true positive among
+  the reviewed clips) or `"unreliable"`, separating the absence of a
+  species from a calibration that fails.
+- New
+  [`suggest_core_species()`](https://provetelab.org/sheepdog/reference/suggest_core_species.md):
+  the species with no unreliable cell.
+- [`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md)
+  gains `drop_empty` (drop the site x month rows without any core
+  species) and returns `trials`, the matrix of nights recorded with the
+  dimensions of the species counts, for the `Ntrials` of a binomial
+  model such as
+  [`gllvm::gllvm()`](https://jenniniku.github.io/gllvm/reference/gllvm.html).
+- [`vignette("community-matrices")`](https://provetelab.org/sheepdog/articles/community-matrices.md)
+  uses the new functions.
+
+### Several reviewers
+
+- New
+  [`assign_reviewers()`](https://provetelab.org/sheepdog/reference/assign_reviewers.md):
+  splits the clips of a manifest among reviewers, balanced within
+  species, with a fraction (`overlap`) given to a second reviewer.
+- New
+  [`split_by_reviewer()`](https://provetelab.org/sheepdog/reference/split_by_reviewer.md):
+  copies each reviewer’s clips to their own folder tree for the BirdNET
+  GUI.
+- New
+  [`reviewer_agreement()`](https://provetelab.org/sheepdog/reference/reviewer_agreement.md):
+  agreement and kappa per species on the clips reviewed more than once
+  (Cohen’s kappa for two reviewers, Fleiss’ kappa otherwise).
+- New
+  [`consensus_verdicts()`](https://provetelab.org/sheepdog/reference/consensus_verdicts.md):
+  one verdict per clip; conflicting clips get `verdict = "disagreement"`
+  and are left out of precision and calibration.
+
 ## sheepdog 2.1.0
 
 ### Bug fixes
