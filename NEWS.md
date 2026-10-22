@@ -1,3 +1,19 @@
+# sheepdog (development version)
+
+## Several reviewers
+
+- New `assign_reviewers()`: splits the clips of a manifest among
+  reviewers, balanced within species, with a fraction (`overlap`) given to
+  a second reviewer.
+- New `split_by_reviewer()`: copies each reviewer's clips to their own
+  folder tree for the BirdNET GUI.
+- New `reviewer_agreement()`: agreement and kappa per species on the
+  clips reviewed more than once (Cohen's kappa for two reviewers, Fleiss'
+  kappa otherwise).
+- New `consensus_verdicts()`: one verdict per clip; conflicting clips get
+  `verdict = "disagreement"` and are left out of precision and
+  calibration.
+
 # sheepdog 2.1.0
 
 ## Bug fixes
