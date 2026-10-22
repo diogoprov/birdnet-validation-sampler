@@ -42,20 +42,6 @@ presence and retraining clips.
 - [`exclude_training_clips()`](https://provetelab.org/sheepdog/reference/exclude_training_clips.md)
   : Leave the training clips out of a manifest
 
-## Stage 1 - Several reviewers
-
-Split the clips among reviewers, measure their agreement and combine
-their verdicts.
-
-- [`assign_reviewers()`](https://provetelab.org/sheepdog/reference/assign_reviewers.md)
-  : Assign the clips to several reviewers
-- [`split_by_reviewer()`](https://provetelab.org/sheepdog/reference/split_by_reviewer.md)
-  : Copy each reviewer's clips to their own folder
-- [`reviewer_agreement()`](https://provetelab.org/sheepdog/reference/reviewer_agreement.md)
-  : Agreement between reviewers
-- [`consensus_verdicts()`](https://provetelab.org/sheepdog/reference/consensus_verdicts.md)
-  : Consensus verdicts of several reviewers
-
 ## Stage 2 - Calibration
 
 Calibrate confidence scores into probabilities of true detection and

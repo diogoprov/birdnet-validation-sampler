@@ -84,25 +84,6 @@
 - [`vignette("community-matrices")`](https://provetelab.org/sheepdog/articles/community-matrices.md)
   uses the new functions.
 
-### Several reviewers
-
-- New
-  [`assign_reviewers()`](https://provetelab.org/sheepdog/reference/assign_reviewers.md):
-  splits the clips of a manifest among reviewers, balanced within
-  species, with a fraction (`overlap`) given to a second reviewer.
-- New
-  [`split_by_reviewer()`](https://provetelab.org/sheepdog/reference/split_by_reviewer.md):
-  copies each reviewer’s clips to their own folder tree for the BirdNET
-  GUI.
-- New
-  [`reviewer_agreement()`](https://provetelab.org/sheepdog/reference/reviewer_agreement.md):
-  agreement and kappa per species on the clips reviewed more than once
-  (Cohen’s kappa for two reviewers, Fleiss’ kappa otherwise).
-- New
-  [`consensus_verdicts()`](https://provetelab.org/sheepdog/reference/consensus_verdicts.md):
-  one verdict per clip; conflicting clips get `verdict = "disagreement"`
-  and are left out of precision and calibration.
-
 ## sheepdog 2.1.0
 
 ### Bug fixes
