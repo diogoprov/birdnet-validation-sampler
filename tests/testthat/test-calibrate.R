@@ -166,3 +166,55 @@ test_that("fit_calibration() warns about a singular fit", {
   expect_true(lme4::isSingular(fit))
   expect_no_warning(fit_calibration(val, calibration_models()$m0_global))
 })
+
+test_that("score_probabilities() scores perfect and calibrated predictions", {
+  sc <- sheepdog:::score_probabilities(c(0, 1, 1, 0), c(0, 1, 1, 0))
+  expect_lt(sc[["logloss"]], 1e-4)
+  expect_equal(sc[["brier"]], 0, tolerance = 1e-8)
+  # previsoes calibradas: intercepto ~0 e inclinacao ~1
+  withr::with_seed(1, {
+    p  <- stats::runif(5000)
+    tp <- stats::rbinom(5000, 1, p)
+  })
+  sc <- sheepdog:::score_probabilities(tp, p)
+  expect_equal(sc[["cal_intercept"]], 0, tolerance = 0.1)
+  expect_equal(sc[["cal_slope"]], 1, tolerance = 0.1)
+})
+
+test_that("compare_calibration_models() reports the scoring metrics", {
+  val <- suppressMessages(read_validations(
+    ref_path("cal", paste0("validacao_por_clipe_", c("ARA", "XAR2", "BAI"),
+                           ".csv")), site_map = c(XAR2 = "XAR")))
+  cv <- suppressMessages(compare_calibration_models(
+    val, calibration_models()[1], k_folds = 3))
+  expect_named(cv, c("model", "formula", "auc_mean", "auc_sd", "n_failed",
+                     "logloss_mean", "logloss_sd", "brier_mean", "brier_sd",
+                     "cal_intercept", "cal_slope", "prop_singular",
+                     "complexity"))
+  expect_true(cv$logloss_mean > 0 && cv$brier_mean > 0)
+  expect_identical(cv$prop_singular, 0)
+})
+
+test_that("calibration_models() adds the uncorrelated m4 on request", {
+  expect_length(calibration_models(), 5)
+  m <- calibration_models(uncorrelated = TRUE)
+  expect_identical(names(m)[6], "m5_species_x_site_uncorrelated")
+  expect_false(grepl("(logit_conf | species)", deparse1(m[[6]]), fixed = TRUE))
+})
+
+test_that("select_calibration_model() applies the two rules", {
+  cv <- tibble::tibble(
+    model = c("m0", "m1", "m2"), auc_mean = c(0.80, 0.90, 0.91),
+    logloss_mean = c(0.50, 0.402, 0.40), logloss_sd = c(0.02, 0.02, 0.02),
+    prop_singular = c(0, 0, 1), complexity = 1:3)
+  expect_identical(select_calibration_model(cv, "best_auc"), "m2")
+  # m2 e singular; m1 e o melhor entre os regulares
+  expect_identical(select_calibration_model(cv, "one_se_logloss"), "m1")
+  # sem singularidade: m1 esta a menos de 1 EP de m2 e e mais simples
+  cv$prop_singular <- 0
+  expect_identical(select_calibration_model(cv, "one_se_logloss"), "m1")
+  # todos singulares: avisa e escolhe entre todos
+  cv$prop_singular <- 1
+  expect_warning(select_calibration_model(cv, "one_se_logloss"),
+                 "Every candidate")
+})

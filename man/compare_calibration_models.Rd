@@ -22,14 +22,28 @@ compare_calibration_models(
 generator is left as it was.}
 }
 \value{
-A tibble with \code{model}, \code{formula}, \code{auc_mean}, \code{auc_sd} and
-\code{n_failed} (folds whose fit failed, left out of the mean), ordered from
-the highest mean AUC. Failed folds also raise a warning.
+A tibble with \code{model}, \code{formula}, \code{auc_mean}, \code{auc_sd},
+\code{n_failed} (folds whose fit failed, left out of the means),
+\code{logloss_mean}, \code{logloss_sd}, \code{brier_mean}, \code{brier_sd},
+\code{cal_intercept} and \code{cal_slope} (means over the folds), \code{prop_singular}
+(share of the fold fits that were singular) and \code{complexity} (position
+of the model in \code{models}), ordered from the highest mean AUC. Failed
+folds also raise a warning.
 }
 \description{
-Fits each candidate model with k-fold cross-validation and reports the
-mean and standard deviation of the AUC on the held-out folds. Folds are
-stratified within site x species, so every level appears in both the
-training and the test sets. Models with random effects need the 'lme4'
-package.
+Fits each candidate model with k-fold cross-validation and scores the
+predicted probabilities on the held-out folds. Folds are stratified
+within site x species, so every level appears in both the training and
+the test sets. Models with random effects need the 'lme4' package.
+}
+\details{
+The AUC measures discrimination (whether true detections get higher
+probabilities than false ones). The log-loss and the Brier score are
+proper scoring rules: they reward probabilities close to the observed
+outcomes, which is what matters when the probabilities are compared
+with \code{p_min} (Gneiting & Raftery 2007, \doi{10.1198/016214506000001437}).
+The calibration intercept and slope come from a logistic regression of
+the verdicts on the logit of the predicted probabilities in each test
+fold: a well calibrated model has intercept 0 and slope 1; a slope below
+1 means probabilities too extreme (overfitting).
 }

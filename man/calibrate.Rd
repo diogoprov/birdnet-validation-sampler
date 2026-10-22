@@ -14,6 +14,8 @@ calibrate(
   min_detections_night = 1,
   dawn_hour = 12,
   k_folds = 5,
+  select = c("best_auc", "one_se_logloss"),
+  uncorrelated = FALSE,
   effort_curve = FALSE,
   effort_n = c(5, 10, 15, 20, 25, 30),
   effort_reps = 50,
@@ -45,6 +47,13 @@ detections for a night with detection.}
 night before.}
 
 \item{k_folds}{Number of folds.}
+
+\item{select}{Rule to choose the model; see
+\code{\link[=select_calibration_model]{select_calibration_model()}}.}
+
+\item{uncorrelated}{Include the m4 variant without the species
+intercept-slope correlation among the candidates; see
+\code{\link[=calibration_models]{calibration_models()}}.}
 
 \item{effort_curve}{Draw the effort curve (slow).}
 
@@ -79,10 +88,12 @@ installed;
 }
 }
 \details{
-The best model is the one with the highest mean AUC. When its refit is
-singular, \code{\link[=fit_calibration]{fit_calibration()}} warns; read \code{calibration_model.txt} and
-the comparison before using the probabilities, since a simpler model
-within the cross-validation spread may be preferable.
+The model is chosen by \code{\link[=select_calibration_model]{select_calibration_model()}} with the rule
+\code{select}: the highest mean AUC by default, or the simplest model within
+one standard error of the lowest log-loss, leaving out singular fits
+(\code{"one_se_logloss"}, the default from 3.0.0). When the refit is singular,
+\code{\link[=fit_calibration]{fit_calibration()}} warns; read \code{calibration_model.txt} and the
+comparison before using the probabilities.
 
 Converting BirdNET confidence scores into probabilities is recommended
 by the BirdNET authors (Wood & Kahl 2024, \doi{10.1007/s10336-024-02144-5});
