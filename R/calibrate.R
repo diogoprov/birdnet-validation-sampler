@@ -243,7 +243,10 @@ select_calibration_model <- function(comparison,
 #' correlation at +-1) raises a warning: the fixed effects and the
 #' predictions can still be used, but the variance components on the
 #' boundary should not be interpreted, and a simpler model may predict as
-#' well. Check them with `lme4::VarCorr()`.
+#' well. Check them with `lme4::VarCorr()`. The other messages of
+#' `lme4::glmer()` are passed on, prefixed by `lme4:`, and every message of
+#' the fit is kept in the attribute `sheepdog_messages` of the model
+#' (convergence warnings of 'lme4' are warnings and are passed on as such).
 #'
 #' With `engine = "brms"`, the model is fitted in a Bayesian framework
 #' with 'brms' (Bernoulli family, logit link). The prior must be given
@@ -292,7 +295,7 @@ fit_calibration <- function(validations, formula,
     }
     return(fit)
   }
-  fit <- fit_model(formula, validations)
+  fit <- fit_model(formula, validations, quiet = FALSE)
   if (inherits(fit, "merMod") && lme4::isSingular(fit)) {
     warning("Singular fit (boundary) of the calibration model ",
             deparse1(formula), ": a variance component is estimated at ",
@@ -326,16 +329,31 @@ fit_levels <- function(fit) {
 }
 
 # Ajusta glm (sem efeitos aleatorios) ou glmer
-fit_model <- function(formula, dados) {
+# Ajusta glm (sem efeitos aleatorios) ou glmer. As mensagens do glmer sao
+# guardadas no atributo `sheepdog_messages`; com quiet = FALSE, as que nao
+# tratam de ajuste singular (que vira aviso em fit_calibration()) sao
+# repassadas ao usuario. Nos folds e nas repeticoes da curva de esforco
+# ficam quietas, para nao repetir a mesma mensagem dezenas de vezes.
+fit_model <- function(formula, dados, quiet = TRUE) {
   if (!has_random_effects(formula)) {
-    stats::glm(formula, data = dados, family = stats::binomial)
-  } else {
-    require_suggested("lme4", "to fit calibration models with random effects")
-    suppressMessages(lme4::glmer(
-      formula, data = dados, family = stats::binomial,
-      control = lme4::glmerControl(optimizer = "bobyqa",
-                                   optCtrl = list(maxfun = 1e5))))
+    return(stats::glm(formula, data = dados, family = stats::binomial))
   }
+  require_suggested("lme4", "to fit calibration models with random effects")
+  mensagens <- character()
+  fit <- withCallingHandlers(
+    lme4::glmer(formula, data = dados, family = stats::binomial,
+                control = lme4::glmerControl(optimizer = "bobyqa",
+                                             optCtrl = list(maxfun = 1e5))),
+    message = function(m) {
+      mensagens <<- c(mensagens, trimws(conditionMessage(m)))
+      invokeRestart("muffleMessage")
+    })
+  attr(fit, "sheepdog_messages") <- mensagens
+  if (!quiet) {
+    outras <- mensagens[!grepl("singular", mensagens, ignore.case = TRUE)]
+    for (m in outras) message("lme4: ", m)
+  }
+  fit
 }
 
 # P(TP) prevista; niveis novos de especie/local usam so os efeitos fixos
@@ -753,6 +771,12 @@ calibrate <- function(validation_files, prediction_tables, output_dir,
   saveRDS(fit_final, file.path(output_dir, "calibration_model.rds"))
   utils::capture.output(summary(fit_final),
                         file = file.path(output_dir, "calibration_model.txt"))
+  # mensagens do ajuste (lme4) no fim do resumo do modelo
+  msgs <- attr(fit_final, "sheepdog_messages")
+  if (length(msgs) > 0) {
+    cat("\nMessages of the fit:\n", paste0("  ", msgs, "\n"), sep = "",
+        file = file.path(output_dir, "calibration_model.txt"), append = TRUE)
+  }
 
   if (requireNamespace("ggplot2", quietly = TRUE)) {
     g <- plot_calibration(fit_final, val, min_confidence, p_min, melhor)

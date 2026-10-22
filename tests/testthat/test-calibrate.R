@@ -218,3 +218,34 @@ test_that("select_calibration_model() applies the two rules", {
   expect_warning(select_calibration_model(cv, "one_se_logloss"),
                  "Every candidate")
 })
+
+test_that("fit_calibration() keeps the glmer messages and passes them on", {
+  skip_if_not_installed("lme4")
+  ex <- system.file("extdata", "example", "validation", package = "sheepdog")
+  val <- suppressMessages(read_validations(list.files(ex, full.names = TRUE)))
+  # o m4 e singular nestes dados: o glmer emite "boundary (singular) fit"
+  msgs <- testthat::capture_messages(
+    fit <- suppressWarnings(fit_calibration(
+      val, calibration_models()$m4_species_x_site)))
+  guardadas <- attr(fit, "sheepdog_messages")
+  expect_true(any(grepl("singular", guardadas)))
+  # a mensagem de ajuste singular nao e repetida (ja vira aviso)
+  expect_false(any(grepl("singular", msgs)))
+  # um modelo sem efeitos aleatorios nao tem mensagens
+  expect_null(attr(fit_calibration(val, tp ~ logit_conf), "sheepdog_messages"))
+})
+
+test_that("fit_model() passes on messages other than singular fits", {
+  skip_if_not_installed("lme4")
+  # glmer simulado que emite uma mensagem qualquer
+  local_mocked_bindings(
+    glmer = function(...) { message("some lme4 note"); structure(list(), class = "merMod") },
+    .package = "lme4")
+  msgs <- testthat::capture_messages(
+    fit <- sheepdog:::fit_model(tp ~ logit_conf + (1 | species),
+                                data.frame(), quiet = FALSE))
+  expect_true(any(grepl("lme4: some lme4 note", msgs)))
+  expect_identical(attr(fit, "sheepdog_messages"), "some lme4 note")
+  expect_length(testthat::capture_messages(
+    sheepdog:::fit_model(tp ~ logit_conf + (1 | species), data.frame())), 0)
+})

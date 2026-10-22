@@ -1,3 +1,15 @@
+# sheepdog (development version)
+
+## Calibration
+
+- `fit_calibration()` (and `calibrate()`) passes on the messages of
+  `lme4::glmer()`, prefixed by `lme4:`, instead of hiding them; the
+  message on singular fits is not repeated, since it already becomes a
+  warning. Every message of the fit is kept in the attribute
+  `sheepdog_messages` of the model, and `calibrate()` appends them to
+  `calibration_model.txt`. The fits of the cross-validation folds and of
+  the effort curve stay quiet.
+
 # sheepdog 2.2.0
 
 ## Calibration

@@ -62,7 +62,7 @@ para o DOI do Zenodo acompanhar as vignettes novas.
   passarem dos limites; posterior predictive check (ex.: proporção de TP
   por faixa de score); P(TP) de cada detecção como posterior, permitindo
   regras do tipo P(P(TP) >= `p_min`) alta. `brms` em Suggests. *(Feito: 2.2.0, PR #28.)*
-- [ ] **Mensagens do `glmer()`** *(adiado para a 2.3.0)*: hoje `fit_model()` usa `suppressMessages()`;
+- [x] **Mensagens do `glmer()`** *(adiado para a 2.3.0; feito no PR das mensagens, repassadas com prefixo `lme4:` e guardadas em `sheepdog_messages`)*: hoje `fit_model()` usa `suppressMessages()`;
   a singularidade já vira aviso (2.x), mas outras mensagens informativas
   somem. Repassar as mensagens ao usuário, ou registrá-las no objeto.
 - [x] **Medidas de calibração além do AUC** (decidido), todas nos folds de
