@@ -171,7 +171,8 @@ The site x species intercepts of m4 have a standard deviation of
 `r if (has_lme4) round(attr(lme4::VarCorr(fit_full)[["site:species"]], "stddev"), 2)`
 on the logit scale, a large effect: at a given score, the odds of a true
 detection differ several-fold among sites for the same species. The fit is
-nevertheless singular: the correlation between the species intercepts and
+nevertheless singular, which is why `fit_calibration()` warned above: the
+correlation between the species intercepts and
 slopes is estimated at
 `r if (has_lme4) round(attr(lme4::VarCorr(fit_full)$species, "correlation")[1, 2], 2)`,
 on the boundary of its range. With `r nlevels(val$species)` species, a
@@ -379,10 +380,11 @@ hierarchical models keep the threshold on P(TP) consistent across them.
 
 Before using calibrated probabilities, check that:
 
-1. **The GLMM converged.** `compare_calibration_models()` and
-   `fit_calibration()` suppress the messages of `lme4::glmer()`, and a
-   fold whose fit fails is dropped from the mean AUC. Inspect the refitted
-   model directly:
+1. **The GLMM converged.** `fit_calibration()` warns when the refitted
+   model is singular, as it did for m4 above, and convergence warnings of
+   `lme4::glmer()` are passed on. `compare_calibration_models()` drops a
+   fold whose fit fails from the mean AUC, warns about it and counts it in
+   `n_failed`. Inspect the refitted model directly:
 
    ```{r, eval = has_lme4}
    lme4::isSingular(fit_full)
@@ -416,9 +418,11 @@ or in species composition.
 compares the candidate models, refits the best one by mean AUC, plots the
 calibration curves (if ggplot2 is installed), scores every detection,
 builds the detection history and writes all the outputs to `output_dir`.
-Because it takes the first row of the comparison table without checking
-for singular fits, read the comparison, `calibration_model.txt` and the
-curves it writes before using its output.
+It refits the model with the highest mean AUC; when that refit is
+singular, as m4 is here, it warns (through `fit_calibration()`) but keeps
+the model. Read the comparison, `calibration_model.txt` and the curves it
+writes before using its output, and refit a simpler model with
+`fit_calibration()` if the comparison supports it.
 
 ```{r, eval = has_lme4}
 out_dir <- file.path(tempdir(), "calibration")

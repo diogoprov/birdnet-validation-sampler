@@ -10,7 +10,13 @@ fit_calibration(validations, formula)
 \item{validations}{Table returned by \code{\link[=read_validations]{read_validations()}}.}
 
 \item{formula}{Model formula, usually the best one of
-\code{\link[=compare_calibration_models]{compare_calibration_models()}}.}
+\code{\link[=compare_calibration_models]{compare_calibration_models()}}.
+
+A model with random effects whose fit is singular (a variance estimated
+at zero or a correlation at +-1) raises a warning: the fixed effects and
+the predictions can still be used, but the variance components on the
+boundary should not be interpreted, and a simpler model may predict as
+well. Check them with \code{lme4::VarCorr()}.}
 }
 \value{
 A \code{glm} (no random effects) or \code{glmerMod} model, with the

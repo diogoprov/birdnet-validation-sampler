@@ -79,6 +79,11 @@ installed;
 }
 }
 \details{
+The best model is the one with the highest mean AUC. When its refit is
+singular, \code{\link[=fit_calibration]{fit_calibration()}} warns; read \code{calibration_model.txt} and
+the comparison before using the probabilities, since a simpler model
+within the cross-validation spread may be preferable.
+
 Converting BirdNET confidence scores into probabilities is recommended
 by the BirdNET authors (Wood & Kahl 2024, \doi{10.1007/s10336-024-02144-5});
 calibration by logistic regression on logit(score) is applied, for

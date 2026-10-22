@@ -99,7 +99,10 @@ keep the default of 50 repetitions (or more): the standard deviation is
 itself estimated from `n_reps` values and is unstable with few
 repetitions. Training sizes must stay below the size of the smallest cell
 minus five, since at most `n - 5` clips of a cell are used for training
-whatever the value of `n_train`.
+whatever the value of `n_train`. `calibration_effort()` warns when a
+requested size exceeds that limit, and reports the training size actually
+used (`n_train_mean`), the size of the test set (`n_test_mean`) and the
+repetitions dropped (`n_failed`) next to the AUC.
 
 ```{r}
 n_train <- c(5, 10, 20, 30, 45, 60, 70)
@@ -150,8 +153,7 @@ n_lo  <- min(n_train)
 n_mid <- 20
 n_hi  <- max(n_train)
 # test clips left with the largest training size
-cell_n     <- count(val, site, species)$n
-n_test_max <- nrow(val) - sum(pmin(n_hi, pmax(cell_n - 5, 1)))
+n_test_max <- round(eff_m0$n_test_mean[eff_m0$n_per_cell == n_hi])
 ```
 
 ### Reading the curve

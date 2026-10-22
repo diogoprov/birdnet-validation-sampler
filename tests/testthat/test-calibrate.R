@@ -25,8 +25,15 @@ rodar_calibracao <- function(saida, ...) {
 test_that("calibrate() reproduces v1.2.0", {
   skip_if_not_installed("lme4")
   saida <- withr::local_tempdir()
-  res <- rodar_calibracao(saida, effort_curve = TRUE, effort_n = c(5, 10),
-                          effort_reps = 3)
+  # o m4 refeito sobre estes dados e singular; o aviso e testado a parte
+  res <- withCallingHandlers(
+    rodar_calibracao(saida, effort_curve = TRUE, effort_n = c(5, 10),
+                     effort_reps = 3),
+    warning = function(w) {
+      if (grepl("Singular fit", conditionMessage(w))) {
+        invokeRestart("muffleWarning")
+      }
+    })
   for (f in names(saidas_cal)) {
     ref <- ref_table("cal", saidas_cal[[f]])
     if (f == "model_comparison.csv") {
@@ -36,8 +43,11 @@ test_that("calibrate() reproduces v1.2.0", {
     # o lme4 converge em valores que diferem por volta da 6a casa entre
     # plataformas (otimizador e BLAS); 1e-3 relativo basta para dizer que
     # o resultado e o mesmo
-    expect_same_table(read_as_text(file.path(saida, f)), ref, label = f,
-                      tolerance = 1e-3)
+    # colunas novas (n_failed, n_train_mean, n_test_mean) nao existiam na
+    # v1.2.0: compara so as colunas da referencia
+    novo <- read_as_text(file.path(saida, f))
+    expect_true(all(names(ref) %in% names(novo)), label = f)
+    expect_same_table(novo[names(ref)], ref, label = f, tolerance = 1e-3)
   }
   expect_true(file.exists(file.path(saida, "calibration_model.rds")))
   expect_s4_class(res$fit, "glmerMod")
@@ -113,4 +123,46 @@ test_that("detection_history() applies the repetition rule", {
   expect_identical(h$detection_k3, c(0L, 0L, 0L))
   expect_identical(h$detection, h$detection_k2)
   expect_identical(summarise_history(h)$nights_k2, 1L)
+})
+
+test_that("compare_calibration_models() counts and warns about failed folds", {
+  val <- suppressMessages(read_validations(
+    ref_path("cal", paste0("validacao_por_clipe_", c("ARA", "XAR2", "BAI"),
+                           ".csv")), site_map = c(XAR2 = "XAR")))
+  # uma formula com variavel inexistente falha em todos os folds
+  modelos <- list(ok = tp ~ logit_conf, ruim = tp ~ logit_conf + nao_existe)
+  expect_warning(
+    cv <- suppressMessages(compare_calibration_models(val, modelos,
+                                                      k_folds = 3)),
+    "ruim: the fit failed in 3 of 3 folds")
+  expect_identical(cv$n_failed[cv$model == "ok"], 0L)
+  expect_identical(cv$n_failed[cv$model == "ruim"], 3L)
+})
+
+test_that("calibration_effort() reports the sizes actually used", {
+  val <- suppressMessages(read_validations(
+    ref_path("cal", paste0("validacao_por_clipe_", c("ARA", "XAR2", "BAI"),
+                           ".csv")), site_map = c(XAR2 = "XAR")))
+  menor <- min(dplyr::count(val, site, species)$n)
+  expect_warning(
+    ef <- suppressMessages(calibration_effort(
+      val, tp ~ logit_conf, n_train = c(5, menor), n_reps = 2)),
+    "exceeds the smallest")
+  expect_named(ef, c("n_per_cell", "auc_mean", "auc_sd", "n_train_mean",
+                     "n_test_mean", "n_failed"))
+  expect_equal(ef$n_train_mean[1], 5)
+  expect_lt(ef$n_train_mean[2], menor)
+  expect_true(all(diff(ef$n_test_mean) < 0))
+})
+
+test_that("fit_calibration() warns about a singular fit", {
+  skip_if_not_installed("lme4")
+  # no exemplo, o m4 tem a correlacao intercepto-inclinacao de especie em +1
+  ex <- system.file("extdata", "example", "validation", package = "sheepdog")
+  val <- suppressMessages(read_validations(list.files(ex, full.names = TRUE)))
+  expect_warning(
+    fit <- fit_calibration(val, calibration_models()$m4_species_x_site),
+    "Singular fit")
+  expect_true(lme4::isSingular(fit))
+  expect_no_warning(fit_calibration(val, calibration_models()$m0_global))
 })

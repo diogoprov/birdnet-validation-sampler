@@ -16,7 +16,13 @@ calibration_effort(
 \item{validations}{Table returned by \code{\link[=read_validations]{read_validations()}}.}
 
 \item{formula}{Model formula, usually the best one of
-\code{\link[=compare_calibration_models]{compare_calibration_models()}}.}
+\code{\link[=compare_calibration_models]{compare_calibration_models()}}.
+
+A model with random effects whose fit is singular (a variance estimated
+at zero or a correlation at +-1) raises a warning: the fixed effects and
+the predictions can still be used, but the variance components on the
+boundary should not be interpreted, and a simpler model may predict as
+well. Check them with \code{lme4::VarCorr()}.}
 
 \item{n_train}{Training sizes per site x species.}
 
@@ -26,7 +32,10 @@ calibration_effort(
 left as it was.}
 }
 \value{
-A tibble with \code{n_per_cell}, \code{auc_mean} and \code{auc_sd}.
+A tibble with \code{n_per_cell} (the requested training size),
+\code{auc_mean}, \code{auc_sd}, \code{n_train_mean} (mean clips per cell actually
+used for training), \code{n_test_mean} (mean size of the test set) and
+\code{n_failed} (repetitions dropped).
 }
 \description{
 How many reviewed clips per site x species are needed to calibrate
@@ -34,4 +43,10 @@ well? For each training size, draws that many clips per cell (keeping
 at least five for testing), fits the model and computes the AUC on the
 remaining clips. Repetitions with fewer than 50 test clips, or whose
 fit fails, are dropped.
+}
+\details{
+Cells with fewer than \code{n_train + 5} clips contribute all but five of
+their clips, so the training size actually used can be below
+\code{n_train}; it is reported in \code{n_train_mean}, with a warning. The test
+set shrinks as \code{n_train} grows (\code{n_test_mean}), which widens \code{auc_sd}.
 }
