@@ -4,7 +4,13 @@
 \alias{detection_history}
 \title{Nightly detection history}
 \usage{
-detection_history(scored, p_min = 0.95, min_detections_night = 1)
+detection_history(
+  scored,
+  p_min = 0.95,
+  min_detections_night = 1,
+  rule = c("mean", "probability"),
+  prob_min = 0.9
+)
 }
 \arguments{
 \item{scored}{Table returned by \code{\link[=score_detections]{score_detections()}}.}
@@ -14,6 +20,17 @@ confidence score).}
 
 \item{min_detections_night}{Repetition rule: minimum number of reliable
 detections for a night with detection.}
+
+\item{rule}{When a detection is reliable: \code{"mean"}, its calibrated
+probability (the posterior mean with \code{engine = "brms"}) is >= \code{p_min};
+\code{"probability"}, the posterior probability that P(TP) >= \code{p_min} (the
+\code{pr_reliable} of a model fitted with \code{engine = "brms"}) is >=
+\code{prob_min}. The second rule propagates the uncertainty of the
+calibration and is more conservative where few clips were reviewed.}
+
+\item{prob_min}{\code{rule = "probability"}: threshold on \code{pr_reliable}.
+\code{pr_reliable} is computed in \code{\link[=score_detections]{score_detections()}} for its \code{p_min};
+use the same \code{p_min} in both.}
 }
 \value{
 A tibble with \code{site}, \code{species}, \code{night}, \code{n_detections},

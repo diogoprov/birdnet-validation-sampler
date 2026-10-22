@@ -4,27 +4,53 @@
 \alias{fit_calibration}
 \title{Fit the calibration model}
 \usage{
-fit_calibration(validations, formula)
+fit_calibration(
+  validations,
+  formula,
+  engine = c("lme4", "brms"),
+  prior = NULL,
+  ...
+)
 }
 \arguments{
 \item{validations}{Table returned by \code{\link[=read_validations]{read_validations()}}.}
 
 \item{formula}{Model formula, usually the best one of
-\code{\link[=compare_calibration_models]{compare_calibration_models()}}.
+\code{\link[=compare_calibration_models]{compare_calibration_models()}}.}
 
-A model with random effects whose fit is singular (a variance estimated
-at zero or a correlation at +-1) raises a warning: the fixed effects and
-the predictions can still be used, but the variance components on the
-boundary should not be interpreted, and a simpler model may predict as
-well. Check them with \code{lme4::VarCorr()}.}
+\item{engine}{\code{"lme4"} or \code{"brms"}.}
+
+\item{prior}{\code{engine = "brms"}: the prior (a \code{brmsprior} object), e.g.
+from \code{\link[=calibration_prior]{calibration_prior()}}. Required.}
+
+\item{...}{\code{engine = "brms"}: further arguments for \code{brms::brm()} (e.g.
+\code{chains}, \code{iter}, \code{cores}, \code{backend}, \code{seed}).}
 }
 \value{
-A \code{glm} (no random effects) or \code{glmerMod} model, with the
-attribute \code{sheepdog_levels} (the species and site levels), used by
+A \code{glm}, \code{glmerMod} or \code{brmsfit} model, with the attribute
+\code{sheepdog_levels} (the species and site levels), used by
 \code{\link[=score_detections]{score_detections()}} and \code{\link[=plot_calibration]{plot_calibration()}}.
 }
 \description{
 Fits a calibration model to all the reviewed clips. The species and
 site levels of \code{validations} are stored with the model, so that
 \code{\link[=score_detections]{score_detections()}} can score new detections.
+}
+\details{
+With \code{engine = "lme4"} (default), the model is fitted by maximum
+likelihood ('lme4' for random effects, \code{glm()} otherwise). A model with
+random effects whose fit is singular (a variance estimated at zero or a
+correlation at +-1) raises a warning: the fixed effects and the
+predictions can still be used, but the variance components on the
+boundary should not be interpreted, and a simpler model may predict as
+well. Check them with \code{lme4::VarCorr()}.
+
+With \code{engine = "brms"}, the model is fitted in a Bayesian framework
+with 'brms' (Bernoulli family, logit link). The prior must be given
+explicitly; \code{\link[=calibration_prior]{calibration_prior()}} builds an example centred on an
+already calibrated score. After the fit, \code{\link[=calibration_diagnostics]{calibration_diagnostics()}}
+runs and a warning is raised when R-hat, the effective sample sizes or
+the divergent transitions fail the usual limits. Check the prior with
+\code{\link[=prior_predictive_calibration]{prior_predictive_calibration()}}, the fit with \code{brms::pp_check()} and
+the sensitivity to the prior with \code{\link[=calibration_sensitivity]{calibration_sensitivity()}}.
 }

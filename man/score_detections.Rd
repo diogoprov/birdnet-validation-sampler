@@ -4,7 +4,15 @@
 \alias{score_detections}
 \title{Score every detection with the calibration model}
 \usage{
-score_detections(tables, fit, min_confidence = 0.1, dawn_hour = 12)
+score_detections(
+  tables,
+  fit,
+  min_confidence = 0.1,
+  dawn_hour = 12,
+  p_min = 0.95,
+  lower_prob = 0.05,
+  grid_step = 0.01
+)
 }
 \arguments{
 \item{tables}{Named character vector of selection-table paths, named by
@@ -16,10 +24,27 @@ site (the site names of the calibration).}
 
 \item{dawn_hour}{Recordings that start before this hour belong to the
 night before.}
+
+\item{p_min, lower_prob}{Models fitted with \code{engine = "brms"}: the
+threshold of \code{pr_reliable} and the probability of the lower quantile
+\code{p_tp_lower}.}
+
+\item{grid_step}{Models fitted with \code{engine = "brms"}: step of the grid
+of scores on which the posterior is computed.
+
+With a model fitted with \code{engine = "brms"}, the posterior of P(TP) is
+computed once on a grid of scores (step \code{grid_step}) for each site x
+species and assigned to the detections by their score rounded to the
+grid, so that the cost does not depend on the number of detections;
+the rounding error is small next to the uncertainty of the calibration.
+Each detection then gets the posterior mean (\code{p_tp}), a lower quantile
+(\code{p_tp_lower}) and the posterior probability that P(TP) >= \code{p_min}
+(\code{pr_reliable}). \code{\link[=detection_history]{detection_history()}} can use either rule.}
 }
 \value{
 A tibble with \code{site}, \code{species}, \code{date}, \code{night}, \code{hour},
-\code{confidence}, \code{p_tp}, \code{begin_path} and \code{file_offset}.
+\code{confidence}, \code{p_tp}, \code{begin_path} and \code{file_offset}; with a model
+fitted with \code{engine = "brms"}, also \code{p_tp_lower} and \code{pr_reliable}.
 }
 \description{
 Reads the complete BirdNET selection tables (not only the reviewed

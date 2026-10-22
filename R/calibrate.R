@@ -237,21 +237,61 @@ select_calibration_model <- function(comparison,
 #' site levels of `validations` are stored with the model, so that
 #' [score_detections()] can score new detections.
 #'
-#' @inheritParams compare_calibration_models
-#' @param formula Model formula, usually the best one of
-#'   [compare_calibration_models()].
-#'
-#' A model with random effects whose fit is singular (a variance estimated
-#' at zero or a correlation at +-1) raises a warning: the fixed effects and
-#' the predictions can still be used, but the variance components on the
+#' With `engine = "lme4"` (default), the model is fitted by maximum
+#' likelihood ('lme4' for random effects, `glm()` otherwise). A model with
+#' random effects whose fit is singular (a variance estimated at zero or a
+#' correlation at +-1) raises a warning: the fixed effects and the
+#' predictions can still be used, but the variance components on the
 #' boundary should not be interpreted, and a simpler model may predict as
 #' well. Check them with `lme4::VarCorr()`.
 #'
-#' @return A `glm` (no random effects) or `glmerMod` model, with the
-#'   attribute `sheepdog_levels` (the species and site levels), used by
+#' With `engine = "brms"`, the model is fitted in a Bayesian framework
+#' with 'brms' (Bernoulli family, logit link). The prior must be given
+#' explicitly; [calibration_prior()] builds an example centred on an
+#' already calibrated score. After the fit, [calibration_diagnostics()]
+#' runs and a warning is raised when R-hat, the effective sample sizes or
+#' the divergent transitions fail the usual limits. Check the prior with
+#' [prior_predictive_calibration()], the fit with `brms::pp_check()` and
+#' the sensitivity to the prior with [calibration_sensitivity()].
+#'
+#' @inheritParams compare_calibration_models
+#' @param formula Model formula, usually the best one of
+#'   [compare_calibration_models()].
+#' @param engine `"lme4"` or `"brms"`.
+#' @param prior `engine = "brms"`: the prior (a `brmsprior` object), e.g.
+#'   from [calibration_prior()]. Required.
+#' @param ... `engine = "brms"`: further arguments for `brms::brm()` (e.g.
+#'   `chains`, `iter`, `cores`, `backend`, `seed`).
+#'
+#' @return A `glm`, `glmerMod` or `brmsfit` model, with the attribute
+#'   `sheepdog_levels` (the species and site levels), used by
 #'   [score_detections()] and [plot_calibration()].
 #' @export
-fit_calibration <- function(validations, formula) {
+fit_calibration <- function(validations, formula,
+                            engine = c("lme4", "brms"), prior = NULL, ...) {
+  engine <- match.arg(engine)
+  if (engine == "brms") {
+    require_suggested("brms", "for Bayesian calibration models")
+    if (is.null(prior)) {
+      stop("engine = \"brms\" needs an explicit `prior`; ",
+           "calibration_prior() builds an example centred on an already ",
+           "calibrated score.", call. = FALSE)
+    }
+    fit <- brms::brm(formula, data = validations,
+                     family = brms::bernoulli(), prior = prior, ...)
+    attr(fit, "sheepdog_levels") <- list(
+      species = levels(validations$species), site = levels(validations$site))
+    diag <- calibration_diagnostics(fit)
+    if (!diag$ok) {
+      warning("The Bayesian calibration model did not pass the convergence ",
+              "checks (max R-hat ", signif(diag$max_rhat, 4),
+              ", min bulk/tail ESS ", round(diag$min_ess_bulk), "/",
+              round(diag$min_ess_tail), ", ", diag$n_divergent,
+              " divergent transitions). Run longer chains or revise the ",
+              "model before using it.", call. = FALSE)
+    }
+    return(fit)
+  }
   fit <- fit_model(formula, validations)
   if (inherits(fit, "merMod") && lme4::isSingular(fit)) {
     warning("Singular fit (boundary) of the calibration model ",
@@ -300,7 +340,10 @@ fit_model <- function(formula, dados) {
 
 # P(TP) prevista; niveis novos de especie/local usam so os efeitos fixos
 predict_tp <- function(modelo, dados) {
-  if (inherits(modelo, "merMod")) {
+  if (inherits(modelo, "brmsfit")) {
+    colMeans(brms::posterior_epred(modelo, newdata = dados,
+                                   allow_new_levels = TRUE))
+  } else if (inherits(modelo, "merMod")) {
     stats::predict(modelo, newdata = dados, type = "response",
                    allow.new.levels = TRUE)
   } else {
@@ -393,12 +436,29 @@ calibration_effort <- function(validations, formula,
 #' @param min_confidence Detections below this confidence are not scored.
 #' @param dawn_hour Recordings that start before this hour belong to the
 #'   night before.
+#' @param p_min,lower_prob Models fitted with `engine = "brms"`: the
+#'   threshold of `pr_reliable` and the probability of the lower quantile
+#'   `p_tp_lower`.
+#' @param grid_step Models fitted with `engine = "brms"`: step of the grid
+#'   of scores on which the posterior is computed.
+#'
+#' With a model fitted with `engine = "brms"`, the posterior of P(TP) is
+#' computed once on a grid of scores (step `grid_step`) for each site x
+#' species and assigned to the detections by their score rounded to the
+#' grid, so that the cost does not depend on the number of detections;
+#' the rounding error is small next to the uncertainty of the calibration.
+#' Each detection then gets the posterior mean (`p_tp`), a lower quantile
+#' (`p_tp_lower`) and the posterior probability that P(TP) >= `p_min`
+#' (`pr_reliable`). [detection_history()] can use either rule.
 #'
 #' @return A tibble with `site`, `species`, `date`, `night`, `hour`,
-#'   `confidence`, `p_tp`, `begin_path` and `file_offset`.
+#'   `confidence`, `p_tp`, `begin_path` and `file_offset`; with a model
+#'   fitted with `engine = "brms"`, also `p_tp_lower` and `pr_reliable`.
 #' @export
 score_detections <- function(tables, fit, min_confidence = 0.1,
-                             dawn_hour = 12) {
+                             dawn_hour = 12, p_min = 0.95, lower_prob = 0.05,
+                             grid_step = 0.01) {
+  bayes <- inherits(fit, "brmsfit")
   niveis <- fit_levels(fit)
   novos <- setdiff(names(tables), niveis$site)
   if (length(novos) > 0) {
@@ -434,6 +494,22 @@ score_detections <- function(tables, fit, min_confidence = 0.1,
             " of species NOT calibrated were dropped).")
     if (nrow(tb) == 0) return(NULL)
 
+    if (bayes) {
+      especies <- sort(unique(tb$species))
+      gd <- grid_draws(fit, loc, especies, min_confidence, grid_step)
+      resumo <- bind_cols(
+        mutate(gd$grid, species = as.character(species),
+               .g = rep(seq_along(score_grid(min_confidence, grid_step)),
+                        length(especies))) |>
+          select(species, .g),
+        summarise_grid_draws(gd$draws, p_min, lower_prob))
+      return(tb |>
+        mutate(.g = snap_to_grid(confidence, min_confidence, grid_step)) |>
+        left_join(resumo, by = c("species", ".g")) |>
+        select(site, species, date, night, hour, confidence, p_tp,
+               p_tp_lower, pr_reliable, begin_path, file_offset))
+    }
+
     tb |>
       mutate(logit_conf = safe_logit(confidence),
              species = factor(species, levels = niveis$species),
@@ -461,18 +537,40 @@ score_detections <- function(tables, fit, min_confidence = 0.1,
 #'   confidence score).
 #' @param min_detections_night Repetition rule: minimum number of reliable
 #'   detections for a night with detection.
+#' @param rule When a detection is reliable: `"mean"`, its calibrated
+#'   probability (the posterior mean with `engine = "brms"`) is >= `p_min`;
+#'   `"probability"`, the posterior probability that P(TP) >= `p_min` (the
+#'   `pr_reliable` of a model fitted with `engine = "brms"`) is >=
+#'   `prob_min`. The second rule propagates the uncertainty of the
+#'   calibration and is more conservative where few clips were reviewed.
+#' @param prob_min `rule = "probability"`: threshold on `pr_reliable`.
+#'   `pr_reliable` is computed in [score_detections()] for its `p_min`;
+#'   use the same `p_min` in both.
 #'
 #' @return A tibble with `site`, `species`, `night`, `n_detections`,
 #'   `n_reliable`, `p_tp_max`, `detection_k1`, `detection_k2`,
 #'   `detection_k3` and `detection`.
 #' @export
 detection_history <- function(scored, p_min = 0.95,
-                              min_detections_night = 1) {
+                              min_detections_night = 1,
+                              rule = c("mean", "probability"),
+                              prob_min = 0.9) {
+  rule <- match.arg(rule)
+  if (rule == "probability") {
+    if (!"pr_reliable" %in% names(scored)) {
+      stop("rule = \"probability\" needs `pr_reliable`, from ",
+           "score_detections() with a model fitted with engine = \"brms\".",
+           call. = FALSE)
+    }
+    scored <- mutate(scored, .confiavel = pr_reliable >= prob_min)
+  } else {
+    scored <- mutate(scored, .confiavel = p_tp >= p_min)
+  }
   scored |>
     group_by(site, species, night) |>
     summarise(
       n_detections = n(),
-      n_reliable   = sum(p_tp >= p_min),
+      n_reliable   = sum(.confiavel),
       p_tp_max     = max(p_tp),
       detection_k1 = as.integer(n_reliable >= 1),
       detection_k2 = as.integer(n_reliable >= 2),
@@ -592,6 +690,19 @@ plot_calibration <- function(fit, validations, min_confidence = 0.1,
 #' @inheritParams compare_calibration_models
 #' @param select Rule to choose the model; see
 #'   [select_calibration_model()].
+#' @param engine Engine of the final fit: `"lme4"` or `"brms"` (see
+#'   [fit_calibration()]). The comparison of the candidate models always
+#'   uses maximum likelihood (fast); with `"brms"`, the selected model is
+#'   then refitted in a Bayesian framework, its convergence diagnostics are
+#'   written to `calibration_diagnostics.csv`, and the scored detections
+#'   carry `p_tp_lower` and `pr_reliable`.
+#' @param prior `engine = "brms"`: the prior, as a `brmsprior` object or as
+#'   a function of the selected formula and the validations that returns
+#'   one, e.g. `calibration_prior` (whose classes then match the selected
+#'   model). Required with `"brms"`.
+#' @param brms_args `engine = "brms"`: list of further arguments for
+#'   `brms::brm()` (e.g. `list(chains = 4, cores = 4, backend = "cmdstanr")`).
+#' @inheritParams detection_history
 #' @param uncorrelated Include the m4 variant without the species
 #'   intercept-slope correlation among the candidates; see
 #'   [calibration_models()].
@@ -609,8 +720,17 @@ calibrate <- function(validation_files, prediction_tables, output_dir,
                       select = c("best_auc", "one_se_logloss"),
                       uncorrelated = FALSE, effort_curve = FALSE,
                       effort_n = c(5, 10, 15, 20, 25, 30),
-                      effort_reps = 50, seed = 2026) {
+                      effort_reps = 50, engine = c("lme4", "brms"),
+                      prior = NULL, brms_args = list(),
+                      rule = c("mean", "probability"), prob_min = 0.9,
+                      seed = 2026) {
   select <- match.arg(select)
+  engine <- match.arg(engine)
+  rule   <- match.arg(rule)
+  if (engine == "brms" && is.null(prior)) {
+    stop("engine = \"brms\" needs an explicit `prior` (e.g. ",
+         "prior = calibration_prior).", call. = FALSE)
+  }
   val <- read_validations(validation_files, site_map)
   modelos <- calibration_models(uncorrelated)
 
@@ -620,7 +740,16 @@ calibrate <- function(validation_files, prediction_tables, output_dir,
   melhor <- select_calibration_model(cv, select, k_folds)
   message("Selected model (", select, "): ", melhor)
 
-  fit_final <- fit_calibration(val, modelos[[melhor]])
+  if (engine == "brms") {
+    prior_final <- if (is.function(prior)) prior(modelos[[melhor]], val) else prior
+    fit_final <- do.call(fit_calibration,
+                         c(list(val, modelos[[melhor]], engine = "brms",
+                                prior = prior_final), brms_args))
+    write_csv(calibration_diagnostics(fit_final),
+              file.path(output_dir, "calibration_diagnostics.csv"))
+  } else {
+    fit_final <- fit_calibration(val, modelos[[melhor]])
+  }
   saveRDS(fit_final, file.path(output_dir, "calibration_model.rds"))
   utils::capture.output(summary(fit_final),
                         file = file.path(output_dir, "calibration_model.txt"))
@@ -642,14 +771,15 @@ calibrate <- function(validation_files, prediction_tables, output_dir,
   }
 
   pontuadas <- score_detections(prediction_tables, fit_final,
-                                min_confidence, dawn_hour)
+                                min_confidence, dawn_hour, p_min = p_min)
   historico <- NULL
   if (nrow(pontuadas) > 0) {
     walk(split(pontuadas, pontuadas$site, drop = TRUE), function(d) {
       write_csv(d, file.path(output_dir, paste0("calibrated_detections_",
                                                 d$site[1], ".csv")))
     })
-    historico <- detection_history(pontuadas, p_min, min_detections_night)
+    historico <- detection_history(pontuadas, p_min, min_detections_night,
+                                   rule = rule, prob_min = prob_min)
     write_csv(historico,
               file.path(output_dir, "nightly_detection_history.csv"))
     write_csv(summarise_history(historico),

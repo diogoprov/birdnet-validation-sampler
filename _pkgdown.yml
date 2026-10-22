@@ -57,6 +57,16 @@ reference:
       - detection_history
       - summarise_history
       - plot_calibration
+  - title: Stage 2 - Bayesian calibration
+    desc: Fit the calibration with brms, check the prior and the fit, and propagate the uncertainty to the histories and the matrices.
+    contents:
+      - calibration_prior
+      - prior_predictive_calibration
+      - calibration_diagnostics
+      - calibration_sensitivity
+      - plot_calibration_draws
+      - history_draws
+      - community_matrices_draws
   - title: Stage 3 - Community matrices
     desc: Effort-standardised site x month matrices from calibrated histories.
     contents:
@@ -75,6 +85,7 @@ articles:
       - sampling-designs
       - validation-effort
       - calibration
+      - bayesian-calibration
       - community-matrices
   - title: Beyond the three stages
     navbar: Beyond the three stages

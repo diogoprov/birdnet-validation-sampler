@@ -16,6 +16,38 @@
   correlation between the species intercepts and slopes, which avoids the
   singular fits of m4; `calibrate()` takes it with `uncorrelated = TRUE`.
 
+## Bayesian calibration
+
+- `fit_calibration()` gains `engine = "brms"`: the model is fitted with
+  'brms' (Bernoulli, logit link). The prior must be given explicitly.
+  Convergence diagnostics run after the fit and warn when R-hat, the
+  effective sample sizes or the divergent transitions fail the usual
+  limits.
+- New `calibration_prior()`: a weakly informative example prior centred on
+  an already calibrated score (slope 1, intercept at the mean logit score),
+  with the slope truncated at 0, `exponential(1)` on the standard
+  deviations and `lkj(2)` on the correlations; only the classes present in
+  the formula are returned.
+- New `prior_predictive_calibration()` and `plot_calibration_draws()` for
+  prior predictive checks and for the uncertainty of the fitted curve;
+  `calibration_diagnostics()`; `calibration_sensitivity()`, a power-scaling
+  sensitivity analysis with 'priorsense'.
+- `score_detections()` with a 'brms' model computes the posterior on a
+  grid of scores per site x species and returns `p_tp` (posterior mean),
+  `p_tp_lower` and `pr_reliable` (posterior probability that P(TP) >=
+  `p_min`).
+- `detection_history()` gains `rule = c("mean", "probability")` and
+  `prob_min`: a detection is reliable when its posterior mean reaches
+  `p_min`, or when `pr_reliable` reaches `prob_min`.
+- New `history_draws()` and `community_matrices_draws()`: the detection
+  histories and the community matrices over posterior draws, with the
+  posterior mean and an interval for each cell.
+- `calibrate()` gains `engine`, `prior` (a prior or a function of the
+  selected formula, such as `calibration_prior`), `brms_args`, `rule` and
+  `prob_min`; with 'brms' it also writes `calibration_diagnostics.csv`.
+- New `vignette("bayesian-calibration")`, precomputed.
+- 'brms', 'posterior' and 'priorsense' are suggested packages.
+
 ## Sampling
 
 - `select_clips()` gains `strata` (`"night_hour"`, the rule of 2.0.0,

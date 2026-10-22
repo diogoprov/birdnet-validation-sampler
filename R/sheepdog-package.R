@@ -12,6 +12,8 @@ NULL
 
 # Colunas usadas via tidy evaluation (evita NOTEs do R CMD check)
 utils::globalVariables(c(
+  ".g", ".confiavel", "pr_reliable", "p_tp_lower", "draw", "max_rhat",
+  "min_ess_bulk", "min_ess_tail", "n_divergent", "n", 
   ".N", ".dur", ".dia", ".n", ".ordem", ".p1", ".p2", "begin_path",
   "begin_time", "clip_end", "clip_start", "confidence", "duration",
   "end_time",

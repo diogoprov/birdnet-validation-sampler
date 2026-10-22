@@ -19,6 +19,11 @@ calibrate(
   effort_curve = FALSE,
   effort_n = c(5, 10, 15, 20, 25, 30),
   effort_reps = 50,
+  engine = c("lme4", "brms"),
+  prior = NULL,
+  brms_args = list(),
+  rule = c("mean", "probability"),
+  prob_min = 0.9,
   seed = 2026
 )
 }
@@ -59,6 +64,32 @@ intercept-slope correlation among the candidates; see
 
 \item{effort_n, effort_reps}{Training sizes and repetitions of the
 effort curve.}
+
+\item{engine}{Engine of the final fit: \code{"lme4"} or \code{"brms"} (see
+\code{\link[=fit_calibration]{fit_calibration()}}). The comparison of the candidate models always
+uses maximum likelihood (fast); with \code{"brms"}, the selected model is
+then refitted in a Bayesian framework, its convergence diagnostics are
+written to \code{calibration_diagnostics.csv}, and the scored detections
+carry \code{p_tp_lower} and \code{pr_reliable}.}
+
+\item{prior}{\code{engine = "brms"}: the prior, as a \code{brmsprior} object or as
+a function of the selected formula and the validations that returns
+one, e.g. \code{calibration_prior} (whose classes then match the selected
+model). Required with \code{"brms"}.}
+
+\item{brms_args}{\code{engine = "brms"}: list of further arguments for
+\code{brms::brm()} (e.g. \code{list(chains = 4, cores = 4, backend = "cmdstanr")}).}
+
+\item{rule}{When a detection is reliable: \code{"mean"}, its calibrated
+probability (the posterior mean with \code{engine = "brms"}) is >= \code{p_min};
+\code{"probability"}, the posterior probability that P(TP) >= \code{p_min} (the
+\code{pr_reliable} of a model fitted with \code{engine = "brms"}) is >=
+\code{prob_min}. The second rule propagates the uncertainty of the
+calibration and is more conservative where few clips were reviewed.}
+
+\item{prob_min}{\code{rule = "probability"}: threshold on \code{pr_reliable}.
+\code{pr_reliable} is computed in \code{\link[=score_detections]{score_detections()}} for its \code{p_min};
+use the same \code{p_min} in both.}
 
 \item{seed}{Seed of the fold assignment. The global random number
 generator is left as it was.}
