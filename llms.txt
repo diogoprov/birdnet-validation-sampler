@@ -199,7 +199,7 @@ If sheepdog is useful in your work, please cite it (GitHub’s “Cite this
 repository” button uses `CITATION.cff`):
 
 > Provete, D. B. (2026). *sheepdog: sample, validate and calibrate
-> BirdNET detections for passive acoustic monitoring* (v2.0.0). Zenodo.
+> BirdNET detections for passive acoustic monitoring* (v2.1.0). Zenodo.
 > <https://doi.org/10.5281/zenodo.22696210>
 
 The hex sticker uses a dog silhouette by Mozillian from

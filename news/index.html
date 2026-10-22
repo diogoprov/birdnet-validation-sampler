@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,7 +47,24 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="sheepdog-development-version">sheepdog (development version)<a class="anchor" aria-label="anchor" href="#sheepdog-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="2.1.0" id="sheepdog-210">sheepdog 2.1.0<a class="anchor" aria-label="anchor" href="#sheepdog-210"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-2-1-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-2-1-0"></a></h3>
+<ul><li>
+<code><a href="../reference/classify_review.html">classify_review()</a></code> classified the clips wrongly on Windows when <code>review_dir</code> had backslashes (e.g. <code>E:\validation\clips</code>): the name of the review folder entered the search for the verdict, so a folder named after a verdict marked every clip with it.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="warnings-and-diagnostics-2-1-0">Warnings and diagnostics<a class="anchor" aria-label="anchor" href="#warnings-and-diagnostics-2-1-0"></a></h3>
+<ul><li>
+<code><a href="../reference/fit_calibration.html">fit_calibration()</a></code> warns when the fitted GLMM is singular (a variance estimated at zero or a correlation at +-1); <code><a href="../reference/calibrate.html">calibrate()</a></code> passes the warning on.</li>
+<li>
+<code><a href="../reference/compare_calibration_models.html">compare_calibration_models()</a></code> warns about, and counts in the new column <code>n_failed</code>, the folds whose fit failed; before, they were silently left out of the mean AUC.</li>
+<li>
+<code><a href="../reference/calibration_effort.html">calibration_effort()</a></code> warns when <code>n_train</code> exceeds the smallest site x species cell minus five, and returns <code>n_train_mean</code>, <code>n_test_mean</code> and <code>n_failed</code>.</li>
+<li>The documentation of <code><a href="../reference/select_clips.html">select_clips()</a></code> explains that <code>target_total</code> gives rare species higher inclusion probabilities (weight pooled estimates by <code>1 / inclusion_prob</code>) and that the default <code>recording_fraction = 0.01</code> draws one recording per site in small projects.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-2-1-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-2-1-0"></a></h3>
 <ul><li>New articles, run on a simulated example data set: <code><a href="../articles/sheepdog.html">vignette("sheepdog")</a></code> (Get started), <code><a href="../articles/sampling-designs.html">vignette("sampling-designs")</a></code>, <code><a href="../articles/validation-effort.html">vignette("validation-effort")</a></code>, <code><a href="../articles/calibration.html">vignette("calibration")</a></code>, <code><a href="../articles/community-matrices.html">vignette("community-matrices")</a></code> and <code><a href="../articles/retraining.html">vignette("retraining")</a></code> (training folders for BirdNET-Analyzer from the reviewed clips).</li>
 <li>The example data set (4 sites x 8 species x 6 months; selection tables, the list of recordings, reviewed clips and a calibrated nightly history) ships in <code>system.file("extdata", "example", package = "sheepdog")</code>; <code>data-raw/make_example_data.R</code> generates it.</li>
 <li>
@@ -55,7 +72,14 @@
 <li>
 <code><a href="../articles/community-matrices.html">vignette("community-matrices")</a></code> uses a PCoA on square-root Bray-Curtis (<code><a href="https://rdrr.io/pkg/ape/man/pcoa.html" class="external-link">ape::pcoa()</a></code>) and a binomial GLLVM (‘gllvm’) for a model-based ordination and a test of the season effect; ‘ape’, ‘gllvm’ and ‘vegan’ are suggested packages, used only there.</li>
 <li>The vignette <code>crywolf-contract</code> is now <code>crywolf-integration</code> (“Integration with crywolf”).</li>
+<li>The repository was renamed to <code>diogoprov/sheepdog</code>; the package site is <a href="https://provetelab.org/sheepdog/" class="uri">https://provetelab.org/sheepdog/</a>.</li>
+<li>The package can be installed from r-universe (<code>install.packages("sheepdog", repos = c("https://diogoprov.r-universe.dev", "https://cloud.r-project.org"))</code>), with binaries for Windows, macOS and Linux.</li>
 </ul></div>
+<div class="section level3">
+<h3 id="tests-2-1-0">Tests<a class="anchor" aria-label="anchor" href="#tests-2-1-0"></a></h3>
+<ul><li>The comparisons with the v1.2.0 outputs tolerate floating-point differences between platforms (relative tolerance 1e-3 for the calibration outputs, 1e-8 for the others); R CMD check runs on macOS, Windows and Ubuntu in GitHub Actions.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.0.0" id="sheepdog-200">sheepdog 2.0.0<a class="anchor" aria-label="anchor" href="#sheepdog-200"></a></h2>
 <p>The four scripts of birdnet-validation-sampler v1.2.0 become the R package <strong>sheepdog</strong>. With the same settings and seed, the package writes the same tables as v1.2.0, after the renaming below; the test suite checks this against outputs of the v1.2.0 scripts on simulated data. The scripts are preserved in the <code>v1.2.0</code> tag.</p>

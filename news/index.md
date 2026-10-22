@@ -1,6 +1,36 @@
 # Changelog
 
-## sheepdog (development version)
+## sheepdog 2.1.0
+
+### Bug fixes
+
+- [`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md)
+  classified the clips wrongly on Windows when `review_dir` had
+  backslashes (e.g. `E:\validation\clips`): the name of the review
+  folder entered the search for the verdict, so a folder named after a
+  verdict marked every clip with it.
+
+### Warnings and diagnostics
+
+- [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)
+  warns when the fitted GLMM is singular (a variance estimated at zero
+  or a correlation at +-1);
+  [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
+  passes the warning on.
+- [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md)
+  warns about, and counts in the new column `n_failed`, the folds whose
+  fit failed; before, they were silently left out of the mean AUC.
+- [`calibration_effort()`](https://provetelab.org/sheepdog/reference/calibration_effort.md)
+  warns when `n_train` exceeds the smallest site x species cell minus
+  five, and returns `n_train_mean`, `n_test_mean` and `n_failed`.
+- The documentation of
+  [`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md)
+  explains that `target_total` gives rare species higher inclusion
+  probabilities (weight pooled estimates by `1 / inclusion_prob`) and
+  that the default `recording_fraction = 0.01` draws one recording per
+  site in small projects.
+
+### Documentation
 
 - New articles, run on a simulated example data set:
   [`vignette("sheepdog")`](https://provetelab.org/sheepdog/articles/sheepdog.md)
@@ -30,6 +60,18 @@
   used only there.
 - The vignette `crywolf-contract` is now `crywolf-integration`
   (“Integration with crywolf”).
+- The repository was renamed to `diogoprov/sheepdog`; the package site
+  is <https://provetelab.org/sheepdog/>.
+- The package can be installed from r-universe
+  (`install.packages("sheepdog", repos = c("https://diogoprov.r-universe.dev", "https://cloud.r-project.org"))`),
+  with binaries for Windows, macOS and Linux.
+
+### Tests
+
+- The comparisons with the v1.2.0 outputs tolerate floating-point
+  differences between platforms (relative tolerance 1e-3 for the
+  calibration outputs, 1e-8 for the others); R CMD check runs on macOS,
+  Windows and Ubuntu in GitHub Actions.
 
 ## sheepdog 2.0.0
 
