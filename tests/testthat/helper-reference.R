@@ -65,8 +65,10 @@ read_as_text <- function(caminho) {
 # Colunas numericas sao comparadas com tolerancia, porque os ultimos digitos
 # das contas variam entre plataformas; nos nomes de clipe, o prefixo da
 # confidence (3 casas) e ignorado, porque o arredondamento de valores no
-# limite tambem varia -- a confidence em si e comparada na sua coluna
-expect_same_table <- function(novo, ref, label = NULL) {
+# limite tambem varia -- a confidence em si e comparada na sua coluna.
+# As saidas de modelos ajustados por otimizacao (GLMM) pedem uma tolerancia
+# maior, passada em `tolerance`
+expect_same_table <- function(novo, ref, label = NULL, tolerance = 1e-8) {
   normalizar <- function(df) {
     df[] <- lapply(df, function(x) {
       num <- suppressWarnings(as.numeric(x))
@@ -77,7 +79,7 @@ expect_same_table <- function(novo, ref, label = NULL) {
     }
     df
   }
-  expect_equal(normalizar(novo), normalizar(ref), tolerance = 1e-8,
+  expect_equal(normalizar(novo), normalizar(ref), tolerance = tolerance,
                label = label)
 }
 
