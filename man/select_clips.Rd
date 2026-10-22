@@ -10,7 +10,7 @@ select_clips(
   occasion_unit = c("file", "minute"),
   threshold = NULL,
   n_top = 2,
-  strata = c("night_hour", "night", "site_species"),
+  strata = "night_hour",
   recording_fraction = 0.01,
   n_recordings_per_site = NULL,
   recordings = NULL,
@@ -49,15 +49,38 @@ defines the candidate occasions of \code{"random_detections"} and the
 \item{n_top}{\code{"top"}: predictions kept per site x species x night x
 hour. \code{"random_detections"}: occasions drawn per stratum (\code{strata}).}
 
-\item{strata}{\code{"random_detections"}: the strata of the occasion draw.
-\code{"night_hour"} (site x species x night x hour, the rule of 2.0.0),
-\code{"night"} (site x species x night) or \code{"site_species"}. With one
-recording per hour and \code{occasion_unit = "file"}, \code{"night_hour"} holds
-a single occasion per stratum and draws nothing (every
-\code{inclusion_prob} is 1); a coarser stratum makes the draw random.
-With a coarser stratum and \code{balance_by_hour = TRUE} under
-\code{target_total} or \code{max_per_species}, \code{inclusion_prob} is conditional
-on the first draw (a warning says so).}
+\item{strata}{\code{"random_detections"}: the strata of the occasion draw
+(ignored by the other modes). Either one of the presets, all within
+site x species:
+\itemize{
+\item \code{"night_hour"}: night x hour (the rule of 2.0.0);
+\item \code{"night"}: night;
+\item \code{"hour"}: hour of the day, pooling the nights (covers the diel
+cycle without fixing the night);
+\item \code{"week"}: ISO week of the night (\code{YYYY-Www});
+\item \code{"month"}: month of the night (\code{YYYY-MM}), which spreads the draw
+over the season;
+\item \code{"site_species"}: no further stratification;
+}
+
+or a character vector of column names of \code{detections}, e.g.
+\code{c("site", "species_code", "habitat", "night")}, for strata defined by
+the user. Columns can be added to \code{detections} before the call (a
+habitat, a recorder, the moon phase, the rain of the night); \code{month}
+and \code{week} can also be used and are derived from the night when absent.
+\code{site} and \code{species_code} are always added to the strata, which keeps
+\code{inclusion_prob} exact when \code{target_total} or \code{max_per_species} draw
+again within site x species. Columns that depend on the score
+(\code{confidence}, \code{rank}) are refused, since the observation-confirmation
+design needs strata independent of the score, and every stratum
+column must be constant within an occasion.
+
+With one recording per hour and \code{occasion_unit = "file"},
+\code{"night_hour"} holds a single occasion per stratum and draws nothing
+(every \code{inclusion_prob} is 1); a coarser stratum makes the draw
+random. With strata without the hour and \code{balance_by_hour = TRUE}
+under \code{target_total} or \code{max_per_species}, \code{inclusion_prob} is
+conditional on the first draw (a warning says so).}
 
 \item{recording_fraction}{\code{"random_recordings"}: fraction of the
 recordings (or minutes) drawn at each site, rounded, with at least one

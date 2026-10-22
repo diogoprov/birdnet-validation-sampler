@@ -138,8 +138,52 @@ rd_night <- select_clips(pred, sampling_mode = "random_detections",
 summary(rd_night$inclusion_prob)
 ```
 
-The strata must still not depend on the score; any of the three is
-compatible with the observation-confirmation design.
+Besides `"night_hour"`, `"night"` and `"site_species"`, the presets
+`"hour"` (pooling the nights), `"week"` and `"month"` spread the draw
+over the diel cycle or the season. With `strata = "month"`, the files
+of a month compete with each other:
+
+```{r}
+rd_month <- select_clips(pred, sampling_mode = "random_detections",
+                         occasion_unit = "file", threshold = threshold,
+                         n_top = 2, strata = "month")
+summary(rd_month$inclusion_prob)
+```
+
+`strata` also takes a vector of column names, for strata defined by the
+user. Any column added to the predictions before the call can be used.
+Since site and species are always part of the strata, a useful column
+varies within a site: the rain of the night, a recorder when a site has
+several, or, as here, the moon phase, approximated from the date of the
+night (days since a reference new moon, modulo the synodic month of
+29.53 days) and crossed with the month.
+
+```{r}
+moon_phase <- function(night) {
+  days <- as.numeric(as.Date(night, "%Y%m%d") - as.Date("2000-01-06"))
+  cut(days %% 29.530588, breaks = c(0, 7.38, 14.77, 22.15, 29.54),
+      labels = c("new", "first_quarter", "full", "last_quarter"),
+      include.lowest = TRUE)
+}
+# the date (YYYYMMDD) comes from the name of the recording
+rd_moon <- pred |>
+  mutate(date = regmatches(begin_path, regexpr("\\d{8}(?=_\\d{6})",
+                                                begin_path, perl = TRUE)),
+         moon = as.character(moon_phase(date))) |>
+  select_clips(sampling_mode = "random_detections", occasion_unit = "file",
+               threshold = threshold, n_top = 1,
+               strata = c("month", "moon"))
+rd_moon |>
+  distinct(site, species_code, occasion_id) |>
+  nrow()
+```
+
+`site` and `species_code` are always part of the strata, so that
+`inclusion_prob` stays exact when `target_total` or `max_per_species`
+draw again within site × species. The strata must not depend on the
+score: `select_clips()` refuses `confidence` and `rank`, and every stratum
+column must be constant within an occasion. Any stratum that meets these
+conditions is compatible with the observation-confirmation design.
 
 With `occasion_unit = "minute"`, a stratum holds up to five candidate
 minutes per recording, and one is drawn:
