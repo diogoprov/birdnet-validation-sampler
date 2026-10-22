@@ -106,7 +106,15 @@ pack_clips <- function(manifest, output_dir) {
 #' <output_dir>/clips/<species_folder>/*.wav
 #' <output_dir>/packages/<species_folder>.zip
 #' <output_dir>/clip_manifest.csv
+#' <output_dir>/extraction_info.csv
 #' ```
+#'
+#' `extraction_info.csv` records the provenance of the run (one `key`,
+#' `value` row per item): the date, the versions of sheepdog and R, the
+#' folder of the selection tables, the `classifier` label and every
+#' argument passed to [select_clips()]. Keep it with the manifest: it tells
+#' later rounds which classifier produced the clips (for instance, to leave
+#' out of a validation round the clips used to retrain that classifier).
 #'
 #' @inheritParams read_selection_tables
 #' @inheritParams cut_clips
@@ -115,6 +123,9 @@ pack_clips <- function(manifest, output_dir) {
 #'   `remap_to`).
 #' @param make_zip Zip one package per species (skipped when `simulate` is
 #'   `TRUE`).
+#' @param classifier Label of the classifier that produced the selection
+#'   tables (e.g. `"FrogNet v2, BirdNET-Analyzer 2.4.0"`), recorded in
+#'   `extraction_info.csv`. `NULL` records `NA`.
 #'
 #' @return The manifest written to `clip_manifest.csv`, invisibly.
 #' @export
@@ -127,7 +138,8 @@ pack_clips <- function(manifest, output_dir) {
 #' }
 extract_validation_clips <- function(data_dir, output_dir, ...,
                                      table_pattern = "^BirdNET_SelectionTable\\.txt$",
-                                     make_zip = TRUE, simulate = FALSE) {
+                                     make_zip = TRUE, simulate = FALSE,
+                                     classifier = NULL) {
   manifesto <- read_selection_tables(data_dir, table_pattern) |>
     select_clips(...) |>
     cut_clips(output_dir, simulate = simulate)
@@ -135,10 +147,32 @@ extract_validation_clips <- function(data_dir, output_dir, ...,
   caminho <- file.path(output_dir, "clip_manifest.csv")
   write_csv(manifesto, caminho)
   message("Manifest written to ", caminho)
+  write_csv(extraction_info(data_dir, classifier, simulate, list(...)),
+            file.path(output_dir, "extraction_info.csv"))
 
   if (make_zip && !simulate) pack_clips(manifesto, output_dir)
 
   message("Done! The clips in ", file.path(output_dir, "clips"),
           " are ready for validation in the BirdNET GUI (review).")
   invisible(manifesto)
+}
+
+# Proveniencia da rodada de extracao: uma linha chave/valor por item
+extraction_info <- function(data_dir, classifier, simulate, args) {
+  valor <- function(x) {
+    if (is.null(x)) return("NULL")
+    if (is.data.frame(x)) return(paste0("<data frame, ", nrow(x), " rows>"))
+    paste(format(x), collapse = ", ")
+  }
+  base <- tibble(
+    key = c("date", "sheepdog_version", "r_version", "data_dir",
+            "classifier", "simulate"),
+    value = c(format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
+              as.character(utils::packageVersion("sheepdog")),
+              paste(R.version$major, R.version$minor, sep = "."),
+              data_dir, if (is.null(classifier)) NA_character_ else classifier,
+              as.character(simulate)))
+  if (length(args) == 0) return(base)
+  bind_rows(base, tibble(key = paste0("select_clips.", names(args)),
+                         value = map_chr(args, valor)))
 }

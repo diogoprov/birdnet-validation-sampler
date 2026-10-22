@@ -16,6 +16,22 @@
   correlation between the species intercepts and slopes, which avoids the
   singular fits of m4; `calibrate()` takes it with `uncorrelated = TRUE`.
 
+## Sampling
+
+- `select_clips()` gains `strata` (`"night_hour"`, the rule of 2.0.0,
+  `"night"` or `"site_species"`) for the occasion draw of
+  `"random_detections"`. With one recording per hour, the default stratum
+  holds a single occasion and draws nothing; a coarser stratum makes the
+  draw random. A coarser stratum combined with `balance_by_hour = TRUE`
+  under a target or limit warns that `inclusion_prob` is conditional on
+  the first draw.
+- `extract_validation_clips()` writes `extraction_info.csv` with the
+  provenance of the run (date, versions of sheepdog and R, folder of the
+  tables, the new `classifier` label and every argument of
+  `select_clips()`).
+- The message on predictions dropped by `min_confidence` is no longer
+  printed when none is dropped.
+
 # sheepdog 2.1.0
 
 ## Bug fixes
