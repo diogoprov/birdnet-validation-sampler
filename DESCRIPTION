@@ -30,9 +30,11 @@ Imports:
     withr,
     zip
 Suggests:
+    ape,
     av,
     crywolf,
     ggplot2,
+    gllvm,
     knitr,
     lme4,
     rmarkdown,

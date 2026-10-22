@@ -22,11 +22,12 @@ jobs:
         with:
           use-public-rspm: true
       # crywolf (Suggests) nao esta no CRAN e nao e usado nos exemplos nem
-      # nas vignettes (eval = FALSE): instala so as dependencias fortes
+      # nas vignettes (eval = FALSE): instala as dependencias fortes mais os
+      # Suggests que as vignettes rodam (sem eles os graficos somem do site)
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           dependencies: '"hard"'
-          extra-packages: any::pkgdown, any::knitr, any::rmarkdown, any::ggplot2, local::.
+          extra-packages: any::pkgdown, any::knitr, any::rmarkdown, any::ggplot2, any::lme4, any::vegan, any::ape, any::gllvm, local::.
           needs: website
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)

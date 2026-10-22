@@ -193,7 +193,9 @@ The number drawn per site follows its recording effort: with
 `recording_fraction = 0.1`, the site with the fewest recordings
 (`r names(which.min(table(recs$site)))`, `r min(table(recs$site))`) contributes
 `r min(table(rr$site))` recordings, and `inclusion_prob` is the fraction drawn at
-that site.
+that site. The default `recording_fraction = 0.01` suits large projects: with
+fewer than 150 recordings per site it draws a single recording per site,
+so small projects should raise it or set `n_recordings_per_site`.
 
 Each clip is a whole recording (or minute); `confidence` is `NA` and `rank`
 is `NA`. `recording_duration` sets `clip_end`; without it, `clip_end` is
@@ -323,10 +325,10 @@ stratum (site × species, and hour when `balance_by_hour = TRUE`):
 summary(rd_cap$inclusion_prob)
 ```
 
-Because `target_total` allocates the same number of occasions to each
-species, rare species are sampled with a higher probability than common
-ones. The unweighted pool of clips therefore over-represents rare species,
-and estimates pooled across species must use the design weights.
+Because the target is split evenly among species, rare species have higher
+inclusion probabilities than common ones: the unweighted pool of clips
+over-represents them, and estimates pooled across species must weight the
+clips by `1 / inclusion_prob`.
 
 In `"random_recordings"` the cap is not applied:
 
