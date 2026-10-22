@@ -4,15 +4,26 @@
 \alias{calibration_models}
 \title{Candidate calibration models}
 \usage{
-calibration_models()
+calibration_models(uncorrelated = FALSE)
+}
+\arguments{
+\item{uncorrelated}{Add \code{m5_species_x_site_uncorrelated}, the m4
+structure without the correlation between the species intercepts and
+slopes. It avoids the singular fits of m4 when that correlation is
+estimated at +-1. \code{FALSE} keeps the candidates of 2.0.0.}
 }
 \value{
 A named list of formulas: \code{m0_global}, \code{m1_species_intercept},
-\code{m2_species_slope}, \code{m3_plus_site} and \code{m4_species_x_site}.
+\code{m2_species_slope}, \code{m3_plus_site}, \code{m4_species_x_site} and, with
+\code{uncorrelated = TRUE}, \code{m5_species_x_site_uncorrelated}.
 }
 \description{
 The family of logistic calibration models compared by
 \code{\link[=compare_calibration_models]{compare_calibration_models()}}, from a single logistic regression on
 the logit of the confidence score to a binomial GLMM with random slopes
 by species and a site x species intercept.
+}
+\details{
+The list goes from the simplest to the most complex model; that order is
+the complexity used by \code{\link[=select_calibration_model]{select_calibration_model()}}.
 }

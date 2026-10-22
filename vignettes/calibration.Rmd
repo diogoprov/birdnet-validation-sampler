@@ -141,22 +141,59 @@ correct nine times in ten). Two models with equal AUC can still give
 different probabilities, so the comparison is a first filter, not the
 whole decision.
 
-When the leading models are close, a simple heuristic is to keep the least
-complex model whose mean AUC is within one standard deviation of the best
-one. This is a judgement call, not a rule implemented by the package:
+### Scoring the probabilities and choosing a model
+
+The comparison also scores the predicted probabilities themselves on the
+held-out folds. The log-loss and the Brier score are proper scoring rules:
+their expected value is best when the predicted probabilities are the true
+ones, so they reward correct probabilities and not only their ranking
+(Gneiting & Raftery 2007). The log-loss penalises confident mistakes
+heavily, which is where `p_min` operates. The calibration intercept and
+slope come from a logistic regression of the verdicts on the logit of the
+predicted probabilities in each test fold: a well calibrated model has
+intercept 0 and slope 1, and a slope below 1 means probabilities that are
+too extreme. `prop_singular` is the share of fold fits that were singular.
 
 ```{r, eval = has_lme4}
-complexity <- match(cv$model, names(models))
-within_1sd <- cv$auc_mean >= cv$auc_mean[1] - cv$auc_sd[1]
-parsimonious <- cv$model[within_1sd][which.min(complexity[within_1sd])]
-parsimonious
+cv |>
+  select(model, logloss_mean, logloss_sd, brier_mean, cal_intercept,
+         cal_slope, prop_singular)
 ```
 
-The wrapper `calibrate()` takes the first row of the table
-(`r if (has_lme4) cv$model[1]`); the heuristic retains
-`r if (has_lme4) parsimonious`. In the example the two agree, because no
-simpler model comes within one standard deviation of the best. Whether
-the retained model is a sound fit is a separate question, taken up next.
+`select_calibration_model()` applies a selection rule to this table.
+`"best_auc"` takes the highest mean AUC, the rule `calibrate()` uses by
+default in 2.x. `"one_se_logloss"` leaves out the models that are singular
+in most folds and, among the rest, keeps the simplest one whose mean
+log-loss is within one standard error of the lowest; it will be the
+default from 3.0.0.
+
+```{r, eval = has_lme4}
+select_calibration_model(cv, "best_auc")
+select_calibration_model(cv, "one_se_logloss", k_folds = 5)
+```
+
+```{r, include = FALSE, eval = has_lme4}
+sel_auc <- select_calibration_model(cv, "best_auc")
+sel_ll  <- select_calibration_model(cv, "one_se_logloss", k_folds = 5)
+```
+
+Here the highest AUC belongs to `r if (has_lme4) sel_auc`, singular in
+`r if (has_lme4) round(100 * cv$prop_singular[cv$model == sel_auc])` % of
+the folds, and the log-loss rule retains `r if (has_lme4) sel_ll`.
+`calibration_models(uncorrelated = TRUE)` adds a sixth candidate, the m4
+structure without the correlation between the species intercepts and
+slopes, which is the term that makes m4 singular (see the next section):
+
+```{r, eval = has_lme4}
+models_u <- calibration_models(uncorrelated = TRUE)
+cv_u <- compare_calibration_models(val, models_u, k_folds = 5)
+cv_u |> select(model, auc_mean, logloss_mean, logloss_sd, prop_singular)
+select_calibration_model(cv_u, "one_se_logloss", k_folds = 5)
+```
+
+`calibrate()` takes the rule in `select` and the extra candidate with
+`uncorrelated = TRUE`. Whether the retained model is a sound fit is a
+separate question, taken up next.
 
 ## Fitting the calibration model
 
@@ -439,23 +476,25 @@ or in species composition.
 ## The calibrate() wrapper
 
 `calibrate()` runs the whole stage in one call. It reads the clips,
-compares the candidate models, refits the best one by mean AUC, plots the
-calibration curves (if ggplot2 is installed), scores every detection,
-builds the detection history and writes all the outputs to `output_dir`.
-It refits the model with the highest mean AUC; when that refit is
-singular, as m4 is here, it warns (through `fit_calibration()`) but keeps
-the model. Read the comparison, `calibration_model.txt` and the curves it
-writes before using its output, and refit a simpler model with
-`fit_calibration()` if the comparison supports it.
+compares the candidate models, refits the one chosen by the rule in
+`select`, plots the calibration curves (if ggplot2 is installed), scores
+every detection, builds the detection history and writes all the outputs
+to `output_dir`. With the default `select = "best_auc"` it refits the
+model with the highest mean AUC; when that refit is singular, as m4 is
+here, it warns (through `fit_calibration()`) but keeps the model. With
+`select = "one_se_logloss"` and `uncorrelated = TRUE` it applies the rule
+of the previous sections. Read the comparison, `calibration_model.txt` and
+the curves it writes before using its output.
 
 ```{r, eval = has_lme4}
 out_dir <- file.path(tempdir(), "calibration")
 res <- calibrate(validation_files  = val_files,
                  prediction_tables = tables,
                  output_dir        = out_dir,
+                 select = "one_se_logloss", uncorrelated = TRUE,
                  p_min = 0.95, min_detections_night = 1, k_folds = 5) |>
   suppressMessages()
-res$comparison$model[1]  # the model calibrate() refitted
+deparse1(res$fit@call$formula)  # the model calibrate() refitted
 list.files(out_dir)
 ```
 
@@ -466,6 +505,10 @@ of clips and many species takes longer, and `effort_curve = TRUE` adds the
 effort curve.
 
 ## References
+
+Gneiting, T., & Raftery, A. E. (2007). Strictly proper scoring rules,
+prediction, and estimation. *Journal of the American Statistical
+Association*, 102, 359–378. https://doi.org/10.1198/016214506000001437
 
 Owens, G., Wood, C. M., Hunt, T. J., Bussolini, L. T., Kreisl, A.,
 Alves, F., & Stojanovic, D. (2026). Passive acoustic monitoring of the rare
