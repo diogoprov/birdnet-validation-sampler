@@ -292,11 +292,13 @@ The response in each cell is a count out of a known number of trials:
 nights with detection out of nights recorded. A distance-based ordination
 discards that structure; frequencies from cells with different effort are
 treated alike, and the mean–variance relationship of the counts is
-ignored. A binomial GLLVM models the counts directly: effort enters through
-the number of trials (`Ntrials`), the binomial variance handles the
-mean–variance relationship, and the latent variables give a model-based
-ordination of the samples (Niku et al. 2019). [CITAR: model-based versus
-distance-based ordination of multivariate abundance data]
+ignored, which can confound differences in location with differences in
+dispersion (Warton, Wright & Wang 2012). A binomial GLLVM models the counts
+directly: effort enters through the number of trials (`Ntrials`), the
+binomial variance handles the mean–variance relationship, and the latent
+variables give a model-based ordination of the samples (Warton et al. 2015;
+Niku et al. 2019). Jupke & Schäfer (2020) compare model- and distance-based
+multivariate methods.
 
 ```{r, eval = has_gllvm}
 Y  <- as.matrix(samples[, core])
@@ -435,7 +437,20 @@ Legendre, P., & Legendre, L. (2012). *Numerical ecology* (3rd English ed.).
 Developments in Environmental Modelling 24. Elsevier.
 <https://doi.org/10.1016/C2010-0-66470-4>
 
+Jupke, J. F., & Schäfer, R. B. (2020). Should ecologists prefer model- over
+distance-based multivariate methods? *Ecology and Evolution*, 10,
+2417–2435. <https://doi.org/10.1002/ece3.6059>
+
 Niku, J., Hui, F. K. C., Taskinen, S., & Warton, D. I. (2019). gllvm: Fast
 analysis of multivariate abundance data with generalized linear latent
 variable models in R. *Methods in Ecology and Evolution*, 10, 2173–2182.
 <https://doi.org/10.1111/2041-210X.13303>
+
+Warton, D. I., Foster, S. D., De'ath, G., Stoklosa, J., & Dunstan, P. K.
+(2015). Model-based thinking for community ecology. *Plant Ecology*, 216,
+669–682. <https://doi.org/10.1007/s11258-014-0366-3>
+
+Warton, D. I., Wright, S. T., & Wang, Y. (2012). Distance-based
+multivariate analyses confound location and dispersion effects. *Methods in
+Ecology and Evolution*, 3, 89–101.
+<https://doi.org/10.1111/j.2041-210X.2011.00127.x>
