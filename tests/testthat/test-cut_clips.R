@@ -129,3 +129,22 @@ test_that("extract_validation_clips() cuts, zips and resumes", {
                                   recursive = TRUE, full.names = TRUE))
   expect_identical(antes, depois)
 })
+
+test_that("extract_validation_clips() writes extraction_info.csv", {
+  saida <- withr::local_tempdir()
+  # os audios do exemplo nao existem: o aviso de clipes nao gerados e
+  # esperado
+  suppressWarnings(suppressMessages(extract_validation_clips(
+    system.file("extdata", "example", "birdnet", package = "sheepdog"),
+    saida, sampling_mode = "random_detections", threshold = 0.5,
+    strata = "site_species", simulate = TRUE, classifier = "Test v1")))
+  info <- readr::read_csv(file.path(saida, "extraction_info.csv"),
+                          show_col_types = FALSE)
+  expect_named(info, c("key", "value"))
+  valor <- stats::setNames(info$value, info$key)
+  expect_identical(valor[["classifier"]], "Test v1")
+  expect_identical(valor[["select_clips.sampling_mode"]], "random_detections")
+  expect_identical(valor[["select_clips.threshold"]], "0.5")
+  expect_identical(valor[["sheepdog_version"]],
+                   as.character(utils::packageVersion("sheepdog")))
+})

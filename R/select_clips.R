@@ -12,7 +12,8 @@
 #'   estimate false-positive rates: top-score clips hold fewer false
 #'   positives than a random sample.
 #' * `"random_detections"` draws, at random, `n_top` occasions per
-#'   site x species x night x hour among the occasions with at least one
+#'   stratum (by default site x species x night x hour; see `strata`)
+#'   among the occasions with at least one
 #'   prediction of the species with confidence >= `threshold`, and keeps
 #'   every prediction >= `threshold` of each drawn occasion. This is the
 #'   observation-confirmation design of Chambert et al. (2015,
@@ -36,8 +37,16 @@
 #'   defines the candidate occasions of `"random_detections"` and the
 #'   `n_detections_occasion` column. `NULL` leaves that column `NA`.
 #' @param n_top `"top"`: predictions kept per site x species x night x
-#'   hour. `"random_detections"`: occasions drawn per site x species x
-#'   night x hour.
+#'   hour. `"random_detections"`: occasions drawn per stratum (`strata`).
+#' @param strata `"random_detections"`: the strata of the occasion draw.
+#'   `"night_hour"` (site x species x night x hour, the rule of 2.0.0),
+#'   `"night"` (site x species x night) or `"site_species"`. With one
+#'   recording per hour and `occasion_unit = "file"`, `"night_hour"` holds
+#'   a single occasion per stratum and draws nothing (every
+#'   `inclusion_prob` is 1); a coarser stratum makes the draw random.
+#'   With a coarser stratum and `balance_by_hour = TRUE` under
+#'   `target_total` or `max_per_species`, `inclusion_prob` is conditional
+#'   on the first draw (a warning says so).
 #' @param recording_fraction `"random_recordings"`: fraction of the
 #'   recordings (or minutes) drawn at each site, rounded, with at least one
 #'   per site. The default (1 %) suits large projects: with fewer than 150
@@ -101,6 +110,7 @@ select_clips <- function(detections,
                          occasion_unit = c("file", "minute"),
                          threshold = NULL,
                          n_top = 2,
+                         strata = c("night_hour", "night", "site_species"),
                          recording_fraction = 0.01,
                          n_recordings_per_site = NULL,
                          recordings = NULL,
@@ -121,6 +131,16 @@ select_clips <- function(detections,
                          remap_to = NULL,
                          seed = 2026) {
   modo    <- match.arg(sampling_mode)
+  strata  <- match.arg(strata)
+  estrato1 <- switch(strata,
+                     night_hour   = c("site", "species_code", "night",
+                                      "recording_hour"),
+                     night        = c("site", "species_code", "night"),
+                     site_species = c("site", "species_code"))
+  rotulo1 <- switch(strata,
+                    night_hour   = "site x species x night x hour",
+                    night        = "site x species x night",
+                    site_species = "site x species")
   unidade <- match.arg(occasion_unit)
   janela  <- list(hour_start = hour_start, hour_end = hour_end,
                   alternate_days = alternate_days,
@@ -209,8 +229,10 @@ select_clips <- function(detections,
     if (!is.null(min_confidence)) {
       antes   <- nrow(selecao)
       selecao <- filter(selecao, confidence >= min_confidence)
-      message(antes - nrow(selecao), " predictions dropped by the filter ",
-              "confidence < ", min_confidence, ".")
+      if (nrow(selecao) < antes) {
+        message(antes - nrow(selecao), " predictions dropped by the filter ",
+                "confidence < ", min_confidence, ".")
+      }
     }
 
     selecao <- selecao |>
@@ -232,20 +254,19 @@ select_clips <- function(detections,
             n_distinct(selecao$species_code), " species.")
   } else if (modo == "random_detections") {
     # Candidatas: ocasioes com >= 1 predicao da especie >= threshold. O
-    # sorteio (n_top ocasioes por local x especie x noite x hora) nao olha
-    # o score.
+    # sorteio (n_top ocasioes por estrato) nao olha o score.
     deteccoes <- filter(selecao, confidence >= threshold)
     selecao <- withr::with_seed(seed, {
       deteccoes |>
         distinct(site, species_code, occasion_id,
                  recording_date, night, recording_hour) |>
-        group_by(site, species_code, night, recording_hour) |>
+        group_by(across(all_of(estrato1))) |>
         mutate(.p1 = min(n_top, n()) / n()) |>
         slice_sample(n = n_top) |>
         ungroup()
     })
     message(nrow(selecao), " occasions drawn (", n_top,
-            " per site x species x night x hour) among ",
+            " per ", rotulo1, ") among ",
             n_distinct(deteccoes[c("site", "species_code", "occasion_id")]),
             " with a prediction >= ", threshold, ".")
     ocasioes_candidatas <- selecao
@@ -354,13 +375,21 @@ select_clips <- function(detections,
   }
 
   if (modo == "random_detections") {
-    # Probabilidade de inclusao = sorteio por noite+hora (.p1) x sorteio da
+    # Probabilidade de inclusao = sorteio no estrato (.p1) x sorteio da
     # meta/limite. A alocacao da meta e deterministica dado o numero de
     # candidatas, entao a 2a etapa e n/N no estrato (local x especie, x hora
     # se balance_by_hour)
     usou_meta <- !is.null(target_total) || !is.null(max_per_species)
     estrato   <- c("site", "species_code",
                    if (usou_meta && balance_by_hour) "recording_hour")
+    # com estrato da 1a etapa sem a hora, o numero de candidatas por hora
+    # na 2a etapa depende do 1o sorteio: o produto deixa de ser exato
+    if (usou_meta && balance_by_hour && strata != "night_hour") {
+      warning("With strata = \"", strata, "\" and balance_by_hour = TRUE, ",
+              "inclusion_prob is conditional on the first draw; use ",
+              "balance_by_hour = FALSE for exact inclusion probabilities.",
+              call. = FALSE)
+    }
     p2 <- if (usou_meta) {
       inner_join(count(selecao, across(all_of(estrato)), name = ".n"),
                  count(ocasioes_candidatas, across(all_of(estrato)),

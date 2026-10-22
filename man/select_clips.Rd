@@ -10,6 +10,7 @@ select_clips(
   occasion_unit = c("file", "minute"),
   threshold = NULL,
   n_top = 2,
+  strata = c("night_hour", "night", "site_species"),
   recording_fraction = 0.01,
   n_recordings_per_site = NULL,
   recordings = NULL,
@@ -46,8 +47,17 @@ defines the candidate occasions of \code{"random_detections"} and the
 \code{n_detections_occasion} column. \code{NULL} leaves that column \code{NA}.}
 
 \item{n_top}{\code{"top"}: predictions kept per site x species x night x
-hour. \code{"random_detections"}: occasions drawn per site x species x
-night x hour.}
+hour. \code{"random_detections"}: occasions drawn per stratum (\code{strata}).}
+
+\item{strata}{\code{"random_detections"}: the strata of the occasion draw.
+\code{"night_hour"} (site x species x night x hour, the rule of 2.0.0),
+\code{"night"} (site x species x night) or \code{"site_species"}. With one
+recording per hour and \code{occasion_unit = "file"}, \code{"night_hour"} holds
+a single occasion per stratum and draws nothing (every
+\code{inclusion_prob} is 1); a coarser stratum makes the draw random.
+With a coarser stratum and \code{balance_by_hour = TRUE} under
+\code{target_total} or \code{max_per_species}, \code{inclusion_prob} is conditional
+on the first draw (a warning says so).}
 
 \item{recording_fraction}{\code{"random_recordings"}: fraction of the
 recordings (or minutes) drawn at each site, rounded, with at least one
@@ -137,7 +147,8 @@ score-to-probability calibration of \code{\link[=calibrate]{calibrate()}}. Do no
 estimate false-positive rates: top-score clips hold fewer false
 positives than a random sample.
 \item \code{"random_detections"} draws, at random, \code{n_top} occasions per
-site x species x night x hour among the occasions with at least one
+stratum (by default site x species x night x hour; see \code{strata})
+among the occasions with at least one
 prediction of the species with confidence >= \code{threshold}, and keeps
 every prediction >= \code{threshold} of each drawn occasion. This is the
 observation-confirmation design of Chambert et al. (2015,

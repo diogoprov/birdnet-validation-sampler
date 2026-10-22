@@ -55,11 +55,20 @@ rename_site <- function(x, mapa) {
 #' the logit of the confidence score to a binomial GLMM with random slopes
 #' by species and a site x species intercept.
 #'
+#' The list goes from the simplest to the most complex model; that order is
+#' the complexity used by [select_calibration_model()].
+#'
+#' @param uncorrelated Add `m5_species_x_site_uncorrelated`, the m4
+#'   structure without the correlation between the species intercepts and
+#'   slopes. It avoids the singular fits of m4 when that correlation is
+#'   estimated at +-1. `FALSE` keeps the candidates of 2.0.0.
+#'
 #' @return A named list of formulas: `m0_global`, `m1_species_intercept`,
-#'   `m2_species_slope`, `m3_plus_site` and `m4_species_x_site`.
+#'   `m2_species_slope`, `m3_plus_site`, `m4_species_x_site` and, with
+#'   `uncorrelated = TRUE`, `m5_species_x_site_uncorrelated`.
 #' @export
-calibration_models <- function() {
-  list(
+calibration_models <- function(uncorrelated = FALSE) {
+  modelos <- list(
     m0_global            = tp ~ logit_conf,
     m1_species_intercept = tp ~ logit_conf + (1 | species),
     m2_species_slope     = tp ~ logit_conf + (logit_conf | species),
@@ -68,15 +77,30 @@ calibration_models <- function() {
     m4_species_x_site    = tp ~ logit_conf + (logit_conf | species) +
                                 (1 | site:species)
   )
+  if (uncorrelated) {
+    modelos$m5_species_x_site_uncorrelated <-
+      tp ~ logit_conf + (1 | species) + (0 + logit_conf | species) +
+      (1 | site:species)
+  }
+  modelos
 }
 
 #' Compare calibration models by cross-validation
 #'
-#' Fits each candidate model with k-fold cross-validation and reports the
-#' mean and standard deviation of the AUC on the held-out folds. Folds are
-#' stratified within site x species, so every level appears in both the
-#' training and the test sets. Models with random effects need the 'lme4'
-#' package.
+#' Fits each candidate model with k-fold cross-validation and scores the
+#' predicted probabilities on the held-out folds. Folds are stratified
+#' within site x species, so every level appears in both the training and
+#' the test sets. Models with random effects need the 'lme4' package.
+#'
+#' The AUC measures discrimination (whether true detections get higher
+#' probabilities than false ones). The log-loss and the Brier score are
+#' proper scoring rules: they reward probabilities close to the observed
+#' outcomes, which is what matters when the probabilities are compared
+#' with `p_min` (Gneiting & Raftery 2007, \doi{10.1198/016214506000001437}).
+#' The calibration intercept and slope come from a logistic regression of
+#' the verdicts on the logit of the predicted probabilities in each test
+#' fold: a well calibrated model has intercept 0 and slope 1; a slope below
+#' 1 means probabilities too extreme (overfitting).
 #'
 #' @param validations Table returned by [read_validations()].
 #' @param models Named list of model formulas.
@@ -84,9 +108,13 @@ calibration_models <- function() {
 #' @param seed Seed of the fold assignment. The global random number
 #'   generator is left as it was.
 #'
-#' @return A tibble with `model`, `formula`, `auc_mean`, `auc_sd` and
-#'   `n_failed` (folds whose fit failed, left out of the mean), ordered from
-#'   the highest mean AUC. Failed folds also raise a warning.
+#' @return A tibble with `model`, `formula`, `auc_mean`, `auc_sd`,
+#'   `n_failed` (folds whose fit failed, left out of the means),
+#'   `logloss_mean`, `logloss_sd`, `brier_mean`, `brier_sd`,
+#'   `cal_intercept` and `cal_slope` (means over the folds), `prop_singular`
+#'   (share of the fold fits that were singular) and `complexity` (position
+#'   of the model in `models`), ordered from the highest mean AUC. Failed
+#'   folds also raise a warning.
 #' @export
 compare_calibration_models <- function(validations,
                                        models = calibration_models(),
@@ -102,27 +130,105 @@ compare_calibration_models <- function(validations,
 
   message("Cross-validation (", k_folds, " folds) of ", length(models),
           " models...")
-  map(names(models), function(nm) {
-    aucs <- map_dbl(seq_len(k_folds), function(k) {
+  vazio <- c(auc = NA_real_, logloss = NA_real_, brier = NA_real_,
+             cal_intercept = NA_real_, cal_slope = NA_real_,
+             singular = NA_real_)
+  map(seq_along(models), function(i) {
+    nm <- names(models)[i]
+    m <- map(seq_len(k_folds), function(k) {
       treino <- filter(val, fold != k)
       teste  <- filter(val, fold == k)
       fit    <- tryCatch(fit_model(models[[nm]], treino),
                          error = function(e) NULL)
-      if (is.null(fit)) return(NA_real_)
-      auc(teste$tp, predict_tp(fit, teste))
-    })
-    n_falhas <- sum(is.na(aucs))
+      if (is.null(fit)) return(vazio)
+      p <- predict_tp(fit, teste)
+      c(auc = auc(teste$tp, p), score_probabilities(teste$tp, p),
+        singular = as.numeric(inherits(fit, "merMod") &&
+                                 lme4::isSingular(fit)))
+    }) |>
+      do.call(what = rbind)
+    n_falhas <- sum(is.na(m[, "auc"]))
     if (n_falhas > 0) {
       warning(nm, ": the fit failed in ", n_falhas, " of ", k_folds,
               " folds, left out of the mean AUC.", call. = FALSE)
     }
+    media <- function(x) mean(x, na.rm = TRUE)
+    dp    <- function(x) stats::sd(x, na.rm = TRUE)
     tibble(model = nm, formula = deparse1(models[[nm]]),
-           auc_mean = mean(aucs, na.rm = TRUE),
-           auc_sd = stats::sd(aucs, na.rm = TRUE),
-           n_failed = n_falhas)
+           auc_mean = media(m[, "auc"]), auc_sd = dp(m[, "auc"]),
+           n_failed = n_falhas,
+           logloss_mean = media(m[, "logloss"]), logloss_sd = dp(m[, "logloss"]),
+           brier_mean = media(m[, "brier"]), brier_sd = dp(m[, "brier"]),
+           cal_intercept = media(m[, "cal_intercept"]),
+           cal_slope = media(m[, "cal_slope"]),
+           prop_singular = media(m[, "singular"]),
+           complexity = i)
   }) |>
     list_rbind() |>
     arrange(desc(auc_mean))
+}
+
+# Log-loss, Brier e intercepto/inclinacao de calibracao de probabilidades
+# previstas p para os vereditos tp (0/1)
+score_probabilities <- function(tp, p) {
+  p  <- pmin(pmax(p, 1e-6), 1 - 1e-6)
+  lp <- stats::qlogis(p)
+  inclinacao <- tryCatch(
+    unname(stats::coef(stats::glm(tp ~ lp, family = stats::binomial))[2]),
+    error = function(e) NA_real_, warning = function(w) NA_real_)
+  intercepto <- tryCatch(
+    unname(stats::coef(stats::glm(tp ~ 1 + offset(lp),
+                                  family = stats::binomial))[1]),
+    error = function(e) NA_real_, warning = function(w) NA_real_)
+  c(logloss = -mean(tp * log(p) + (1 - tp) * log(1 - p)),
+    brier = mean((p - tp)^2),
+    cal_intercept = intercepto, cal_slope = inclinacao)
+}
+
+#' Select the calibration model
+#'
+#' Picks a model from the table of [compare_calibration_models()].
+#'
+#' * `"best_auc"`: the model with the highest mean AUC (the rule of
+#'   [calibrate()] in 2.x).
+#' * `"one_se_logloss"`: among the models whose mean log-loss is within one
+#'   standard error (`logloss_sd / sqrt(k_folds)`) of the lowest, the
+#'   simplest (lowest `complexity`); models singular in most folds are left
+#'   out, unless all are, which raises a warning. The log-loss rewards
+#'   correct probabilities, not only their ranking, and the one-standard-
+#'   error rule prefers the simpler model when the data cannot tell the
+#'   candidates apart. This rule will be the default of [calibrate()] in
+#'   3.0.0.
+#'
+#' @param comparison Table returned by [compare_calibration_models()].
+#' @param rule Selection rule.
+#' @param k_folds Number of folds of the comparison (for the standard
+#'   error).
+#'
+#' @return The name of the selected model.
+#' @export
+select_calibration_model <- function(comparison,
+                                     rule = c("best_auc", "one_se_logloss"),
+                                     k_folds = 5) {
+  rule <- match.arg(rule)
+  if (rule == "best_auc") {
+    return(comparison$model[which.max(comparison$auc_mean)])
+  }
+  cand <- filter(comparison, !is.na(logloss_mean))
+  regulares <- filter(cand, prop_singular <= 0.5)
+  if (nrow(regulares) == 0) {
+    warning("Every candidate model is singular in most folds; selecting ",
+            "among all of them.", call. = FALSE)
+  } else {
+    cand <- regulares
+  }
+  melhor <- cand[which.min(cand$logloss_mean), ]
+  limite <- melhor$logloss_mean + melhor$logloss_sd / sqrt(k_folds)
+  cand |>
+    filter(logloss_mean <= limite) |>
+    arrange(complexity) |>
+    pull(model) |>
+    first()
 }
 
 #' Fit the calibration model
@@ -459,10 +565,12 @@ plot_calibration <- function(fit, validations, min_confidence = 0.1,
 #' * `nightly_detection_history.csv` ([detection_history()]);
 #' * `detection_summary.csv` ([summarise_history()]).
 #'
-#' The best model is the one with the highest mean AUC. When its refit is
-#' singular, [fit_calibration()] warns; read `calibration_model.txt` and
-#' the comparison before using the probabilities, since a simpler model
-#' within the cross-validation spread may be preferable.
+#' The model is chosen by [select_calibration_model()] with the rule
+#' `select`: the highest mean AUC by default, or the simplest model within
+#' one standard error of the lowest log-loss, leaving out singular fits
+#' (`"one_se_logloss"`, the default from 3.0.0). When the refit is singular,
+#' [fit_calibration()] warns; read `calibration_model.txt` and the
+#' comparison before using the probabilities.
 #'
 #' Converting BirdNET confidence scores into probabilities is recommended
 #' by the BirdNET authors (Wood & Kahl 2024, \doi{10.1007/s10336-024-02144-5});
@@ -482,6 +590,11 @@ plot_calibration <- function(fit, validations, min_confidence = 0.1,
 #' @inheritParams score_detections
 #' @inheritParams detection_history
 #' @inheritParams compare_calibration_models
+#' @param select Rule to choose the model; see
+#'   [select_calibration_model()].
+#' @param uncorrelated Include the m4 variant without the species
+#'   intercept-slope correlation among the candidates; see
+#'   [calibration_models()].
 #' @param effort_curve Draw the effort curve (slow).
 #' @param effort_n,effort_reps Training sizes and repetitions of the
 #'   effort curve.
@@ -492,17 +605,20 @@ plot_calibration <- function(fit, validations, min_confidence = 0.1,
 calibrate <- function(validation_files, prediction_tables, output_dir,
                       site_map = NULL, min_confidence = 0.1, p_min = 0.95,
                       min_detections_night = 1, dawn_hour = 12,
-                      k_folds = 5, effort_curve = FALSE,
+                      k_folds = 5,
+                      select = c("best_auc", "one_se_logloss"),
+                      uncorrelated = FALSE, effort_curve = FALSE,
                       effort_n = c(5, 10, 15, 20, 25, 30),
                       effort_reps = 50, seed = 2026) {
+  select <- match.arg(select)
   val <- read_validations(validation_files, site_map)
-  modelos <- calibration_models()
+  modelos <- calibration_models(uncorrelated)
 
   cv <- compare_calibration_models(val, modelos, k_folds, seed)
   dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
   write_csv(cv, file.path(output_dir, "model_comparison.csv"))
-  melhor <- cv$model[1]
-  message("Best model: ", melhor)
+  melhor <- select_calibration_model(cv, select, k_folds)
+  message("Selected model (", select, "): ", melhor)
 
   fit_final <- fit_calibration(val, modelos[[melhor]])
   saveRDS(fit_final, file.path(output_dir, "calibration_model.rds"))

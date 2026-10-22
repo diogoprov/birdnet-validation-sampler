@@ -128,3 +128,42 @@ test_that("random_detections needs a threshold", {
   expect_error(suppressMessages(select_clips(pred, "random_detections")),
                "threshold")
 })
+
+test_that("strata sets the strata of the random_detections draw", {
+  det <- suppressMessages(read_selection_tables(
+    system.file("extdata", "example", "birdnet", package = "sheepdog")))
+  # uma gravacao por hora: por noite x hora nada e sorteado
+  m_nh <- suppressMessages(select_clips(det, "random_detections",
+                                        threshold = 0.5, n_top = 1))
+  expect_true(all(m_nh$inclusion_prob == 1))
+  # por local x especie: n_top / N ocasioes, igual em cada estrato
+  m_ss <- suppressMessages(select_clips(det, "random_detections",
+                                        threshold = 0.5, n_top = 3,
+                                        strata = "site_species"))
+  oc <- dplyr::distinct(m_ss, site, species_code, occasion_id, inclusion_prob)
+  expect_true(all(dplyr::count(oc, site, species_code)$n <= 3))
+  cand <- det |>
+    dplyr::filter(confidence >= 0.5) |>
+    dplyr::mutate(occasion_id = tools::file_path_sans_ext(
+      basename(gsub("\\\\", "/", begin_path)))) |>
+    dplyr::distinct(site, species_code, occasion_id) |>
+    dplyr::count(site, species_code, name = "N")
+  esperado <- dplyr::left_join(oc, cand, by = c("site", "species_code"))
+  expect_equal(esperado$inclusion_prob, pmin(3, esperado$N) / esperado$N)
+  # estrato sem hora + balance_by_hour: probabilidade condicional, avisa
+  expect_warning(
+    suppressMessages(select_clips(det, "random_detections", threshold = 0.5,
+                                  strata = "night", max_per_species = 5)),
+    "conditional on the first draw")
+  expect_no_warning(
+    suppressMessages(select_clips(det, "random_detections", threshold = 0.5,
+                                  strata = "night", max_per_species = 5,
+                                  balance_by_hour = FALSE)))
+})
+
+test_that("the min_confidence message is skipped when nothing is dropped", {
+  det <- suppressMessages(read_selection_tables(
+    system.file("extdata", "example", "birdnet", package = "sheepdog")))
+  msgs <- testthat::capture_messages(select_clips(det, min_confidence = 0))
+  expect_false(any(grepl("predictions dropped", msgs)))
+})
