@@ -54,3 +54,23 @@ test_that("build_community_matrices() reads a new-format history file", {
     c("site", "month", "n_nights_recorded", "included"))
   expect_error(community_matrices(antigo, character()), "empty")
 })
+
+test_that("community_matrices() returns the trials matrix and drops empty rows", {
+  h <- readr::read_csv(system.file("extdata", "example",
+                                   "nightly_detection_history.csv",
+                                   package = "sheepdog"),
+                       show_col_types = FALSE,
+                       col_types = readr::cols(night = "c"))
+  core <- c("boa_ran", "ela_bic", "lep_pod", "phy_cuv")
+  m <- community_matrices(h, core, k_min = 2)
+  expect_identical(dim(m$trials), c(nrow(m$counts), length(core)))
+  expect_identical(colnames(m$trials), core)
+  expect_equal(m$trials[, 1], m$counts$n_nights_recorded,
+               ignore_attr = TRUE)
+  vazias <- rowSums(as.matrix(m$counts[core])) == 0
+  m2 <- suppressMessages(community_matrices(h, core, k_min = 2,
+                                            drop_empty = TRUE))
+  expect_identical(nrow(m2$counts), nrow(m$counts) - sum(vazias))
+  expect_identical(nrow(m2$trials), nrow(m2$counts))
+  expect_true(all(rowSums(as.matrix(m2$counts[core])) > 0))
+})

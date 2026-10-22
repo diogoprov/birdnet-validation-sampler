@@ -69,10 +69,8 @@ and read it back with `classify_review()`, which records where each clip
 was found (`reviewed_path`).
 
 ```{r}
-validation <- list.files(file.path(ex, "validation"), full.names = TRUE) |>
-  lapply(readr::read_csv, show_col_types = FALSE,
-         col_types = readr::cols(night = "c", recording_date = "c")) |>
-  bind_rows()
+validation <- read_validation_tables(
+  list.files(file.path(ex, "validation"), full.names = TRUE))
 
 review_dir <- file.path(tempdir(), "review")
 unlink(review_dir, recursive = TRUE)
@@ -89,13 +87,8 @@ reviewed <- validation |>
 count(reviewed, species_code, verdict)
 ```
 
-`retraining_clips()` lists the positives; the negatives are the reviewed
-clips with `verdict == "negative"`.
-
-```{r}
-positives <- retraining_clips(reviewed)
-negatives <- filter(reviewed, verdict == "negative")
-```
+`read_validation_tables()` stacks the `validation_by_clip.csv` tables of
+several sites or rounds, keeping every column and verdict.
 
 ## Keeping an independent test set
 
@@ -105,67 +98,46 @@ during training. BirdNET-Analyzer holds out a validation split
 same site and night share background noise and calling individuals, so a
 random split of clips tends to overstate performance (our recommendation,
 not a statement of the BirdNET documentation). A stricter test keeps whole
-sites (or whole nights) out of training and passes them as `--test_data`.
-
-Here we hold out one site:
-
-```{r}
-test_site <- "NHE"
-split_set <- function(df) {
-  mutate(df, set = if_else(site == test_site, "test", "train"))
-}
-positives <- split_set(positives)
-negatives <- split_set(negatives)
-count(positives, set)
-```
+sites out of training and passes them as `--test_data`. Here we hold out
+one site.
 
 ## Building the training folders
 
-The function below copies the clips into the BirdNET layout: positives in
-`<set>/<species_code>/` and negatives in `<set>/-<species_code>/`. In a
-real project `reviewed_path` points to the clips where the review left
-them.
+`build_training_set()` copies the reviewed clips into the BirdNET layout:
+positives in `<set>/<species_code>/` and negatives in
+`<set>/-<species_code>/`, where `<set>` is `train`, or `test` for the
+sites in `test_sites`. It reads each clip from `reviewed_path`, the place
+where the review left it, leaves out whole-recording clips (which have no
+confidence score), writes the table of copied clips to
+`training_set.csv`, and warns about classes with fewer positive training
+files than `min_files` (100 by default, the number recommended by the
+BirdNET documentation).
 
 ```{r}
-copy_to_training <- function(clips, root, negative = FALSE) {
-  prefix <- if (negative) "-" else ""
-  to <- file.path(root, clips$set, paste0(prefix, clips$species_code))
-  for (d in unique(to)) dir.create(d, recursive = TRUE, showWarnings = FALSE)
-  ok <- file.copy(clips$reviewed_path, file.path(to, clips$clip_file))
-  if (!all(ok)) warning(sum(!ok), " clip(s) not copied.")
-  invisible(ok)
-}
-
 training_root <- file.path(tempdir(), "birdnet_training")
 unlink(training_root, recursive = TRUE)
-copy_to_training(positives, training_root)
-copy_to_training(negatives, training_root, negative = TRUE)
+training_set <- build_training_set(reviewed, training_root,
+                                   test_sites = "NHE") |>
+  suppressMessages()
 
 list.files(file.path(training_root, "train"))
+count(training_set, set, verdict)
 ```
 
-How many files each class received, against the 100 files per species
-recommended by the BirdNET documentation:
+How many positive training files each class received:
 
 ```{r}
-n_files <- tibble(
-  folder = list.dirs(file.path(training_root, "train"),
-                     recursive = FALSE, full.names = FALSE)) |>
-  mutate(n = vapply(folder, function(f) length(list.files(
-    file.path(training_root, "train", f))), integer(1)),
-    below_100 = n < 100)
-n_files
-```
-
-```{r, include = FALSE}
-pos_low <- n_files |> filter(!startsWith(folder, "-"), below_100)
+n_pos <- training_set |>
+  filter(set == "train", verdict == "positive") |>
+  count(species_code) |>
+  mutate(below_100 = n < 100)
+n_pos
 ```
 
 With the `r nrow(validation)` reviewed clips of the example,
-`r nrow(pos_low)` of the `r sum(!startsWith(n_files$folder, "-"))` positive
-classes have fewer than 100 training files. Classes with few positives
-are the ones that most need clips from further review rounds before
-retraining.
+`r sum(n_pos$below_100)` of the `r nrow(n_pos)` classes have fewer than
+100 positive training files. Classes with few positives are the ones that
+most need clips from further review rounds before retraining.
 
 ## Which clips to add
 
@@ -222,6 +194,16 @@ was estimated from the scores of the old one no longer applies:
 3. Recalibrate (stage 2, `vignette("calibration")`) and rebuild the
    detection histories and community matrices (stage 3).
 
-Keeping track of which reviewed clips went into training (for example,
-by saving the tables `positives` and `negatives` above with the classifier
-version) makes it possible to exclude them from later validation rounds.
+Keep `training_set.csv` with the new classifier. Before reviewing the
+detections of the retrained classifier, `exclude_training_clips()` drops
+from the new manifest the clips that overlap, for the same species and
+recording, a clip used in training:
+
+```{r, eval = FALSE}
+manifest_v2 <- select_clips(detections_v2, ...) |>
+  exclude_training_clips(file.path(training_root, "training_set.csv"))
+```
+
+`extract_validation_clips()` records the `classifier` label in
+`extraction_info.csv`, so each validation round can be traced to the
+classifier that produced its clips.
