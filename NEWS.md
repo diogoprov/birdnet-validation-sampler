@@ -1,3 +1,19 @@
+# sheepdog (development version)
+
+## Community matrices
+
+- New `cell_status()`: classifies each site x species cell of the
+  calibration as `"reliable"` (the calibrated curve reaches `p_min` within
+  the reviewed scores, with at least `min_n` clips), `"probably_absent"`
+  (no true positive among the reviewed clips) or `"unreliable"`,
+  separating the absence of a species from a calibration that fails.
+- New `suggest_core_species()`: the species with no unreliable cell.
+- `community_matrices()` gains `drop_empty` (drop the site x month rows
+  without any core species) and returns `trials`, the matrix of nights
+  recorded with the dimensions of the species counts, for the `Ntrials` of
+  a binomial model such as `gllvm::gllvm()`.
+- `vignette("community-matrices")` uses the new functions.
+
 # sheepdog 2.1.0
 
 ## Bug fixes

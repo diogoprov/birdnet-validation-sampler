@@ -27,14 +27,20 @@
 #' @param min_nights_month Site x month cells with fewer recorded nights are
 #'   dropped from the matrices (unstable frequencies) and flagged in
 #'   `effort`.
+#' @param drop_empty Drop the site x month rows in which no core species
+#'   was detected. Distances such as Bray-Curtis are undefined for them.
 #'
-#' @return A list with three tibbles: `frequency` and `counts` (one row per
+#' @return A list with three tibbles, `frequency` and `counts` (one row per
 #'   site x month, with `site`, `month`, `n_nights_recorded` and one column
 #'   per core species) and `effort` (`site`, `month`, `n_nights_recorded`,
-#'   `included`).
+#'   `included`), plus `trials`: a numeric matrix with the dimensions of
+#'   the species columns of `counts` holding the nights recorded, the
+#'   `Ntrials` of a binomial model of the counts (e.g. `gllvm::gllvm()`,
+#'   which needs a matrix when effort varies among samples). The row names
+#'   of `trials` are `<site>_<month>`.
 #' @export
 community_matrices <- function(history, core_species, k_min = 2,
-                               min_nights_month = 5) {
+                               min_nights_month = 5, drop_empty = FALSE) {
   if (length(core_species) == 0) stop("`core_species` is empty.")
   historico <- from_legacy(history) |>
     mutate(night = as.character(night))
@@ -85,7 +91,26 @@ community_matrices <- function(history, core_species, k_min = 2,
     pivot_wider(names_from = species, values_from = n_nights_detected) |>
     arrange(site, month)
 
-  list(frequency = frequencia, counts = contagens, effort = esforco)
+  if (drop_empty) {
+    cols <- intersect(core_species, names(contagens))
+    vazias <- rowSums(as.matrix(contagens[cols])) == 0
+    if (any(vazias)) {
+      message(sum(vazias), " site x month row(s) without any core species ",
+              "dropped: ", paste(contagens$site[vazias],
+                                 contagens$month[vazias], collapse = ", "))
+      contagens  <- contagens[!vazias, ]
+      frequencia <- frequencia[!vazias, ]
+    }
+  }
+
+  cols <- setdiff(names(contagens), c("site", "month", "n_nights_recorded"))
+  tentativas <- matrix(as.numeric(contagens$n_nights_recorded),
+                       nrow = nrow(contagens), ncol = length(cols),
+                       dimnames = list(paste(contagens$site, contagens$month,
+                                             sep = "_"), cols))
+
+  list(frequency = frequencia, counts = contagens, effort = esforco,
+       trials = tentativas)
 }
 
 #' Write the community matrices

@@ -4,7 +4,13 @@
 \alias{community_matrices}
 \title{Community matrices from the detection history}
 \usage{
-community_matrices(history, core_species, k_min = 2, min_nights_month = 5)
+community_matrices(
+  history,
+  core_species,
+  k_min = 2,
+  min_nights_month = 5,
+  drop_empty = FALSE
+)
 }
 \arguments{
 \item{history}{Nightly detection history, as returned by
@@ -19,12 +25,19 @@ matrix.}
 \item{min_nights_month}{Site x month cells with fewer recorded nights are
 dropped from the matrices (unstable frequencies) and flagged in
 \code{effort}.}
+
+\item{drop_empty}{Drop the site x month rows in which no core species
+was detected. Distances such as Bray-Curtis are undefined for them.}
 }
 \value{
-A list with three tibbles: \code{frequency} and \code{counts} (one row per
+A list with three tibbles, \code{frequency} and \code{counts} (one row per
 site x month, with \code{site}, \code{month}, \code{n_nights_recorded} and one column
 per core species) and \code{effort} (\code{site}, \code{month}, \code{n_nights_recorded},
-\code{included}).
+\code{included}), plus \code{trials}: a numeric matrix with the dimensions of
+the species columns of \code{counts} holding the nights recorded, the
+\code{Ntrials} of a binomial model of the counts (e.g. \code{gllvm::gllvm()},
+which needs a matrix when effort varies among samples). The row names
+of \code{trials} are \verb{<site>_<month>}.
 }
 \description{
 Turns the calibrated nightly detection history into site x month

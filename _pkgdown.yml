@@ -51,6 +51,8 @@ reference:
     contents:
       - build_community_matrices
       - community_matrices
+      - cell_status
+      - suggest_core_species
   - title: Package
     contents:
       - sheepdog-package
