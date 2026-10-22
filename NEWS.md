@@ -1,5 +1,37 @@
 # sheepdog (development version)
 
+## Calibration
+
+- `compare_calibration_models()` also scores the predicted probabilities on
+  the held-out folds: log-loss and Brier score (proper scoring rules),
+  calibration intercept and slope, the share of singular fold fits
+  (`prop_singular`) and the position of each model (`complexity`).
+- New `select_calibration_model()`, with the rules `"best_auc"` (the rule
+  of 2.x) and `"one_se_logloss"` (the simplest model within one standard
+  error of the lowest log-loss, leaving out singular fits).
+  `calibrate()` takes the rule in `select`; the default stays
+  `"best_auc"` until 3.0.0, when it becomes `"one_se_logloss"`.
+- `calibration_models(uncorrelated = TRUE)` adds
+  `m5_species_x_site_uncorrelated`, the m4 structure without the
+  correlation between the species intercepts and slopes, which avoids the
+  singular fits of m4; `calibrate()` takes it with `uncorrelated = TRUE`.
+
+## Sampling
+
+- `select_clips()` gains `strata` (`"night_hour"`, the rule of 2.0.0,
+  `"night"` or `"site_species"`) for the occasion draw of
+  `"random_detections"`. With one recording per hour, the default stratum
+  holds a single occasion and draws nothing; a coarser stratum makes the
+  draw random. A coarser stratum combined with `balance_by_hour = TRUE`
+  under a target or limit warns that `inclusion_prob` is conditional on
+  the first draw.
+- `extract_validation_clips()` writes `extraction_info.csv` with the
+  provenance of the run (date, versions of sheepdog and R, folder of the
+  tables, the new `classifier` label and every argument of
+  `select_clips()`).
+- The message on predictions dropped by `min_confidence` is no longer
+  printed when none is dropped.
+
 ## Review and retraining
 
 - New `read_validation_tables()`: stacks the `validation_by_clip.csv`
