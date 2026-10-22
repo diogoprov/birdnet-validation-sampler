@@ -1,6 +1,6 @@
 # Changelog
 
-## sheepdog 2.2.0
+## sheepdog (development version)
 
 ### Calibration
 
