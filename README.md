@@ -2,6 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22696210.svg)](https://doi.org/10.5281/zenodo.22696210)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
+[![r-universe](https://diogoprov.r-universe.dev/sheepdog/badges/version)](https://diogoprov.r-universe.dev/sheepdog)
 
 In the fable, the boy cries "wolf!" and the villagers have to decide whether
 the wolf is real. **sheepdog** does that check for automated detections from
@@ -29,6 +30,17 @@ The two packages are independent: sheepdog does not depend on crywolf.
 ![The three stages of sheepdog](man/figures/pipeline.png)
 
 ## Installation
+
+Install the package from [r-universe](https://diogoprov.r-universe.dev/sheepdog),
+which provides binaries for Windows, macOS and Linux:
+
+```r
+install.packages("sheepdog",
+                 repos = c("https://diogoprov.r-universe.dev",
+                           "https://cloud.r-project.org"))
+```
+
+The development version can be installed from GitHub:
 
 ```r
 # install.packages("remotes")
