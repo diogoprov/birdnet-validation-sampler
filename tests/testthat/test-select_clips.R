@@ -167,3 +167,52 @@ test_that("the min_confidence message is skipped when nothing is dropped", {
   msgs <- testthat::capture_messages(select_clips(det, min_confidence = 0))
   expect_false(any(grepl("predictions dropped", msgs)))
 })
+
+test_that("strata presets hour, week and month draw within those periods", {
+  det <- suppressMessages(read_selection_tables(
+    system.file("extdata", "example", "birdnet", package = "sheepdog")))
+  sorteio <- function(strata) suppressMessages(select_clips(
+    det, "random_detections", threshold = 0.5, n_top = 1, strata = strata))
+  oc <- function(m) dplyr::distinct(m, site, species_code, occasion_id,
+                                    night, recording_hour)
+  # um sorteio por local x especie x periodo
+  m_mes <- oc(sorteio("month")) |>
+    dplyr::mutate(month = substr(night, 1, 6))
+  expect_true(all(dplyr::count(m_mes, site, species_code, month)$n == 1))
+  m_hora <- oc(sorteio("hour"))
+  expect_true(all(dplyr::count(m_hora, site, species_code,
+                               recording_hour)$n == 1))
+  m_sem <- oc(sorteio("week")) |>
+    dplyr::mutate(week = format(as.Date(night, "%Y%m%d"), "%G-W%V"))
+  expect_true(all(dplyr::count(m_sem, site, species_code, week)$n == 1))
+  # os estratos mais grossos sorteiam de fato (probabilidade < 1)
+  expect_true(any(sorteio("month")$inclusion_prob < 1))
+  # a coluna derivada nao entra no manifesto
+  expect_false("month" %in% names(sorteio("month")))
+})
+
+test_that("strata takes user columns and validates them", {
+  det <- suppressMessages(read_selection_tables(
+    system.file("extdata", "example", "birdnet", package = "sheepdog")))
+  hab <- tibble::tibble(site = c("ARA", "BAI", "NHE", "XAR"),
+                        habitat = c("pond", "pond", "stream", "stream"))
+  det_h <- dplyr::left_join(det, hab, by = "site")
+  m <- suppressMessages(select_clips(
+    det_h, "random_detections", threshold = 0.5, n_top = 2,
+    strata = c("habitat", "month")))
+  # local e especie entram sempre: no maximo 2 ocasioes por local x
+  # especie x habitat x mes
+  oc <- dplyr::distinct(m, site, species_code, occasion_id, night) |>
+    dplyr::mutate(month = substr(night, 1, 6))
+  expect_true(all(dplyr::count(oc, site, species_code, month)$n <= 2))
+  expect_error(select_clips(det_h, "random_detections", threshold = 0.5,
+                            strata = c("habitat", "confidence")),
+               "depend on the score")
+  expect_error(suppressMessages(select_clips(
+    det_h, "random_detections", threshold = 0.5, strata = "nao_existe")),
+    "not in `detections`")
+  # file_offset varia dentro de uma ocasiao (arquivo): recusado
+  expect_error(suppressMessages(select_clips(
+    det_h, "random_detections", threshold = 0.5, strata = "file_offset")),
+    "constant within an occasion")
+})

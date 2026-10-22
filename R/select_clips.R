@@ -38,15 +38,38 @@
 #'   `n_detections_occasion` column. `NULL` leaves that column `NA`.
 #' @param n_top `"top"`: predictions kept per site x species x night x
 #'   hour. `"random_detections"`: occasions drawn per stratum (`strata`).
-#' @param strata `"random_detections"`: the strata of the occasion draw.
-#'   `"night_hour"` (site x species x night x hour, the rule of 2.0.0),
-#'   `"night"` (site x species x night) or `"site_species"`. With one
-#'   recording per hour and `occasion_unit = "file"`, `"night_hour"` holds
-#'   a single occasion per stratum and draws nothing (every
-#'   `inclusion_prob` is 1); a coarser stratum makes the draw random.
-#'   With a coarser stratum and `balance_by_hour = TRUE` under
-#'   `target_total` or `max_per_species`, `inclusion_prob` is conditional
-#'   on the first draw (a warning says so).
+#' @param strata `"random_detections"`: the strata of the occasion draw
+#'   (ignored by the other modes). Either one of the presets, all within
+#'   site x species:
+#'   * `"night_hour"`: night x hour (the rule of 2.0.0);
+#'   * `"night"`: night;
+#'   * `"hour"`: hour of the day, pooling the nights (covers the diel
+#'     cycle without fixing the night);
+#'   * `"week"`: ISO week of the night (`YYYY-Www`);
+#'   * `"month"`: month of the night (`YYYY-MM`), which spreads the draw
+#'     over the season;
+#'   * `"site_species"`: no further stratification;
+#'
+#'   or a character vector of column names of `detections`, e.g.
+#'   `c("site", "species_code", "habitat", "night")`, for strata defined by
+#'   the user. Columns can be added to `detections` before the call; since
+#'   site and species are always part of the strata, useful columns vary
+#'   within a site (the moon phase, the rain of the night, a recorder when
+#'   a site has several). `month` and `week` can also be used and are
+#'   derived from the night when absent.
+#'   `site` and `species_code` are always added to the strata, which keeps
+#'   `inclusion_prob` exact when `target_total` or `max_per_species` draw
+#'   again within site x species. Columns that depend on the score
+#'   (`confidence`, `rank`) are refused, since the observation-confirmation
+#'   design needs strata independent of the score, and every stratum
+#'   column must be constant within an occasion.
+#'
+#'   With one recording per hour and `occasion_unit = "file"`,
+#'   `"night_hour"` holds a single occasion per stratum and draws nothing
+#'   (every `inclusion_prob` is 1); a coarser stratum makes the draw
+#'   random. With strata without the hour and `balance_by_hour = TRUE`
+#'   under `target_total` or `max_per_species`, `inclusion_prob` is
+#'   conditional on the first draw (a warning says so).
 #' @param recording_fraction `"random_recordings"`: fraction of the
 #'   recordings (or minutes) drawn at each site, rounded, with at least one
 #'   per site. The default (1 %) suits large projects: with fewer than 150
@@ -110,7 +133,7 @@ select_clips <- function(detections,
                          occasion_unit = c("file", "minute"),
                          threshold = NULL,
                          n_top = 2,
-                         strata = c("night_hour", "night", "site_species"),
+                         strata = "night_hour",
                          recording_fraction = 0.01,
                          n_recordings_per_site = NULL,
                          recordings = NULL,
@@ -131,16 +154,8 @@ select_clips <- function(detections,
                          remap_to = NULL,
                          seed = 2026) {
   modo    <- match.arg(sampling_mode)
-  strata  <- match.arg(strata)
-  estrato1 <- switch(strata,
-                     night_hour   = c("site", "species_code", "night",
-                                      "recording_hour"),
-                     night        = c("site", "species_code", "night"),
-                     site_species = c("site", "species_code"))
-  rotulo1 <- switch(strata,
-                    night_hour   = "site x species x night x hour",
-                    night        = "site x species x night",
-                    site_species = "site x species")
+  estrato1 <- resolve_strata(strata)
+  rotulo1  <- paste(estrato1, collapse = " x ")
   unidade <- match.arg(occasion_unit)
   janela  <- list(hour_start = hour_start, hour_end = hour_end,
                   alternate_days = alternate_days,
@@ -255,11 +270,22 @@ select_clips <- function(detections,
   } else if (modo == "random_detections") {
     # Candidatas: ocasioes com >= 1 predicao da especie >= threshold. O
     # sorteio (n_top ocasioes por estrato) nao olha o score.
-    deteccoes <- filter(selecao, confidence >= threshold)
+    deteccoes <- filter(selecao, confidence >= threshold) |>
+      add_period_columns(estrato1)
+    faltam <- setdiff(estrato1, names(deteccoes))
+    if (length(faltam) > 0) {
+      stop("Column(s) of `strata` not in `detections`: ",
+           paste(faltam, collapse = ", "), call. = FALSE)
+    }
+    chave <- unique(c("site", "species_code", "occasion_id",
+                      "recording_date", "night", "recording_hour", estrato1))
+    ocasioes <- distinct(deteccoes, across(all_of(chave)))
+    if (anyDuplicated(ocasioes[c("site", "species_code", "occasion_id")])) {
+      stop("The `strata` columns must be constant within an occasion; ",
+           "some occasions fall in more than one stratum.", call. = FALSE)
+    }
     selecao <- withr::with_seed(seed, {
-      deteccoes |>
-        distinct(site, species_code, occasion_id,
-                 recording_date, night, recording_hour) |>
+      ocasioes |>
         group_by(across(all_of(estrato1))) |>
         mutate(.p1 = min(n_top, n()) / n()) |>
         slice_sample(n = n_top) |>
@@ -384,8 +410,9 @@ select_clips <- function(detections,
                    if (usou_meta && balance_by_hour) "recording_hour")
     # com estrato da 1a etapa sem a hora, o numero de candidatas por hora
     # na 2a etapa depende do 1o sorteio: o produto deixa de ser exato
-    if (usou_meta && balance_by_hour && strata != "night_hour") {
-      warning("With strata = \"", strata, "\" and balance_by_hour = TRUE, ",
+    if (usou_meta && balance_by_hour && !"recording_hour" %in% estrato1) {
+      warning("With strata (", rotulo1, ") without the hour and ",
+              "balance_by_hour = TRUE, ",
               "inclusion_prob is conditional on the first draw; use ",
               "balance_by_hour = FALSE for exact inclusion probabilities.",
               call. = FALSE)
@@ -595,4 +622,44 @@ sample_clips <- function(df, n_alvo, por_hora = TRUE) {
   } else {
     slice_sample(df, n = n_alvo)
   }
+}
+
+# Estratos do sorteio de random_detections: um dos atalhos ou um vetor de
+# colunas, sempre com local e especie e nunca com colunas do score
+resolve_strata <- function(strata) {
+  atalhos <- list(
+    night_hour   = c("night", "recording_hour"),
+    night        = "night",
+    hour         = "recording_hour",
+    week         = "week",
+    month        = "month",
+    site_species = character())
+  if (!is.character(strata) || length(strata) == 0) {
+    stop("`strata` must be a preset name or a character vector of columns.",
+         call. = FALSE)
+  }
+  cols <- if (length(strata) == 1 && strata %in% names(atalhos)) {
+    atalhos[[strata]]
+  } else {
+    strata
+  }
+  proibidas <- intersect(cols, c("confidence", "rank"))
+  if (length(proibidas) > 0) {
+    stop("`strata` cannot use column(s) that depend on the score: ",
+         paste(proibidas, collapse = ", "), call. = FALSE)
+  }
+  unique(c("site", "species_code", cols))
+}
+
+# Mes (AAAA-MM) e semana ISO (AAAA-Wss) da noite, quando usados nos
+# estratos e ausentes das deteccoes
+add_period_columns <- function(df, cols) {
+  data_noite <- function() as.Date(df$night, "%Y%m%d")
+  if ("month" %in% cols && !"month" %in% names(df)) {
+    df$month <- format(data_noite(), "%Y-%m")
+  }
+  if ("week" %in% cols && !"week" %in% names(df)) {
+    df$week <- format(data_noite(), "%G-W%V")
+  }
+  df
 }

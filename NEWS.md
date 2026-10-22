@@ -10,6 +10,16 @@
   GUI compared with the calibration of stage 2, and the review with
   several reviewers.
 
+## Sampling
+
+- `select_clips(strata = )` gains the presets `"hour"` (pooling the
+  nights), `"week"` (ISO week of the night) and `"month"`, and accepts a
+  character vector of column names for strata defined by the user, e.g.
+  `c("month", "moon")` with a column added to the detections before the
+  call. `site` and `species_code` are always added to the strata, columns
+  that depend on the score (`confidence`, `rank`) are refused, and every
+  stratum column must be constant within an occasion.
+
 ## Calibration
 
 - `fit_calibration()` (and `calibrate()`) passes on the messages of
