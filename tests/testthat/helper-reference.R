@@ -12,7 +12,7 @@ sim_root <- local({
       raiz <<- file.path(tempdir(), "sheepdog-sim")
       unlink(raiz, recursive = TRUE)
       dir.create(raiz)
-      raiz <<- normalizePath(raiz)
+      raiz <<- normalizePath(raiz, winslash = "/")
       simulate_pam(raiz)
       utils::write.csv(simulate_recordings_table(raiz),
                        file.path(raiz, "gravacoes.csv"), row.names = FALSE)
@@ -59,6 +59,28 @@ scenario_args <- function(nome) {
 read_as_text <- function(caminho) {
   readr::read_csv(caminho, col_types = readr::cols(.default = "c"),
                   na = character(), progress = FALSE)
+}
+
+# Compara uma saida com a referencia da v1.2.0 (as duas lidas como texto).
+# Colunas numericas sao comparadas com tolerancia, porque os ultimos digitos
+# das contas variam entre plataformas; nos nomes de clipe, o prefixo da
+# confidence (3 casas) e ignorado, porque o arredondamento de valores no
+# limite tambem varia -- a confidence em si e comparada na sua coluna.
+# As saidas de modelos ajustados por otimizacao (GLMM) pedem uma tolerancia
+# maior, passada em `tolerance`
+expect_same_table <- function(novo, ref, label = NULL, tolerance = 1e-8) {
+  normalizar <- function(df) {
+    df[] <- lapply(df, function(x) {
+      num <- suppressWarnings(as.numeric(x))
+      if (identical(is.na(num), is.na(x) | x %in% c("NA", ""))) num else x
+    })
+    for (col in intersect(c("clip_file", "reviewed_path"), names(df))) {
+      df[[col]] <- sub("(^|/)[0-9]+\\.[0-9]{3}_", "\\1", df[[col]])
+    }
+    df
+  }
+  expect_equal(normalizar(novo), normalizar(ref), tolerance = tolerance,
+               label = label)
 }
 
 # Escreve uma tabela como o pacote escreve e le de volta como texto,

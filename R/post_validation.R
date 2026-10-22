@@ -29,11 +29,14 @@ classify_review <- function(manifest, review_dir,
                      recursive = TRUE, full.names = TRUE)
   if (length(wavs) == 0) stop("No .wav found in ", review_dir)
 
-  # o veredito vem so das subpastas abaixo de review_dir
+  # o veredito vem so das subpastas abaixo de review_dir (no Windows o
+  # dirname() troca \\ por /, entao as barras sao igualadas antes)
+  raiz <- chartr("\\", "/", review_dir)
   revisao <- tibble(reviewed_path = wavs) |>
     mutate(
       clip_file = basename(reviewed_path),
-      subpasta  = str_remove(dirname(reviewed_path), fixed(review_dir)),
+      subpasta  = str_remove(chartr("\\", "/", dirname(reviewed_path)),
+                             fixed(raiz)),
       verdict   = case_when(
         str_detect(subpasta, regex(positive_pattern, ignore_case = TRUE)) ~ "positive",
         str_detect(subpasta, regex(negative_pattern, ignore_case = TRUE)) ~ "negative",

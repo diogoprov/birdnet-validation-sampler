@@ -12,9 +12,9 @@ for (k in 1:2) {
                paste0("matriz_contagens_local_mes_k", k, ".csv"),
                "effort_site_month.csv", "esforco_local_mes.csv")
     for (i in seq(1, length(pares), by = 2)) {
-      expect_identical(read_as_text(file.path(saida, pares[i])),
-                       ref_table(paste0("mat_k", k), pares[i + 1]),
-                       label = pares[i])
+      expect_same_table(read_as_text(file.path(saida, pares[i])),
+                        ref_table(paste0("mat_k", k), pares[i + 1]),
+                        label = pares[i])
     }
   })
 }
