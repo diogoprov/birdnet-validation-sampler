@@ -44,17 +44,21 @@ sites.
 
 ## The example data
 
-The example data are simulated (`data-raw/make_example_data.R`). Five
+The example data are simulated (`data-raw/make_example_data.R`). Eight
 anuran species were recorded at four sites over six months, from October
 2021 to March 2022. When a species is present, its true detections have
 scores drawn from a species-specific Beta distribution. Every species also
 produces false positives in every recording, present or not, with scores
-drawn from a second species-specific Beta distribution that overlaps the
-first. The rate of false positives is multiplied by a site noise factor
-(ARA 0.7, BAI 1.0, XAR 1.5, NHE 2.2), and presence varies with site and
-season. The same score therefore corresponds to different probabilities of
-a true detection among species and sites. The verdicts of the reviewed
-clips come from the simulated truth.
+drawn from a second species-specific Beta distribution. For five species
+(`boa_ran`, `den_nan`, `lep_fus`, `pse_pla`, `sci_nas`) the two
+distributions overlap widely; the other three (`ela_bic`, `lep_pod`,
+`phy_cuv`) produce few false positives, with low scores, and are well
+separated. The rate of false positives is multiplied by a site noise
+factor (ARA 0.7, BAI 1.0, XAR 1.5, NHE 2.2). Presence varies with season
+and site, including a random preference of each species for each site.
+The same score therefore corresponds to different probabilities of a true
+detection among species and sites. The verdicts of the reviewed clips
+come from the simulated truth.
 
 The reviewed clips are the `validation_by_clip_<site>.csv` tables written
 by `post_validation()`. `read_validations()` stacks them, keeps the clips
@@ -69,7 +73,9 @@ table(val$site, val$species)
 
 The clips were selected with the `"top"` design (the two highest scores per
 site x species x night x hour, at most `r max(table(val$site, val$species))`
-per site x species). Precision differs widely among species:
+per site x species). Cells where a species was rarely detected hold fewer
+clips (as few as `r min(table(val$site, val$species))`). Precision differs
+widely among species:
 
 ```{r}
 val |>
@@ -109,7 +115,7 @@ uses a fixed `seed`. Five folds run in a few seconds on these data.
 
 ```{r, eval = has_lme4}
 cv <- compare_calibration_models(val, models, k_folds = 5)
-cv |> select(model, auc_mean, auc_sd)
+cv |> select(model, auc_mean, auc_sd, n_failed)
 ```
 
 ```{r, include = FALSE, eval = has_lme4}
@@ -117,13 +123,17 @@ auc_of <- function(m) round(cv$auc_mean[cv$model == m], 3)
 ```
 
 The table is ordered by mean AUC. Read the differences between models
-together with the spread among folds (`auc_sd`). Here, any species effect
-improves on the global model by much more than the fold-to-fold standard
-deviation (AUC `r if (has_lme4) auc_of("m0_global")` for m0 against
-`r if (has_lme4) auc_of("m1_species_intercept")` for m1), and site
-effects add a smaller gain (`r if (has_lme4) auc_of("m4_species_x_site")`
-for m4). The differences among the hierarchical models are of the same
-order as `auc_sd`, so their order can change with `k_folds` or `seed`.
+together with the spread among folds (`auc_sd`), and check `n_failed`
+(folds whose fit failed and were left out of the mean; none here). In the
+example, each added level of structure raises the mean AUC by more than
+the fold-to-fold standard deviation: from
+`r if (has_lme4) auc_of("m0_global")` for the global model to
+`r if (has_lme4) auc_of("m1_species_intercept")` with species intercepts,
+`r if (has_lme4) auc_of("m2_species_slope")` with species slopes,
+`r if (has_lme4) auc_of("m3_plus_site")` with site intercepts and
+`r if (has_lme4) auc_of("m4_species_x_site")` with site x species
+intercepts. When differences are of the same order as `auc_sd`, the order
+of the table can change with `k_folds` or `seed`.
 
 AUC measures discrimination (whether true detections score higher than
 false ones), not calibration (whether a predicted probability of 0.9 is
@@ -143,9 +153,10 @@ parsimonious
 ```
 
 The wrapper `calibrate()` takes the first row of the table
-(`r if (has_lme4) cv$model[1]`), whereas the heuristic retains
-`r if (has_lme4) parsimonious`. The next sections show what the two
-choices imply.
+(`r if (has_lme4) cv$model[1]`); the heuristic retains
+`r if (has_lme4) parsimonious`. In the example the two agree, because no
+simpler model comes within one standard deviation of the best. Whether
+the retained model is a sound fit is a separate question, taken up next.
 
 ## Fitting the calibration model
 
@@ -171,7 +182,8 @@ The site x species intercepts of m4 have a standard deviation of
 `r if (has_lme4) round(attr(lme4::VarCorr(fit_full)[["site:species"]], "stddev"), 2)`
 on the logit scale, a large effect: at a given score, the odds of a true
 detection differ several-fold among sites for the same species. The fit is
-nevertheless singular, which is why `fit_calibration()` warned above: the
+nevertheless singular, which is why `fit_calibration()` warned above (it
+is the only singular fit among the candidates): the
 correlation between the species intercepts and
 slopes is estimated at
 `r if (has_lme4) round(attr(lme4::VarCorr(fit_full)$species, "correlation")[1, 2], 2)`,
@@ -180,13 +192,16 @@ correlation between two random effects is poorly identified. A singular
 fit means that the random-effect structure is more complex than the data
 can support. The predictions can still be used, but this variance
 component should not be interpreted. The singularity lies in the species
-term, not in the site x species term that gives m4 its advantage: m2 and
-m3 share the same species term and are not singular (in m3 the
-correlation is
-`r if (has_lme4) round(attr(lme4::VarCorr(fits$m3_plus_site)$species, "correlation")[1, 2], 2)`),
-and m3 comes close to m4 in the comparison. A non-singular model within
-one standard deviation of the best (m2 or m3 here) is a defensible
-alternative to m4. Fitting m4 without the correlation (with
+term, not in the site x species term that gives m4 its advantage. m2 and
+m3 share the same species term and are not flagged as singular, but in m3
+the correlation is already
+`r if (has_lme4) round(attr(lme4::VarCorr(fits$m3_plus_site)$species, "correlation")[1, 2], 2)`,
+close to the boundary: the species intercepts and slopes are nearly
+collinear in every model. Here the choice is between m4, singular in a
+component that does not drive its predictions but clearly better in the
+cross-validation, and m3, a regular fit with a lower AUC. We keep m4 for
+the rest of the vignette and do not interpret its species correlation.
+Fitting m4 without the correlation (with
 `(1 | species) + (0 + logit_conf | species)`) would be a further option,
 but it is not one of the built-in candidates.
 
@@ -217,12 +232,17 @@ Look for:
   extrapolations. The `"top"` design gives few clips at low scores, so the
   lower part of each curve rests mainly on the shared fixed effects.
 
-In the example, all of these appear. `pse_pla` has a shallow curve that
-stays well below `p_min` at every site: its false positives overlap its
-true detections too much for any score to be reliable. `sci_nas` reaches
-`p_min` only at the very top of the score range. For `lep_fus`, the curve
-at NHE, the noisiest site, lies far to the right of the others, and at ARA,
-the quietest site, to the left.
+In the example, all of these appear. The three well-separated species
+(`ela_bic`, `lep_pod`, `phy_cuv`) have steep curves that cross `p_min` at
+moderate scores and lie close together among sites. `pse_pla` has a
+shallow curve that stays below `p_min` at every site: its false positives
+overlap its true detections too much for any score to be reliable.
+`sci_nas` and `den_nan` reach `p_min` only near the top of the score range,
+except at ARA, the quietest site, where their curves lie to the left.
+`lep_fus` diverges most among sites: its curves at ARA and BAI lie far
+below those at NHE and XAR. The species is rarely present at ARA and BAI,
+so most of its detections there are false, and these two cells also hold
+the fewest reviewed clips.
 
 The practical consequence is the score at which each site x species
 reaches `p_min`. Under the global model this score is the same everywhere:
@@ -349,20 +369,24 @@ history_global <- score_detections(tables, fit_global) |>
 compare <- inner_join(history, history_global,
                       by = c("site", "species", "night"),
                       suffix = c("_full", "_global"))
-compare |>
+compare_sp <- compare |>
   group_by(species) |>
   summarise(nights = n(),
             k1_full = sum(detection_k1_full),
             k1_global = sum(detection_k1_global),
             differ_k1 = sum(detection_k1_full != detection_k1_global))
+compare_sp
 ```
 
 The global model changes the history of
 `r if (has_lme4) sum(compare$detection_k1_full != compare$detection_k1_global)`
 of `r if (has_lme4) nrow(compare)` site x species x nights under k = 1. It
-is too strict for the species with high precision, whose detections need a
-lower score than the common threshold, and it accepts nights for species
-that have no reliable detection at all under m4.
+accepts fewer nights than m4 for
+`r if (has_lme4) paste(with(compare_sp, as.character(species[k1_global < k1_full])), collapse = ", ")`,
+which reach P(TP) >= 0.95 below the common threshold at some or all
+sites, and more nights for
+`r if (has_lme4) paste(with(compare_sp, as.character(species[k1_global > k1_full])), collapse = ", ")`,
+whose calibrated probabilities m4 places lower.
 
 ## When the global model is enough
 

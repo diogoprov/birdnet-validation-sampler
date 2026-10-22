@@ -3,7 +3,8 @@
 #
 # Gera o conjunto de exemplo das vignettes em inst/extdata/example/:
 #   birdnet/<SITE>/BirdNET_SelectionTable.txt - predicoes simuladas (Raven)
-#                                               de 4 locais x 6 meses
+#                                               de 4 locais x 6 meses,
+#                                               8 especies
 #   recordings.csv                            - todas as gravacoes, com ou
 #                                               sem predicao
 #   validation/validation_by_clip_<SITE>.csv  - clipes "top" revisados (o
@@ -30,13 +31,21 @@ library(dplyr)
 
 set.seed(2026)
 
+# a_tp/b_tp e a_fp/b_fp: Betas da confidence das deteccoes verdadeiras e
+# dos falsos positivos; lambda_tp e mu_fp: deteccoes por gravacao; psi0 e
+# chuva: ocupacao base (logito) e efeito da estacao chuvosa (nov-fev).
+# As tres ultimas especies sao bem calibradas (poucos falsos positivos de
+# score baixo); pse-pla e sci-nas sao as dificeis.
 especies <- tibble::tribble(
-  ~species_code,                    ~a_tp, ~b_tp, ~lambda_tp, ~mu_fp, ~a_fp, ~b_fp,
-  "Boana raniceps_boa-ran",           5,     2,      3.0,      0.6,    2.0,   4.0,
-  "Dendropsophus nanus_den-nan",      3,     2,      3.5,      1.5,    2.0,   3.0,
-  "Scinax nasicus_sci-nas",           3,     2,      2.0,      1.5,    2.5,   3.0,
-  "Leptodactylus fuscus_lep-fus",     4,     3,      1.5,      0.8,    2.0,   4.0,
-  "Pseudis platensis_pse-pla",        2.5,   2,      1.5,      2.0,    2.5,   2.5
+  ~species_code,                     ~a_tp, ~b_tp, ~lambda_tp, ~mu_fp, ~a_fp, ~b_fp, ~psi0, ~chuva,
+  "Boana raniceps_boa-ran",            5,     2,      3.0,      0.6,    2.0,   4.0,   0.8,   1.2,
+  "Dendropsophus nanus_den-nan",       3,     2,      3.5,      1.5,    2.0,   3.0,   0.6,   1.2,
+  "Scinax nasicus_sci-nas",            3,     2,      2.0,      1.5,    2.5,   3.0,   0.0,   1.2,
+  "Leptodactylus fuscus_lep-fus",      4,     3,      1.5,      0.8,    2.0,   4.0,  -0.8,   1.2,
+  "Pseudis platensis_pse-pla",         2.5,   2,      1.5,      2.0,    2.5,   2.5,  -0.3,   1.2,
+  "Physalaemus cuvieri_phy-cuv",       6,     1.8,    3.0,      0.3,    1.5,   5.0,   0.4,   2.0,
+  "Elachistocleis bicolor_ela-bic",    6,     1.8,    2.5,      0.3,    1.5,   5.0,  -0.2,   2.5,
+  "Leptodactylus podicipinus_lep-pod", 6,     1.8,    2.5,      0.3,    1.5,   5.0,   0.5,  -0.5
 )
 locais <- c("ARA", "XAR", "BAI", "NHE")
 # multiplicador da taxa de falsos positivos por local (ruido de fundo)
@@ -45,16 +54,22 @@ meses  <- seq(as.Date("2021-10-01"), by = "month", length.out = 6)
 horas  <- c("190000", "220000", "010000")
 dur    <- 300
 
-# Ocupacao por local x mes: a sazonalidade (chuva de nov a fev) e o local
-# mudam a probabilidade de cada especie
+# Ocupacao por local x mes: a estacao (chuva de nov a fev, com efeito
+# proprio de cada especie), o local e a preferencia de cada especie por
+# local mudam a probabilidade -- e o que da estrutura as ordenacoes
+pref <- expand.grid(site = locais, species_code = especies$species_code,
+                    stringsAsFactors = FALSE) |>
+  mutate(pref = rnorm(n(), 0, 1))
 psi <- expand.grid(site = locais, mes = format(meses, "%Y%m"),
                    species_code = especies$species_code,
                    stringsAsFactors = FALSE) |>
+  left_join(select(especies, species_code, psi0, chuva_ef = chuva),
+            by = "species_code") |>
+  left_join(pref, by = c("site", "species_code")) |>
   mutate(
     chuva = substr(mes, 5, 6) %in% c("11", "12", "01", "02"),
-    base  = c(ARA = 0.3, XAR = 0, BAI = -0.4, NHE = 0.1)[site] +
-      c(0.8, 0.6, 0, -0.8, -0.3)[match(species_code, especies$species_code)],
-    psi   = plogis(base + ifelse(chuva, 1.2, -1.0)),
+    base  = c(ARA = 0.3, XAR = 0, BAI = -0.4, NHE = 0.1)[site] + psi0 + pref,
+    psi   = plogis(base + ifelse(chuva, chuva_ef, -chuva_ef + 0.2)),
     presente = runif(n()) < psi
   )
 
@@ -74,7 +89,7 @@ gravacoes <- expand.grid(site = locais, mes = meses, noite = 1:5,
 
 # Uma linha por deteccao, com a verdade (tp) guardada a parte
 deteccoes <- gravacoes |>
-  tidyr::crossing(especies) |>
+  tidyr::crossing(select(especies, -psi0, -chuva)) |>
   left_join(select(psi, site, mes, species_code, presente),
             by = c("site", "mes", "species_code")) |>
   mutate(n_tp = if_else(presente, rpois(n(), lambda_tp), 0L),

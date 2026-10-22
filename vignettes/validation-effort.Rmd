@@ -30,13 +30,14 @@ This vignette runs both on the simulated example shipped with the package.
 
 ## Example data
 
-The example holds BirdNET predictions simulated for five frog species at
-four sites over six months (`data-raw/make_example_data.R` in the source
+The example holds BirdNET predictions simulated for frog species at
+several sites over six months (`data-raw/make_example_data.R` in the source
 repository). False-positive confidences overlap those of true detections,
 and false-positive rates differ among species and sites. The reviewed clips
 were drawn with the `"top"` design (the two highest confidences per
 site x species x night x hour, up to 80 clips per site x species) and their
-verdicts come from the simulated truth.
+verdicts come from the simulated truth. Species with few detections at a
+site yield fewer than 80 clips there.
 
 ```{r}
 library(sheepdog)
@@ -58,10 +59,11 @@ val |>
 ```
 
 The table gives the share of true positives among the reviewed clips of
-each cell (`r n_distinct(paste(val$site, val$species))` cells of
+each cell (`r n_distinct(val$species)` species x `r n_distinct(val$site)`
+sites = `r n_distinct(paste(val$site, val$species))` cells of
 `r paste(unique(range(count(val, site, species)$n)), collapse = " to ")`
-clips). It already shows that the same
-design yields very different precision across species and sites.
+clips). It already shows that the same design yields very different
+precision across species and sites.
 
 ## Stage 2: the effort curve
 
@@ -105,9 +107,20 @@ used (`n_train_mean`), the size of the test set (`n_test_mean`) and the
 repetitions dropped (`n_failed`) next to the AUC.
 
 ```{r}
-n_train <- c(5, 10, 20, 30, 45, 60, 70)
+cell_min <- min(count(val, site, species)$n)
+cell_min
+n_train <- c(5, 10, 15, 20, 25)
 n_reps  <- 15
 ```
+
+The smallest cell holds `r cell_min` clips, so the largest training size
+that every cell can supply is `r cell_min - 5`, and `n_train` stops below
+it. Larger sizes would trigger the warning, and `n_train_mean` would fall
+below `n_per_cell`: the small cells would contribute fewer clips than
+requested, and the curve would no longer describe a uniform effort per
+cell. To explore larger efforts, draw the curve on the subset of cells
+large enough to supply them, keeping in mind that this subset excludes
+the species with few detections, often the hardest to calibrate.
 
 ### The two curves
 
@@ -165,7 +178,7 @@ at every training size: it has only two parameters, which are estimated
 well from a few clips per cell, and more clips cannot correct its
 structural limitation, that one score-to-probability curve is shared by
 all species and sites.
-`r if (has_lme4) paste0("The hierarchical model starts higher (", auc_at(eff_m4, n_lo), " with ", n_lo, " clips per cell) and keeps improving (", auc_at(eff_m4, n_mid), " with ", n_mid, " and ", auc_at(eff_m4, n_hi), " with ", n_hi, "), because each additional clip also informs the species- and site-specific terms.") else "With 'lme4' installed, this vignette also draws the curve of the hierarchical model."`
+`r if (has_lme4) paste0("The hierarchical model is higher at every size (", auc_at(eff_m4, n_lo), " with ", n_lo, " clips per cell, ", auc_at(eff_m4, n_mid), " with ", n_mid, " and ", auc_at(eff_m4, n_hi), " with ", n_hi, ") and, unlike the global model, it gains from additional clips, because each clip also informs the species- and site-specific terms.") else "With 'lme4' installed, this vignette also draws the curve of the hierarchical model."`
 The gap between the curves is the gain from modelling how species and
 sites differ; its size, not only the height of either curve, is what the
 choice of formula rests on. Draw the curve for the formula that
@@ -177,19 +190,23 @@ increasing, extra clips in every cell add little discrimination. With a
 tolerance of 0.005 below the best mean AUC of each curve (an illustrative
 choice, not a rule of the package), the global model is flat from
 `r plateau(eff_m0)` clips per cell`r if (has_lme4) paste0(" and the hierarchical model from ", plateau(eff_m4))`.
-`r if (has_lme4) paste0("For the hierarchical model the gain per clip falls with effort: the first ", 10 - n_lo, " extra clips per cell (from ", n_lo, " to 10) add ", round(auc_at(eff_m4, 10) - auc_at(eff_m4, n_lo), 3), " to the mean AUC, and the next ", plateau(eff_m4) - 10, " (from 10 to ", plateau(eff_m4), ") add ", round(auc_at(eff_m4, plateau(eff_m4)) - auc_at(eff_m4, 10), 3), " in total.")`
+`r if (has_lme4) paste0("For the hierarchical model the gain per clip falls with effort: the first ", 10 - n_lo, " extra clips per cell (from ", n_lo, " to 10) add ", round(auc_at(eff_m4, 10) - auc_at(eff_m4, n_lo), 3), " to the mean AUC, and the next ", n_hi - 10, " (from 10 to ", n_hi, ") add ", round(auc_at(eff_m4, n_hi) - auc_at(eff_m4, 10), 3), " in total.")`
 The first clips of a cell fix its intercept and slope; the later ones only
-refine them. Small dips in the mean between neighbouring training sizes
+refine them. Whether the curve keeps rising beyond `r cell_min - 5` clips
+per cell cannot be assessed with every cell in the curve (see above). Small dips in the mean between neighbouring training sizes
 are within the spread of the repetitions and should not be read as losses.
 
 **The variability across repetitions.** At small *n* the standard
 deviation measures how much the calibration depends on *which* clips were
 reviewed; a large spread means that a single validation round of that size
-may produce a poor model by chance. At large *n* the spread grows for a
-different reason: the test set is what is left of each cell, so it shrinks
-as *n* grows (with `r n_hi` training clips per cell, only `r n_test_max` of
-the `r nrow(val)` clips are left for testing). The right end of the curve
-is therefore estimated less precisely than its middle.
+may produce a poor model by chance.
+`r if (has_lme4) paste0("For the hierarchical model it is largest with ", n_lo, " clips per cell (sd = ", round(eff_m4$auc_sd[1], 3), ") and halves by ", eff_m4$n_per_cell[which(eff_m4$auc_sd <= eff_m4$auc_sd[1] / 2)[1]], ".")`
+The spread can also grow with *n* for a different reason: the test set is
+what is left of each cell, so it shrinks as *n* grows (`n_test_mean`; with
+`r n_hi` training clips per cell, `r n_test_max` of the `r nrow(val)` clips
+remain for testing). The standard deviation of the global model, which
+gains nothing from extra clips, rises from `r round(eff_m0$auc_sd[1], 3)`
+to `r round(eff_m0$auc_sd[nrow(eff_m0)], 3)` for that reason alone.
 
 AUC measures discrimination (whether true detections score higher than
 false ones), not whether the calibrated probabilities are accurate. A curve
@@ -210,19 +227,24 @@ val_raw <- purrr::map(val_files, readr::read_csv, show_col_types = FALSE) |>
 
 prec <- precision_by_bin(val_raw, min_n = 15)
 prec |>
-  filter(site == "BAI", species_folder %in% c("lep_fus", "pse_pla")) |>
+  filter(site == "BAI", species_folder %in% c("phy_cuv", "pse_pla")) |>
   mutate(precision = round(precision, 2)) |>
   select(species_folder, bin, n = n_reviewed, precision) |>
   tidyr::pivot_wider(names_from = species_folder,
-                     values_from = c(n, precision))
+                     values_from = c(n, precision)) |>
+  arrange(bin)
 ```
 
 A bin is flagged `low_support` when it holds fewer than `min_n` reviewed
-clips (here, bins with `n` below 15). The two cells shown fail in different ways. For *lep_fus* at BAI the
-few clips in the upper bins are all true positives, but those bins are
-flagged: the precision at high scores rests on a handful of clips. For
-*pse_pla* at BAI the upper bins hold more clips, and precision there is
-still low: the classifier confuses this species even at high scores.
+clips (here, bins with `n` below 15). The two cells shown differ in how
+the flags should be read. For *phy_cuv* at BAI the reviewed clips
+concentrate in the upper bins, as expected from the `"top"` design, and
+precision there is high; the flagged low bins matter only if the study
+needs a low threshold. For *pse_pla* at BAI the clips spread over the
+whole range and precision stays low at high scores, including the upper bins
+that reach `min_n`:
+the classifier confuses this species at high scores, and more clips would
+not change that.
 
 `suggest_thresholds()` returns, for each cell, the lowest confidence at
 which precision reaches `target_precision` with at least `min_n` clips
@@ -299,7 +321,9 @@ support:
 * **`"exhausted"`:** `r cells_with("exhausted")`.
   The `"top"` design has already taken almost every high-score detection
   of these cells; more effort cannot add support. Treat the species at that
-  site as poorly calibrated.
+  site as poorly calibrated. In this example these cells have
+  `r sum(filter(count(val, site, species, wt = tp), paste(species, site) %in% with(filter(support, diagnosis == "exhausted"), paste(species, site)))$n)`
+  true positives among their reviewed clips in total (see `n_fp` below).
 * **`"unreliable"`:** `r cells_with("unreliable")`.
   Most high-score detections are false positives; more review would only
   confirm it. These cells call for retraining the classifier (with the
@@ -308,8 +332,8 @@ support:
 The column `n_fp` deserves a look of its own. The calibration slope is
 estimated from the contrast between true and false positives, so a cell
 with few false positives (here as few as `r min(support$n_fp)`) carries
-little information about the low end of its calibration curve, even with
-the same number of reviewed clips as the other cells. At the other extreme,
+little information about the low end of its calibration curve, even when
+its total number of reviewed clips is large. At the other extreme,
 a cell whose reviewed clips are all false positives
 (`r with(filter(count(val, site, species, wt = tp), n == 0), if (length(species) > 0) paste(species, site, sep = " at ", collapse = ", ") else "none in this example")`)
 gives no information on true detections at all; it may be a site where the
@@ -359,7 +383,7 @@ res <- calibrate(
   prediction_tables = setNames(
     file.path(ex, "birdnet", sites, "BirdNET_SelectionTable.txt"), sites),
   output_dir   = file.path(tempdir(), "calibration"),
-  effort_curve = TRUE, effort_n = c(5, 10, 20, 30, 45, 60, 70),
+  effort_curve = TRUE, effort_n = c(5, 10, 15, 20, 25),
   effort_reps  = 50
 )
 res$effort

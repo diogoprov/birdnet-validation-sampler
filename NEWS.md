@@ -5,15 +5,17 @@
   `vignette("validation-effort")`, `vignette("calibration")`,
   `vignette("community-matrices")` and `vignette("retraining")`
   (training folders for BirdNET-Analyzer from the reviewed clips).
-- The example data set (4 sites x 5 species x 6 months; selection tables,
+- The example data set (4 sites x 8 species x 6 months; selection tables,
   the list of recordings, reviewed clips and a calibrated nightly history)
   ships in `system.file("extdata", "example", package = "sheepdog")`;
   `data-raw/make_example_data.R` generates it.
 - `plot_precision()` draws one line per site when the table has several
   sites; before, the lines of different sites were joined in the same panel
   (also in the `precision_by_bin.png` of `post_validation()`).
-- 'vegan' is a suggested package, used only in
-  `vignette("community-matrices")`.
+- `vignette("community-matrices")` uses a PCoA on square-root
+  Bray-Curtis (`ape::pcoa()`) and a binomial GLLVM ('gllvm') for a
+  model-based ordination and a test of the season effect; 'ape', 'gllvm'
+  and 'vegan' are suggested packages, used only there.
 - The vignette `crywolf-contract` is now `crywolf-integration`
   ("Integration with crywolf").
 

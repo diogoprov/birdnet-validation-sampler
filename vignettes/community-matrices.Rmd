@@ -10,13 +10,17 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 has_vegan   <- requireNamespace("vegan", quietly = TRUE)
+has_ape     <- requireNamespace("ape", quietly = TRUE)
 has_ggplot2 <- requireNamespace("ggplot2", quietly = TRUE)
+has_gllvm   <- requireNamespace("gllvm", quietly = TRUE)
+run_pcoa    <- has_vegan && has_ape
 ```
 
 Stage 3 of sheepdog turns the calibrated nightly detection history into
 site x month community matrices for multivariate analyses. This vignette
-runs that stage on the example data shipped with the package and closes
-with an illustrative ordination.
+runs that stage on the example data shipped with the package, and then uses
+the matrices in a distance-based ordination (PCoA) and in a model-based
+ordination and test with generalised linear latent variable models (GLLVM).
 
 ```{r}
 library(sheepdog)
@@ -25,12 +29,13 @@ library(sheepdog)
 ## The calibrated detection history
 
 The example history is the output of `calibrate()` on simulated BirdNET
-predictions for four sites, five species and six months (October 2021 to
-March 2022), with five recorded nights per site x month, except for one
-recorder failure. In the simulation, occupancy is seasonal (higher in the
-rainy months, November to February) and differs among sites and species;
-the false-positive scores overlap those of true detections, at rates that
-vary among species and sites (`data-raw/make_example_data.R`).
+predictions for four sites and six months (October 2021 to March 2022),
+with five recorded nights per site x month, except for one recorder
+failure. In the simulation, occupancy depends on species-specific
+seasonality (most species prefer the rainy months, November to February;
+one prefers the dry months) and on species x site preferences; the
+false-positive scores overlap those of true detections, at rates that vary
+among species and sites (`data-raw/make_example_data.R`).
 
 ```{r}
 ex <- system.file("extdata", "example", package = "sheepdog")
@@ -89,36 +94,26 @@ by_site |>
 ```
 
 ```{r, include = FALSE}
-core <- by_site |>
-  dplyr::summarise(all_sites = all(nights_k1 > 0), .by = species) |>
-  dplyr::filter(all_sites) |>
-  dplyr::pull(species) |>
-  sort()
-never <- by_site |>
-  dplyr::summarise(none = all(nights_k1 == 0), .by = species) |>
-  dplyr::filter(none) |>
-  dplyr::pull(species) |>
-  sort()
-partial <- setdiff(species, c(core, never))
+n_sites_ok <- by_site |>
+  dplyr::summarise(n = sum(nights_k1 > 0), .by = species)
+never   <- sort(n_sites_ok$species[n_sites_ok$n == 0])
+partial <- sort(n_sites_ok$species[n_sites_ok$n > 0 &
+                                     n_sites_ok$n < length(sites)])
 ```
 
-Species with no reliable detection anywhere (`r never`) are cases in which
+Some species have no reliable detection anywhere (`r never`): their
 calibrated probabilities rarely reach `p_min`, because their false-positive
-scores overlap those of true detections; in the simulation every species
-has a non-zero probability of occupancy at every site. Species reliably detected at some sites only (`r partial`) are
-the case the core rule targets: their absence from a site may reflect the
-classifier rather than the community. Here the core species are taken as
-those with at least one night with a reliable detection at every site
-(`r core`). This is a convenient proxy for the example; with real data the
-decision rests on the calibration diagnostics, and a species that is truly
-absent from some sites should not be excluded on this criterion alone.
+scores overlap those of true detections. Others are reliably detected at
+some sites only (`r partial`); they are the case the core rule targets,
+because their absence from a site may reflect the classifier rather than
+the community. Here the core species are taken as those with at least one
+night with a reliable detection at every site. This is a convenient proxy
+for the example; with real data the decision rests on the calibration
+diagnostics, and a species that is truly absent from some sites should not
+be excluded on this criterion alone.
 
 ```{r}
-core <- by_site |>
-  dplyr::summarise(all_sites = all(nights_k1 > 0), .by = species) |>
-  dplyr::filter(all_sites) |>
-  dplyr::pull(species) |>
-  sort()
+core <- n_sites_ok$species[n_sites_ok$n == length(sites)] |> sort()
 core
 ```
 
@@ -186,8 +181,8 @@ least <- names(which.min(loss))
 
 From `k_min = 1` to `3`, the mean frequency of `r least` falls by
 `r loss[least]`%, whereas that of `r most` falls by `r loss[most]`%. The
-rule therefore acts unevenly among species, and its effect on the
-ordination should be reported. `k_min = 2` is the default.
+rule therefore acts unevenly among species, and its effect on later
+analyses should be reported. `k_min = 2` is the default.
 
 ## Writing the matrices to disk
 
@@ -202,114 +197,245 @@ mats <- build_community_matrices(history_file, out, core_species = core,
 list.files(out)
 ```
 
-## An illustrative ordination
+## Preparing the samples
 
-The example has only `r length(sites)` sites, six months and
-`r length(core)` core species, so the ordination below illustrates the
-workflow; it does not support inference. With so few species, the
-ordination adds little to a plot of the raw frequencies. It uses the
-**vegan** package, which is suggested but not required by sheepdog.
+Both analyses below use the same samples. Samples in which no core species
+was detected are removed first: their Bray–Curtis dissimilarity is
+undefined, and they carry no information on species co-occurrence. Season
+is coded as rainy (November to February) or dry.
 
-The dissimilarity is Bray–Curtis on the frequency matrix, which retains the
-quantitative information of the frequencies; Jaccard on incidence would
-discard it. [CITAR: properties of Bray–Curtis and Jaccard for frequency
-data in community ordination] Samples in which no core species was
-detected have undefined Bray–Curtis dissimilarity and must be removed
-first.
-
-```{r, eval = has_vegan}
-freq <- mats$frequency |>
+```{r}
+samples <- mats$counts |>
   dplyr::mutate(
-    season = ifelse(substr(month, 6, 7) %in% c("11", "12", "01", "02"),
-                    "rainy", "dry"),
-    label  = paste(site, month)
+    season = factor(ifelse(substr(month, 6, 7) %in% c("11", "12", "01", "02"),
+                           "rainy", "dry"), levels = c("dry", "rainy")),
+    site = factor(site)
   )
-Y <- as.matrix(freq[, core])
-rownames(Y) <- freq$label
-empty <- rowSums(Y) == 0
-freq$label[empty] # samples removed
-freq_ord <- freq[!empty, ]
-Y <- Y[!empty, , drop = FALSE]
-d <- vegan::vegdist(Y, method = "bray")
+empty <- rowSums(samples[, core]) == 0
+paste(samples$site, samples$month)[empty] # samples removed
+samples <- samples[!empty, ]
+freq <- as.matrix(samples[, core]) / samples$n_nights_recorded
+rownames(freq) <- paste(samples$site, samples$month)
 ```
 
-```{r, include = FALSE, eval = has_vegan}
+```{r, include = FALSE}
 n_empty <- sum(empty)
-n_kept  <- nrow(Y)
+n_kept  <- nrow(samples)
 ```
 
-`r if (has_vegan) paste0("Samples removed for lacking any core species: ", n_empty, "; samples kept: ", n_kept, ".") else ""`
+`r n_empty` sample(s) removed; `r n_kept` samples x `r length(core)`
+species remain. The example has only `r length(sites)` sites and six
+months, so the analyses below illustrate the workflow; they do not support
+general conclusions.
 
-A principal coordinates analysis (PCoA) on the dissimilarity matrix:
+## Distance-based ordination: PCoA on Bray–Curtis
 
-```{r, eval = has_vegan}
-pcoa <- vegan::wcmdscale(d, eig = TRUE)
-expl <- pcoa$eig[pcoa$eig > 0] / sum(pcoa$eig[pcoa$eig > 0])
-round(100 * expl[1:2], 1)
-sum(pcoa$eig < 0) # negative eigenvalues
-scores_pcoa <- data.frame(freq_ord[, c("site", "month", "season")],
-                          PCo1 = pcoa$points[, 1], PCo2 = pcoa$points[, 2])
+The choice of resemblance coefficient determines what an ordination
+represents; Legendre & Legendre (2012) review the properties of the
+coefficients. Here we use Bray–Curtis on the frequency matrix, which
+retains the quantitative information of the frequencies (Jaccard on
+incidence would discard it). Bray–Curtis is not Euclidean, so a principal
+coordinates analysis (PCoA) of it produces negative eigenvalues, which have
+no geometric representation. Its square root is Euclidean (Legendre &
+Legendre 2012), and we use it below. The PCoA is computed with
+`ape::pcoa()`.
+
+```{r, eval = run_pcoa}
+bc      <- vegan::vegdist(freq, method = "bray")
+pcoa_bc <- ape::pcoa(bc)
+pcoa_sq <- ape::pcoa(sqrt(bc))
+tol <- 1e-8
+c(bray_curtis      = sum(pcoa_bc$values$Eigenvalues < -tol),
+  sqrt_bray_curtis = sum(pcoa_sq$values$Eigenvalues < -tol))
 ```
 
-Bray–Curtis is not Euclidean, so some eigenvalues are negative;
-`wcmdscale()` returns only the axes with positive eigenvalues, and the
-percentages above are relative to their sum.
+```{r, include = FALSE, eval = run_pcoa}
+n_neg <- sum(pcoa_bc$values$Eigenvalues < -tol)
+rel   <- round(100 * pcoa_sq$values$Relative_eig[1:2], 1)
+```
 
-```{r, eval = has_vegan && has_ggplot2, fig.width = 6, fig.height = 4.5, fig.alt = "PCoA of the site x month samples, coloured by site, with shape by season."}
+`r if (run_pcoa) paste0("Untransformed Bray–Curtis yields ", n_neg, " negative eigenvalues; its square root yields none.") else ""`
+An alternative is to keep the untransformed coefficient and correct the
+negative eigenvalues, with the Lingoes or Cailliez corrections offered by
+`ape::pcoa()` (`correction = "lingoes"` or `correction = "cailliez"`);
+both are described by Legendre & Legendre (2012).
+
+```{r, eval = run_pcoa}
+head(pcoa_sq$values[, c("Eigenvalues", "Relative_eig")], 3)
+scores_pcoa <- data.frame(samples[, c("site", "month", "season")],
+                          PCo1 = pcoa_sq$vectors[, 1],
+                          PCo2 = pcoa_sq$vectors[, 2])
+```
+
+```{r, eval = run_pcoa && has_ggplot2, fig.width = 6, fig.height = 4.5, fig.alt = "PCoA of the site x month samples on square-root Bray-Curtis, coloured by site, with shape by season."}
+# amostras com frequencias identicas cairiam no mesmo ponto: um pequeno
+# deslocamento aleatorio deixa todas visiveis
+jit <- 0.02 * diff(range(scores_pcoa$PCo1))
 ggplot2::ggplot(scores_pcoa,
                 ggplot2::aes(PCo1, PCo2, colour = site, shape = season)) +
-  ggplot2::geom_point(size = 3, alpha = 0.8) +
+  ggplot2::geom_point(size = 3, alpha = 0.7,
+                      position = ggplot2::position_jitter(jit, jit, seed = 1)) +
   ggplot2::labs(
-    x = sprintf("PCo1 (%.1f%%)", 100 * expl[1]),
-    y = sprintf("PCo2 (%.1f%%)", 100 * expl[2]),
+    x = sprintf("PCo1 (%.1f%%)", rel[1]),
+    y = sprintf("PCo2 (%.1f%%)", rel[2]),
     colour = "Site", shape = "Season"
   ) +
   ggplot2::theme_bw()
 ```
 
-Samples with identical frequencies share a single point. Non-metric
-multidimensional scaling (NMDS) on the same dissimilarity, with stress
-reported:
+Samples with identical frequencies would share a single point; the points
+are jittered slightly so that all of them are visible.
 
-```{r, eval = has_vegan}
-set.seed(2026)
-nmds <- vegan::metaMDS(d, k = 2, trymax = 50, trace = FALSE)
-nmds$stress
+## Model-based ordination: GLLVM
+
+The response in each cell is a count out of a known number of trials:
+nights with detection out of nights recorded. A distance-based ordination
+discards that structure; frequencies from cells with different effort are
+treated alike, and the mean–variance relationship of the counts is
+ignored. A binomial GLLVM models the counts directly: effort enters through
+the number of trials (`Ntrials`), the binomial variance handles the
+mean–variance relationship, and the latent variables give a model-based
+ordination of the samples (Niku et al. 2019). [CITAR: model-based versus
+distance-based ordination of multivariate abundance data]
+
+```{r, eval = has_gllvm}
+Y  <- as.matrix(samples[, core])
+storage.mode(Y) <- "double"
+rownames(Y) <- rownames(freq)
+Nt <- matrix(samples$n_nights_recorded, nrow(Y), ncol(Y))
 ```
 
-```{r, eval = has_vegan && has_ggplot2, fig.width = 6, fig.height = 4.5, fig.alt = "NMDS of the site x month samples, coloured by site, with shape by season."}
-scores_nmds <- data.frame(freq_ord[, c("site", "season")],
-                          vegan::scores(nmds))
-ggplot2::ggplot(scores_nmds,
-                ggplot2::aes(NMDS1, NMDS2, colour = site, shape = season)) +
-  ggplot2::geom_point(size = 3, alpha = 0.8) +
+`Ntrials` is given as a matrix with the dimensions of the response, because
+effort varies among samples. With `r length(core)` species, the default
+starting values of `gllvm()` fail for two latent variables, so the model
+starts from zero (`starting.val = "zero"`).
+
+```{r, eval = has_gllvm}
+fit_lv <- gllvm::gllvm(y = Y, family = "binomial", Ntrials = Nt,
+                       num.lv = 2, starting.val = "zero", seed = 2026)
+fit_lv
+```
+
+```{r, eval = has_gllvm && has_ggplot2, fig.width = 6, fig.height = 4.5, fig.alt = "Latent variables of the binomial GLLVM for the site x month samples, coloured by site, with shape by season; species loadings shown as labels."}
+lv <- data.frame(samples[, c("site", "season")], gllvm::getLV(fit_lv))
+ld <- data.frame(species = core, gllvm::getLoadings(fit_lv))
+k  <- max(abs(lv[, c("LV1", "LV2")])) / max(abs(ld[, c("LV1", "LV2")]))
+jit <- 0.02 * diff(range(lv$LV1))
+ggplot2::ggplot(lv, ggplot2::aes(LV1, LV2)) +
+  ggplot2::geom_point(ggplot2::aes(colour = site, shape = season),
+                      size = 3, alpha = 0.7,
+                      position = ggplot2::position_jitter(jit, jit, seed = 1)) +
+  ggplot2::geom_text(data = ld,
+                     ggplot2::aes(LV1 * k, LV2 * k, label = species),
+                     colour = "grey30", size = 3.5) +
+  ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.15)) +
+  ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = 0.1)) +
   ggplot2::labs(colour = "Site", shape = "Season",
-                caption = sprintf("Stress = %.3f", nmds$stress)) +
+                caption = "Species loadings (labels) rescaled to the LV range; points jittered slightly") +
   ggplot2::theme_bw()
 ```
 
-The low stress is expected: `r length(core)` species define a
-low-dimensional configuration, and a two-dimensional NMDS reproduces it
-almost exactly.
+The residual correlations among species, induced by the latent variables,
+summarise which species tend to be detected in the same samples:
 
-### A note on inference
-
-A PERMANOVA (`vegan::adonis2()`) could test for differences between
-seasons, but the example does not support that test. There are only
-`r if (has_vegan) n_kept else "a few"` samples from `r length(sites)`
-sites, and months within a site are not independent replicates: they share
-the site, its species pool and its recorder, and consecutive months are
-temporally autocorrelated. Restricting permutations to within sites
-(`strata = site`) respects the blocking by site but not the temporal
-dependence, and the cell dropped for low effort leaves the blocks
-unbalanced. The code is shown for completeness and its p-value should not
-be interpreted:
-
-```{r, eval = has_vegan}
-set.seed(2026)
-vegan::adonis2(d ~ season, data = freq_ord, strata = freq_ord$site,
-               permutations = 999)
+```{r, eval = has_gllvm}
+round(gllvm::getResidualCor(fit_lv), 2)
 ```
 
-A design that supports inference would need more sites per treatment, or a
-model that accounts explicitly for repeated measures within sites.
+With `r if (has_gllvm) n_kept else "about twenty"` samples,
+`r length(core)` species and two latent variables, the loadings and
+residual correlations are weakly identified, and solutions can change with
+the starting values; they are shown here as an illustration.
+
+## Model-based inference: species responses to season
+
+A GLLVM can also test hypotheses, by adding covariates with
+species-specific coefficients. The question here is whether species
+respond to season. The model includes:
+
+* species-specific season effects (`formula = ~ season`);
+* effort, through `Ntrials`;
+* a random intercept for site, shared by all species
+  (`row.eff = ~(1 | site)`, with `studyDesign` naming the site of each
+  sample), which accounts for months of the same site not being
+  independent;
+* one latent variable, for residual co-occurrence (for instance, from
+  species x site preferences not captured by the site intercept).
+
+The test is a likelihood-ratio test between this model and the same model
+without season (`anova()` on the two fits).
+
+```{r, eval = has_gllvm}
+X      <- data.frame(season = samples$season)
+design <- data.frame(site = samples$site)
+fit_season <- gllvm::gllvm(y = Y, X = X, formula = ~ season,
+                           family = "binomial", Ntrials = Nt, num.lv = 1,
+                           row.eff = ~ (1 | site), studyDesign = design,
+                           starting.val = "zero", seed = 2026)
+fit_null   <- gllvm::gllvm(y = Y, family = "binomial", Ntrials = Nt,
+                           num.lv = 1, row.eff = ~ (1 | site),
+                           studyDesign = design,
+                           starting.val = "zero", seed = 2026)
+lrt <- anova(fit_null, fit_season)
+```
+
+```{r, include = FALSE, eval = has_gllvm}
+lrt_d  <- round(lrt$D[2], 1)
+lrt_df <- lrt$Df.diff[2]
+lrt_p  <- if (lrt$P.value[2] < 1e-4) "< 0.0001" else
+  paste("=", signif(lrt$P.value[2], 2))
+sigma_site <- signif(fit_season$params$sigma, 2)
+```
+
+`r if (has_gllvm) paste0("The likelihood-ratio statistic is D = ", lrt_d, " on ", lrt_df, " degrees of freedom (one season coefficient per species; P ", lrt_p, "). The estimated standard deviation of the site intercept is ", sigma_site, ", so in this example the shared site effect is negligible once the species-specific terms are in the model.") else ""`
+
+The species-specific season coefficients (rainy relative to dry, on the
+logit scale) and their 95% Wald intervals:
+
+```{r, eval = has_gllvm}
+ci <- confint(fit_season, parm = "Xcoef")
+season_coef <- data.frame(species = core,
+                          estimate = fit_season$params$Xcoef[, "seasonrainy"],
+                          lower = ci[, 1], upper = ci[, 2],
+                          row.names = NULL)
+season_coef |>
+  dplyr::mutate(dplyr::across(estimate:upper, \(x) signif(x, 3))) |>
+  tibble::as_tibble()
+```
+
+```{r, include = FALSE, eval = has_gllvm}
+sep_sp  <- core[which.max(abs(season_coef$estimate))]
+sep_rainy <- all(samples[[sep_sp]][samples$season == "rainy"] > 0)
+neg_sp  <- season_coef$species[season_coef$estimate < 0]
+```
+
+`r if (has_gllvm) paste0("The negative coefficient of ", paste(neg_sp, collapse = ", "), " matches its preference for the dry season in the simulation. The estimate of ", sep_sp, " is large and its interval is degenerate: the species was detected in ", if (sep_rainy) "every" else "almost every", " rainy-season sample, so the data are close to complete separation and the coefficient is not identified.") else ""`
+Such intervals should not be read as estimates of precision.
+
+### Caveats
+
+* The test uses `r if (has_gllvm) n_kept else "about twenty"` samples from
+  `r length(sites)` sites. The site random intercept is estimated from
+  `r length(sites)` levels, and the likelihood-ratio test relies on
+  large-sample approximations; P-values are approximate.
+* Months within a site are also temporally autocorrelated; the site
+  intercept accounts for their shared site, not for that autocorrelation.
+* In our trials on these data, the model with two latent variables and
+  covariates did not converge reliably, and fits with random starting
+  values reached lower likelihoods; hence one latent variable and zero starting values.
+  With few species the latent part is weakly identified, and results
+  should be checked against several starting values (`starting.val`,
+  `n.init`).
+* The test concerns detection frequency, not occupancy: season may change
+  calling activity as well as occurrence.
+
+## References
+
+Legendre, P., & Legendre, L. (2012). *Numerical ecology* (3rd English ed.).
+Developments in Environmental Modelling 24. Elsevier.
+<https://doi.org/10.1016/C2010-0-66470-4>
+
+Niku, J., Hui, F. K. C., Taskinen, S., & Warton, D. I. (2019). gllvm: Fast
+analysis of multivariate abundance data with generalized linear latent
+variable models in R. *Methods in Ecology and Evolution*, 10, 2173–2182.
+<https://doi.org/10.1111/2041-210X.13303>
