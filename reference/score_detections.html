@@ -15,7 +15,7 @@ recordings that start before dawn_hour."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,7 @@ recordings that start before dawn_hour."><meta property="og:image" content="http
     <li><a class="dropdown-item" href="../articles/sampling-designs.html">Choosing a sampling design</a></li>
     <li><a class="dropdown-item" href="../articles/validation-effort.html">How many clips should I validate?</a></li>
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibrating confidence scores</a></li>
+    <li><a class="dropdown-item" href="../articles/bayesian-calibration.html">Bayesian calibration with brms</a></li>
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
@@ -51,7 +52,7 @@ recordings that start before dawn_hour."><meta property="og:image" content="http
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Score every detection with the calibration model</h1>
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v2.2.0/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
       <div class="d-none name"><code>score_detections.Rd</code></div>
     </div>
 
@@ -65,7 +66,15 @@ recordings that start before <code>dawn_hour</code>.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">score_detections</span><span class="op">(</span><span class="va">tables</span>, <span class="va">fit</span>, min_confidence <span class="op">=</span> <span class="fl">0.1</span>, dawn_hour <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">score_detections</span><span class="op">(</span></span>
+<span>  <span class="va">tables</span>,</span>
+<span>  <span class="va">fit</span>,</span>
+<span>  min_confidence <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  dawn_hour <span class="op">=</span> <span class="fl">12</span>,</span>
+<span>  p_min <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  lower_prob <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  grid_step <span class="op">=</span> <span class="fl">0.01</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -89,11 +98,31 @@ site (the site names of the calibration).</p></dd>
 <dd><p>Recordings that start before this hour belong to the
 night before.</p></dd>
 
+
+<dt id="arg-p-min-lower-prob">p_min, lower_prob<a class="anchor" aria-label="anchor" href="#arg-p-min-lower-prob"></a></dt>
+<dd><p>Models fitted with <code>engine = "brms"</code>: the
+threshold of <code>pr_reliable</code> and the probability of the lower quantile
+<code>p_tp_lower</code>.</p></dd>
+
+
+<dt id="arg-grid-step">grid_step<a class="anchor" aria-label="anchor" href="#arg-grid-step"></a></dt>
+<dd><p>Models fitted with <code>engine = "brms"</code>: step of the grid
+of scores on which the posterior is computed.</p>
+<p>With a model fitted with <code>engine = "brms"</code>, the posterior of P(TP) is
+computed once on a grid of scores (step <code>grid_step</code>) for each site x
+species and assigned to the detections by their score rounded to the
+grid, so that the cost does not depend on the number of detections;
+the rounding error is small next to the uncertainty of the calibration.
+Each detection then gets the posterior mean (<code>p_tp</code>), a lower quantile
+(<code>p_tp_lower</code>) and the posterior probability that P(TP) &gt;= <code>p_min</code>
+(<code>pr_reliable</code>). <code><a href="detection_history.html">detection_history()</a></code> can use either rule.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with <code>site</code>, <code>species</code>, <code>date</code>, <code>night</code>, <code>hour</code>,
-<code>confidence</code>, <code>p_tp</code>, <code>begin_path</code> and <code>file_offset</code>.</p>
+<code>confidence</code>, <code>p_tp</code>, <code>begin_path</code> and <code>file_offset</code>; with a model
+fitted with <code>engine = "brms"</code>, also <code>p_tp_lower</code> and <code>pr_reliable</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

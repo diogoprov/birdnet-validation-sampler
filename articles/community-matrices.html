@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,7 @@
     <li><a class="dropdown-item" href="../articles/sampling-designs.html">Choosing a sampling design</a></li>
     <li><a class="dropdown-item" href="../articles/validation-effort.html">How many clips should I validate?</a></li>
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibrating confidence scores</a></li>
+    <li><a class="dropdown-item" href="../articles/bayesian-calibration.html">Bayesian calibration with brms</a></li>
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
@@ -74,7 +75,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>From detections to community analyses</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/vignettes/community-matrices.Rmd" class="external-link"><code>vignettes/community-matrices.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v2.2.0/vignettes/community-matrices.Rmd" class="external-link"><code>vignettes/community-matrices.Rmd</code></a></small>
       <div class="d-none name"><code>community-matrices.Rmd</code></div>
     </div>
 
@@ -347,7 +348,7 @@ matrices and the effort table as CSV files:</p>
 <span>                                 k_min <span class="op">=</span> <span class="fl">2</span>, min_nights_month <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Matrix: 23 rows (site x month) x 4 species | rule k &gt;= 2</span></span>
 <span><span class="co">#&gt; Effort: 23 site x month cells included; 1 dropped for having &lt; 5 recorded nights (see effort_site_month.csv)</span></span>
-<span><span class="co">#&gt; Files in: /tmp/RtmpEu314v/community_matrices</span></span>
+<span><span class="co">#&gt; Files in: /tmp/Rtmp679hgA/community_matrices</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "count_matrix_site_month_k2.csv"     "effort_site_month.csv"             </span></span>
 <span><span class="co">#&gt; [3] "frequency_matrix_site_month_k2.csv"</span></span></code></pre></div>

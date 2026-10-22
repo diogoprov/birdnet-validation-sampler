@@ -30,13 +30,6 @@ calibration_effort(
   Model formula, usually the best one of
   [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md).
 
-  A model with random effects whose fit is singular (a variance
-  estimated at zero or a correlation at +-1) raises a warning: the fixed
-  effects and the predictions can still be used, but the variance
-  components on the boundary should not be interpreted, and a simpler
-  model may predict as well. Check them with
-  [`lme4::VarCorr()`](https://rdrr.io/pkg/nlme/man/VarCorr.html).
-
 - n_train:
 
   Training sizes per site x species.

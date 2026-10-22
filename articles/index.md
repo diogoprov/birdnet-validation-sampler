@@ -8,6 +8,8 @@
   validate?](https://provetelab.org/sheepdog/articles/validation-effort.md):
 - [Calibrating confidence
   scores](https://provetelab.org/sheepdog/articles/calibration.md):
+- [Bayesian calibration with
+  brms](https://provetelab.org/sheepdog/articles/bayesian-calibration.md):
 - [From detections to community
   analyses](https://provetelab.org/sheepdog/articles/community-matrices.md):
 

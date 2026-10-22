@@ -1,6 +1,6 @@
 # Changelog
 
-## sheepdog (development version)
+## sheepdog 2.2.0
 
 ### Calibration
 
@@ -23,6 +23,52 @@
   the singular fits of m4;
   [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
   takes it with `uncorrelated = TRUE`.
+
+### Bayesian calibration
+
+- [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)
+  gains `engine = "brms"`: the model is fitted with ‘brms’ (Bernoulli,
+  logit link). The prior must be given explicitly. Convergence
+  diagnostics run after the fit and warn when R-hat, the effective
+  sample sizes or the divergent transitions fail the usual limits.
+- New
+  [`calibration_prior()`](https://provetelab.org/sheepdog/reference/calibration_prior.md):
+  a weakly informative example prior centred on an already calibrated
+  score (slope 1, intercept at the mean logit score), with the slope
+  truncated at 0, `exponential(1)` on the standard deviations and
+  `lkj(2)` on the correlations; only the classes present in the formula
+  are returned.
+- New
+  [`prior_predictive_calibration()`](https://provetelab.org/sheepdog/reference/prior_predictive_calibration.md)
+  and
+  [`plot_calibration_draws()`](https://provetelab.org/sheepdog/reference/plot_calibration_draws.md)
+  for prior predictive checks and for the uncertainty of the fitted
+  curve;
+  [`calibration_diagnostics()`](https://provetelab.org/sheepdog/reference/calibration_diagnostics.md);
+  [`calibration_sensitivity()`](https://provetelab.org/sheepdog/reference/calibration_sensitivity.md),
+  a power-scaling sensitivity analysis with ‘priorsense’.
+- [`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md)
+  with a ‘brms’ model computes the posterior on a grid of scores per
+  site x species and returns `p_tp` (posterior mean), `p_tp_lower` and
+  `pr_reliable` (posterior probability that P(TP) \>= `p_min`).
+- [`detection_history()`](https://provetelab.org/sheepdog/reference/detection_history.md)
+  gains `rule = c("mean", "probability")` and `prob_min`: a detection is
+  reliable when its posterior mean reaches `p_min`, or when
+  `pr_reliable` reaches `prob_min`.
+- New
+  [`history_draws()`](https://provetelab.org/sheepdog/reference/history_draws.md)
+  and
+  [`community_matrices_draws()`](https://provetelab.org/sheepdog/reference/community_matrices_draws.md):
+  the detection histories and the community matrices over posterior
+  draws, with the posterior mean and an interval for each cell.
+- [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
+  gains `engine`, `prior` (a prior or a function of the selected
+  formula, such as `calibration_prior`), `brms_args`, `rule` and
+  `prob_min`; with ‘brms’ it also writes `calibration_diagnostics.csv`.
+- New
+  [`vignette("bayesian-calibration")`](https://provetelab.org/sheepdog/articles/bayesian-calibration.md),
+  precomputed.
+- ‘brms’, ‘posterior’ and ‘priorsense’ are suggested packages.
 
 ### Sampling
 
@@ -83,6 +129,25 @@
   [`gllvm::gllvm()`](https://jenniniku.github.io/gllvm/reference/gllvm.html).
 - [`vignette("community-matrices")`](https://provetelab.org/sheepdog/articles/community-matrices.md)
   uses the new functions.
+
+### Several reviewers
+
+- New
+  [`assign_reviewers()`](https://provetelab.org/sheepdog/reference/assign_reviewers.md):
+  splits the clips of a manifest among reviewers, balanced within
+  species, with a fraction (`overlap`) given to a second reviewer.
+- New
+  [`split_by_reviewer()`](https://provetelab.org/sheepdog/reference/split_by_reviewer.md):
+  copies each reviewer’s clips to their own folder tree for the BirdNET
+  GUI.
+- New
+  [`reviewer_agreement()`](https://provetelab.org/sheepdog/reference/reviewer_agreement.md):
+  agreement and kappa per species on the clips reviewed more than once
+  (Cohen’s kappa for two reviewers, Fleiss’ kappa otherwise).
+- New
+  [`consensus_verdicts()`](https://provetelab.org/sheepdog/reference/consensus_verdicts.md):
+  one verdict per clip; conflicting clips get `verdict = "disagreement"`
+  and are left out of precision and calibration.
 
 ## sheepdog 2.1.0
 

@@ -42,6 +42,20 @@ presence and retraining clips.
 - [`exclude_training_clips()`](https://provetelab.org/sheepdog/reference/exclude_training_clips.md)
   : Leave the training clips out of a manifest
 
+## Stage 1 - Several reviewers
+
+Split the clips among reviewers, measure their agreement and combine
+their verdicts.
+
+- [`assign_reviewers()`](https://provetelab.org/sheepdog/reference/assign_reviewers.md)
+  : Assign the clips to several reviewers
+- [`split_by_reviewer()`](https://provetelab.org/sheepdog/reference/split_by_reviewer.md)
+  : Copy each reviewer's clips to their own folder
+- [`reviewer_agreement()`](https://provetelab.org/sheepdog/reference/reviewer_agreement.md)
+  : Agreement between reviewers
+- [`consensus_verdicts()`](https://provetelab.org/sheepdog/reference/consensus_verdicts.md)
+  : Consensus verdicts of several reviewers
+
 ## Stage 2 - Calibration
 
 Calibrate confidence scores into probabilities of true detection and
@@ -69,6 +83,26 @@ build nightly detection histories.
   : Summarise the detection history by site and species
 - [`plot_calibration()`](https://provetelab.org/sheepdog/reference/plot_calibration.md)
   : Plot the calibration curves
+
+## Stage 2 - Bayesian calibration
+
+Fit the calibration with brms, check the prior and the fit, and
+propagate the uncertainty to the histories and the matrices.
+
+- [`calibration_prior()`](https://provetelab.org/sheepdog/reference/calibration_prior.md)
+  : Example prior for a Bayesian calibration model
+- [`prior_predictive_calibration()`](https://provetelab.org/sheepdog/reference/prior_predictive_calibration.md)
+  : Prior predictive calibration curves
+- [`calibration_diagnostics()`](https://provetelab.org/sheepdog/reference/calibration_diagnostics.md)
+  : Convergence diagnostics of a Bayesian calibration model
+- [`calibration_sensitivity()`](https://provetelab.org/sheepdog/reference/calibration_sensitivity.md)
+  : Prior and likelihood sensitivity of a Bayesian calibration model
+- [`plot_calibration_draws()`](https://provetelab.org/sheepdog/reference/plot_calibration_draws.md)
+  : Calibration curves of posterior (or prior) draws
+- [`history_draws()`](https://provetelab.org/sheepdog/reference/history_draws.md)
+  : Nightly detection histories over posterior draws
+- [`community_matrices_draws()`](https://provetelab.org/sheepdog/reference/community_matrices_draws.md)
+  : Community matrices over posterior draws
 
 ## Stage 3 - Community matrices
 

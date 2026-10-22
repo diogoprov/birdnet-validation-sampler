@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,6 +24,7 @@
     <li><a class="dropdown-item" href="../articles/sampling-designs.html">Choosing a sampling design</a></li>
     <li><a class="dropdown-item" href="../articles/validation-effort.html">How many clips should I validate?</a></li>
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibrating confidence scores</a></li>
+    <li><a class="dropdown-item" href="../articles/bayesian-calibration.html">Bayesian calibration with brms</a></li>
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
@@ -169,6 +170,43 @@
         </dt>
         <dd>Leave the training clips out of a manifest</dd>
       </dl></div><div class="section level2">
+      <h2 id="stage-several-reviewers">Stage 1 - Several reviewers<a class="anchor" aria-label="anchor" href="#stage-several-reviewers"></a></h2>
+
+      <div class="section-desc"><p>Split the clips among reviewers, measure their agreement and combine their verdicts.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="assign_reviewers.html">assign_reviewers()</a></code>
+
+        </dt>
+        <dd>Assign the clips to several reviewers</dd>
+
+        <dt>
+
+          <code><a href="split_by_reviewer.html">split_by_reviewer()</a></code>
+
+        </dt>
+        <dd>Copy each reviewer's clips to their own folder</dd>
+
+        <dt>
+
+          <code><a href="reviewer_agreement.html">reviewer_agreement()</a></code>
+
+        </dt>
+        <dd>Agreement between reviewers</dd>
+
+        <dt>
+
+          <code><a href="consensus_verdicts.html">consensus_verdicts()</a></code>
+
+        </dt>
+        <dd>Consensus verdicts of several reviewers</dd>
+      </dl></div><div class="section level2">
       <h2 id="stage-calibration">Stage 2 - Calibration<a class="anchor" aria-label="anchor" href="#stage-calibration"></a></h2>
 
       <div class="section-desc"><p>Calibrate confidence scores into probabilities of true detection and build nightly detection histories.</p></div>
@@ -254,6 +292,64 @@
 
         </dt>
         <dd>Plot the calibration curves</dd>
+      </dl></div><div class="section level2">
+      <h2 id="stage-bayesian-calibration">Stage 2 - Bayesian calibration<a class="anchor" aria-label="anchor" href="#stage-bayesian-calibration"></a></h2>
+
+      <div class="section-desc"><p>Fit the calibration with brms, check the prior and the fit, and propagate the uncertainty to the histories and the matrices.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="calibration_prior.html">calibration_prior()</a></code>
+
+        </dt>
+        <dd>Example prior for a Bayesian calibration model</dd>
+
+        <dt>
+
+          <code><a href="prior_predictive_calibration.html">prior_predictive_calibration()</a></code>
+
+        </dt>
+        <dd>Prior predictive calibration curves</dd>
+
+        <dt>
+
+          <code><a href="calibration_diagnostics.html">calibration_diagnostics()</a></code>
+
+        </dt>
+        <dd>Convergence diagnostics of a Bayesian calibration model</dd>
+
+        <dt>
+
+          <code><a href="calibration_sensitivity.html">calibration_sensitivity()</a></code>
+
+        </dt>
+        <dd>Prior and likelihood sensitivity of a Bayesian calibration model</dd>
+
+        <dt>
+
+          <code><a href="plot_calibration_draws.html">plot_calibration_draws()</a></code>
+
+        </dt>
+        <dd>Calibration curves of posterior (or prior) draws</dd>
+
+        <dt>
+
+          <code><a href="history_draws.html">history_draws()</a></code>
+
+        </dt>
+        <dd>Nightly detection histories over posterior draws</dd>
+
+        <dt>
+
+          <code><a href="community_matrices_draws.html">community_matrices_draws()</a></code>
+
+        </dt>
+        <dd>Community matrices over posterior draws</dd>
       </dl></div><div class="section level2">
       <h2 id="stage-community-matrices">Stage 3 - Community matrices<a class="anchor" aria-label="anchor" href="#stage-community-matrices"></a></h2>
 

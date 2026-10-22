@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,6 +24,7 @@
     <li><a class="dropdown-item" href="../articles/sampling-designs.html">Choosing a sampling design</a></li>
     <li><a class="dropdown-item" href="../articles/validation-effort.html">How many clips should I validate?</a></li>
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibrating confidence scores</a></li>
+    <li><a class="dropdown-item" href="../articles/bayesian-calibration.html">Bayesian calibration with brms</a></li>
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
@@ -43,13 +44,13 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/diogoprov/sheepdog/blob/v2.2.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="sheepdog-development-version">sheepdog (development version)<a class="anchor" aria-label="anchor" href="#sheepdog-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="2.2.0" id="sheepdog-220">sheepdog 2.2.0<a class="anchor" aria-label="anchor" href="#sheepdog-220"></a></h2>
 <div class="section level3">
-<h3 id="calibration-development-version">Calibration<a class="anchor" aria-label="anchor" href="#calibration-development-version"></a></h3>
+<h3 id="calibration-2-2-0">Calibration<a class="anchor" aria-label="anchor" href="#calibration-2-2-0"></a></h3>
 <ul><li>
 <code><a href="../reference/compare_calibration_models.html">compare_calibration_models()</a></code> also scores the predicted probabilities on the held-out folds: log-loss and Brier score (proper scoring rules), calibration intercept and slope, the share of singular fold fits (<code>prop_singular</code>) and the position of each model (<code>complexity</code>).</li>
 <li>New <code><a href="../reference/select_calibration_model.html">select_calibration_model()</a></code>, with the rules <code>"best_auc"</code> (the rule of 2.x) and <code>"one_se_logloss"</code> (the simplest model within one standard error of the lowest log-loss, leaving out singular fits). <code><a href="../reference/calibrate.html">calibrate()</a></code> takes the rule in <code>select</code>; the default stays <code>"best_auc"</code> until 3.0.0, when it becomes <code>"one_se_logloss"</code>.</li>
@@ -57,7 +58,23 @@
 <code>calibration_models(uncorrelated = TRUE)</code> adds <code>m5_species_x_site_uncorrelated</code>, the m4 structure without the correlation between the species intercepts and slopes, which avoids the singular fits of m4; <code><a href="../reference/calibrate.html">calibrate()</a></code> takes it with <code>uncorrelated = TRUE</code>.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="sampling-development-version">Sampling<a class="anchor" aria-label="anchor" href="#sampling-development-version"></a></h3>
+<h3 id="bayesian-calibration-2-2-0">Bayesian calibration<a class="anchor" aria-label="anchor" href="#bayesian-calibration-2-2-0"></a></h3>
+<ul><li>
+<code><a href="../reference/fit_calibration.html">fit_calibration()</a></code> gains <code>engine = "brms"</code>: the model is fitted with ‘brms’ (Bernoulli, logit link). The prior must be given explicitly. Convergence diagnostics run after the fit and warn when R-hat, the effective sample sizes or the divergent transitions fail the usual limits.</li>
+<li>New <code><a href="../reference/calibration_prior.html">calibration_prior()</a></code>: a weakly informative example prior centred on an already calibrated score (slope 1, intercept at the mean logit score), with the slope truncated at 0, <code>exponential(1)</code> on the standard deviations and <code>lkj(2)</code> on the correlations; only the classes present in the formula are returned.</li>
+<li>New <code><a href="../reference/prior_predictive_calibration.html">prior_predictive_calibration()</a></code> and <code><a href="../reference/plot_calibration_draws.html">plot_calibration_draws()</a></code> for prior predictive checks and for the uncertainty of the fitted curve; <code><a href="../reference/calibration_diagnostics.html">calibration_diagnostics()</a></code>; <code><a href="../reference/calibration_sensitivity.html">calibration_sensitivity()</a></code>, a power-scaling sensitivity analysis with ‘priorsense’.</li>
+<li>
+<code><a href="../reference/score_detections.html">score_detections()</a></code> with a ‘brms’ model computes the posterior on a grid of scores per site x species and returns <code>p_tp</code> (posterior mean), <code>p_tp_lower</code> and <code>pr_reliable</code> (posterior probability that P(TP) &gt;= <code>p_min</code>).</li>
+<li>
+<code><a href="../reference/detection_history.html">detection_history()</a></code> gains <code>rule = c("mean", "probability")</code> and <code>prob_min</code>: a detection is reliable when its posterior mean reaches <code>p_min</code>, or when <code>pr_reliable</code> reaches <code>prob_min</code>.</li>
+<li>New <code><a href="../reference/history_draws.html">history_draws()</a></code> and <code><a href="../reference/community_matrices_draws.html">community_matrices_draws()</a></code>: the detection histories and the community matrices over posterior draws, with the posterior mean and an interval for each cell.</li>
+<li>
+<code><a href="../reference/calibrate.html">calibrate()</a></code> gains <code>engine</code>, <code>prior</code> (a prior or a function of the selected formula, such as <code>calibration_prior</code>), <code>brms_args</code>, <code>rule</code> and <code>prob_min</code>; with ‘brms’ it also writes <code>calibration_diagnostics.csv</code>.</li>
+<li>New <code><a href="../articles/bayesian-calibration.html">vignette("bayesian-calibration")</a></code>, precomputed.</li>
+<li>‘brms’, ‘posterior’ and ‘priorsense’ are suggested packages.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="sampling-2-2-0">Sampling<a class="anchor" aria-label="anchor" href="#sampling-2-2-0"></a></h3>
 <ul><li>
 <code><a href="../reference/select_clips.html">select_clips()</a></code> gains <code>strata</code> (<code>"night_hour"</code>, the rule of 2.0.0, <code>"night"</code> or <code>"site_species"</code>) for the occasion draw of <code>"random_detections"</code>. With one recording per hour, the default stratum holds a single occasion and draws nothing; a coarser stratum makes the draw random. A coarser stratum combined with <code>balance_by_hour = TRUE</code> under a target or limit warns that <code>inclusion_prob</code> is conditional on the first draw.</li>
 <li>
@@ -65,7 +82,7 @@
 <li>The message on predictions dropped by <code>min_confidence</code> is no longer printed when none is dropped.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="review-and-retraining-development-version">Review and retraining<a class="anchor" aria-label="anchor" href="#review-and-retraining-development-version"></a></h3>
+<h3 id="review-and-retraining-2-2-0">Review and retraining<a class="anchor" aria-label="anchor" href="#review-and-retraining-2-2-0"></a></h3>
 <ul><li>New <code><a href="../reference/read_validation_tables.html">read_validation_tables()</a></code>: stacks the <code>validation_by_clip.csv</code> tables of several sites or rounds with every column and verdict (unlike <code><a href="../reference/read_validations.html">read_validations()</a></code>, which keeps only what the calibration needs).</li>
 <li>New <code><a href="../reference/build_training_set.html">build_training_set()</a></code>: copies the reviewed clips into the training layout of BirdNET-Analyzer (positives in <code>&lt;species_code&gt;/</code>, negatives in <code>-&lt;species_code&gt;/</code>), with the sites in <code>test_sites</code> in a separate <code>test</code> folder for <code>--test_data</code>; writes <code>training_set.csv</code> and warns about classes with fewer positive files than <code>min_files</code>.</li>
 <li>New <code><a href="../reference/exclude_training_clips.html">exclude_training_clips()</a></code>: drops from a manifest the clips that overlap a clip used in training (same species and recording).</li>
@@ -73,13 +90,20 @@
 <code><a href="../articles/retraining.html">vignette("retraining")</a></code> uses the new functions.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="community-matrices-development-version">Community matrices<a class="anchor" aria-label="anchor" href="#community-matrices-development-version"></a></h3>
+<h3 id="community-matrices-2-2-0">Community matrices<a class="anchor" aria-label="anchor" href="#community-matrices-2-2-0"></a></h3>
 <ul><li>New <code><a href="../reference/cell_status.html">cell_status()</a></code>: classifies each site x species cell of the calibration as <code>"reliable"</code> (the calibrated curve reaches <code>p_min</code> within the reviewed scores, with at least <code>min_n</code> clips), <code>"probably_absent"</code> (no true positive among the reviewed clips) or <code>"unreliable"</code>, separating the absence of a species from a calibration that fails.</li>
 <li>New <code><a href="../reference/suggest_core_species.html">suggest_core_species()</a></code>: the species with no unreliable cell.</li>
 <li>
 <code><a href="../reference/community_matrices.html">community_matrices()</a></code> gains <code>drop_empty</code> (drop the site x month rows without any core species) and returns <code>trials</code>, the matrix of nights recorded with the dimensions of the species counts, for the <code>Ntrials</code> of a binomial model such as <code><a href="https://jenniniku.github.io/gllvm/reference/gllvm.html" class="external-link">gllvm::gllvm()</a></code>.</li>
 <li>
 <code><a href="../articles/community-matrices.html">vignette("community-matrices")</a></code> uses the new functions.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="several-reviewers-2-2-0">Several reviewers<a class="anchor" aria-label="anchor" href="#several-reviewers-2-2-0"></a></h3>
+<ul><li>New <code><a href="../reference/assign_reviewers.html">assign_reviewers()</a></code>: splits the clips of a manifest among reviewers, balanced within species, with a fraction (<code>overlap</code>) given to a second reviewer.</li>
+<li>New <code><a href="../reference/split_by_reviewer.html">split_by_reviewer()</a></code>: copies each reviewer’s clips to their own folder tree for the BirdNET GUI.</li>
+<li>New <code><a href="../reference/reviewer_agreement.html">reviewer_agreement()</a></code>: agreement and kappa per species on the clips reviewed more than once (Cohen’s kappa for two reviewers, Fleiss’ kappa otherwise).</li>
+<li>New <code><a href="../reference/consensus_verdicts.html">consensus_verdicts()</a></code>: one verdict per clip; conflicting clips get <code>verdict = "disagreement"</code> and are left out of precision and calibration.</li>
 </ul></div>
 </div>
     <div class="section level2">

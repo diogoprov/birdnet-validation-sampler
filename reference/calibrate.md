@@ -47,6 +47,11 @@ calibrate(
   effort_curve = FALSE,
   effort_n = c(5, 10, 15, 20, 25, 30),
   effort_reps = 50,
+  engine = c("lme4", "brms"),
+  prior = NULL,
+  brms_args = list(),
+  rule = c("mean", "probability"),
+  prob_min = 0.9,
   seed = 2026
 )
 ```
@@ -112,6 +117,44 @@ calibrate(
 - effort_n, effort_reps:
 
   Training sizes and repetitions of the effort curve.
+
+- engine:
+
+  Engine of the final fit: `"lme4"` or `"brms"` (see
+  [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)).
+  The comparison of the candidate models always uses maximum likelihood
+  (fast); with `"brms"`, the selected model is then refitted in a
+  Bayesian framework, its convergence diagnostics are written to
+  `calibration_diagnostics.csv`, and the scored detections carry
+  `p_tp_lower` and `pr_reliable`.
+
+- prior:
+
+  `engine = "brms"`: the prior, as a `brmsprior` object or as a function
+  of the selected formula and the validations that returns one, e.g.
+  `calibration_prior` (whose classes then match the selected model).
+  Required with `"brms"`.
+
+- brms_args:
+
+  `engine = "brms"`: list of further arguments for `brms::brm()` (e.g.
+  `list(chains = 4, cores = 4, backend = "cmdstanr")`).
+
+- rule:
+
+  When a detection is reliable: `"mean"`, its calibrated probability
+  (the posterior mean with `engine = "brms"`) is \>= `p_min`;
+  `"probability"`, the posterior probability that P(TP) \>= `p_min` (the
+  `pr_reliable` of a model fitted with `engine = "brms"`) is \>=
+  `prob_min`. The second rule propagates the uncertainty of the
+  calibration and is more conservative where few clips were reviewed.
+
+- prob_min:
+
+  `rule = "probability"`: threshold on `pr_reliable`. `pr_reliable` is
+  computed in
+  [`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md)
+  for its `p_min`; use the same `p_min` in both.
 
 - seed:
 

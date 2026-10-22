@@ -9,7 +9,15 @@ recordings that start before `dawn_hour`.
 ## Usage
 
 ``` r
-score_detections(tables, fit, min_confidence = 0.1, dawn_hour = 12)
+score_detections(
+  tables,
+  fit,
+  min_confidence = 0.1,
+  dawn_hour = 12,
+  p_min = 0.95,
+  lower_prob = 0.05,
+  grid_step = 0.01
+)
 ```
 
 ## Arguments
@@ -32,7 +40,29 @@ score_detections(tables, fit, min_confidence = 0.1, dawn_hour = 12)
 
   Recordings that start before this hour belong to the night before.
 
+- p_min, lower_prob:
+
+  Models fitted with `engine = "brms"`: the threshold of `pr_reliable`
+  and the probability of the lower quantile `p_tp_lower`.
+
+- grid_step:
+
+  Models fitted with `engine = "brms"`: step of the grid of scores on
+  which the posterior is computed.
+
+  With a model fitted with `engine = "brms"`, the posterior of P(TP) is
+  computed once on a grid of scores (step `grid_step`) for each site x
+  species and assigned to the detections by their score rounded to the
+  grid, so that the cost does not depend on the number of detections;
+  the rounding error is small next to the uncertainty of the
+  calibration. Each detection then gets the posterior mean (`p_tp`), a
+  lower quantile (`p_tp_lower`) and the posterior probability that P(TP)
+  \>= `p_min` (`pr_reliable`).
+  [`detection_history()`](https://provetelab.org/sheepdog/reference/detection_history.md)
+  can use either rule.
+
 ## Value
 
 A tibble with `site`, `species`, `date`, `night`, `hour`, `confidence`,
-`p_tp`, `begin_path` and `file_offset`.
+`p_tp`, `begin_path` and `file_offset`; with a model fitted with
+`engine = "brms"`, also `p_tp_lower` and `pr_reliable`.

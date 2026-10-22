@@ -9,7 +9,13 @@ analysis.
 ## Usage
 
 ``` r
-detection_history(scored, p_min = 0.95, min_detections_night = 1)
+detection_history(
+  scored,
+  p_min = 0.95,
+  min_detections_night = 1,
+  rule = c("mean", "probability"),
+  prob_min = 0.9
+)
 ```
 
 ## Arguments
@@ -27,6 +33,22 @@ detection_history(scored, p_min = 0.95, min_detections_night = 1)
 
   Repetition rule: minimum number of reliable detections for a night
   with detection.
+
+- rule:
+
+  When a detection is reliable: `"mean"`, its calibrated probability
+  (the posterior mean with `engine = "brms"`) is \>= `p_min`;
+  `"probability"`, the posterior probability that P(TP) \>= `p_min` (the
+  `pr_reliable` of a model fitted with `engine = "brms"`) is \>=
+  `prob_min`. The second rule propagates the uncertainty of the
+  calibration and is more conservative where few clips were reviewed.
+
+- prob_min:
+
+  `rule = "probability"`: threshold on `pr_reliable`. `pr_reliable` is
+  computed in
+  [`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md)
+  for its `p_min`; use the same `p_min` in both.
 
 ## Value
 

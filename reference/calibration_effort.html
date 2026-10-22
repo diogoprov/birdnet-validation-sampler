@@ -15,7 +15,7 @@ fit fails, are dropped."><meta property="og:image" content="https://provetelab.o
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,7 @@ fit fails, are dropped."><meta property="og:image" content="https://provetelab.o
     <li><a class="dropdown-item" href="../articles/sampling-designs.html">Choosing a sampling design</a></li>
     <li><a class="dropdown-item" href="../articles/validation-effort.html">How many clips should I validate?</a></li>
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibrating confidence scores</a></li>
+    <li><a class="dropdown-item" href="../articles/bayesian-calibration.html">Bayesian calibration with brms</a></li>
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
@@ -51,7 +52,7 @@ fit fails, are dropped."><meta property="og:image" content="https://provetelab.o
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Effort curve of the calibration</h1>
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v2.2.0/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
       <div class="d-none name"><code>calibration_effort.Rd</code></div>
     </div>
 
@@ -84,12 +85,7 @@ fit fails, are dropped.</p>
 
 <dt id="arg-formula">formula<a class="anchor" aria-label="anchor" href="#arg-formula"></a></dt>
 <dd><p>Model formula, usually the best one of
-<code><a href="compare_calibration_models.html">compare_calibration_models()</a></code>.</p>
-<p>A model with random effects whose fit is singular (a variance estimated
-at zero or a correlation at +-1) raises a warning: the fixed effects and
-the predictions can still be used, but the variance components on the
-boundary should not be interpreted, and a simpler model may predict as
-well. Check them with <code><a href="https://rdrr.io/pkg/nlme/man/VarCorr.html" class="external-link">lme4::VarCorr()</a></code>.</p></dd>
+<code><a href="compare_calibration_models.html">compare_calibration_models()</a></code>.</p></dd>
 
 
 <dt id="arg-n-train">n_train<a class="anchor" aria-label="anchor" href="#arg-n-train"></a></dt>
