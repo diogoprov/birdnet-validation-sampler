@@ -5,9 +5,13 @@ sem release). Este roadmap junta o que ficou pendente na conversão para
 pacote e o que as vignettes revelaram sobre a API. Itens marcados
 **[decidir]** dependem de uma escolha do Diogo antes de implementar.
 
-A v3.0.0 é major porque muda comportamento padrão (seleção do modelo de
-calibração) e remove a leitura dos arquivos da v1.2.0. Todo o resto pode
-entrar antes, em versões 2.x.
+A v3.0.0 é major porque muda o comportamento padrão da seleção do modelo
+de calibração. Todo o resto pode entrar antes, em versões 2.x.
+
+Decisões tomadas (2026-10-22): a leitura dos arquivos da v1.2.0 fica
+(memória do projeto; a tese da Daiene ainda usa esses arquivos); entram o
+backend com `brms`, as medidas de calibração, o critério de células para as
+espécies-núcleo e o suporte a vários revisores, como descritos abaixo.
 
 ## 0. Antes da v3: fechar a 2.1.0
 
@@ -28,20 +32,21 @@ para o DOI do Zenodo acompanhar as vignettes novas.
 
 ## 1. Mudanças que quebram compatibilidade (definem a 3.0.0)
 
-- [ ] **Seleção do modelo de calibração em `calibrate()`** **[decidir]**.
+- [ ] **Seleção do modelo de calibração em `calibrate()`** (decidido).
   Hoje: maior AUC médio (`cv$model[1]`), mesmo que o ajuste seja singular e
-  que a diferença para um modelo mais simples seja menor que `auc_sd`. A
-  vignette de calibração mostrou que a escolha muda com `k_folds` quando os
-  AUCs empatam. Proposta: argumento `select = c("one_se", "best_auc")`, com
-  padrão `"one_se"` (o modelo mais simples dentro de 1 DP do melhor) e
-  preferência por modelos não singulares; `"best_auc"` reproduz a 2.x.
-- [ ] **Remover a leitura dos arquivos da v1.2.0** (`R/legacy.R`, colunas e
-  valores em português) **[decidir]**. Caminho: na 2.x, avisar com
-  `lifecycle::deprecate_warn()` ao ler um arquivo antigo; na 3.0.0, remover,
-  mantendo um script em `data-raw/` ou uma função `convert_v1()` para quem
-  ainda tiver validações antigas (FrogNet, tese da Daiene).
-- [ ] **Testes de reprodução da v1.2.0**: saem junto com a leitura antiga;
-  as saídas de referência viram snapshot da própria 3.0.0.
+  que a diferença para um modelo mais simples seja menor que `auc_sd`. O
+  AUC mede discriminação, mas o que vai para o histórico é a probabilidade
+  comparada com `p_min`. Novo padrão:
+  1. escolher pela **log-loss** nos folds (regra de pontuação própria;
+     Gneiting & Raftery 2007, doi:10.1198/016214506000001437);
+  2. regra de 1 erro-padrão: entre os modelos a até 1 EP da melhor
+     log-loss, o mais simples (m0 < m1 < ... < m4);
+  3. excluir ajustes singulares, a menos que todos sejam (aí, avisar);
+  4. `select = c("one_se_logloss", "best_auc")`; `"best_auc"` reproduz a
+     2.x. A tabela de comparação reporta todas as métricas.
+  Na 2.9.x, avisar que o padrão vai mudar.
+- [x] ~~Remover a leitura dos arquivos da v1.2.0~~: **fica** (decidido). Os
+  testes de reprodução da v1.2.0 também ficam.
 
 ## 2. Calibração
 
@@ -50,17 +55,22 @@ para o DOI do Zenodo acompanhar as vignettes novas.
   exemplo, o m4 é singular só pela correlação intercepto–inclinação de
   espécie (+1); a variante resolveria isso sem perder o efeito local ×
   espécie.
-- [ ] **Backend bayesiano opcional com `brms`** **[decidir]**: mesma família
-  de modelos, com priors declarados explicitamente (argumento obrigatório,
-  sem defaults implícitos), saída com R-hat, ESS, divergências e posterior
-  predictive check. Útil quando o GLMM é singular ou há poucas células. Seria
-  Suggests; custo: tempo de ajuste e dependência do Stan.
+- [ ] **Backend bayesiano opcional com `brms`** (decidido): `engine =
+  c("lme4", "brms")`, mesma família m0–m4; argumento `prior` obrigatório com
+  `engine = "brms"` (a documentação traz um exemplo fracamente informativo
+  na escala logito); saída com R-hat, ESS e divergências, com aviso quando
+  passarem dos limites; posterior predictive check (ex.: proporção de TP
+  por faixa de score); P(TP) de cada detecção como posterior, permitindo
+  regras do tipo P(P(TP) >= `p_min`) alta. `brms` em Suggests.
 - [ ] **Mensagens do `glmer()`**: hoje `fit_model()` usa `suppressMessages()`;
   a singularidade já vira aviso (2.x), mas outras mensagens informativas
   somem. Repassar as mensagens ao usuário, ou registrá-las no objeto.
-- [ ] **Calibração de curvas em vez de só AUC**: o AUC mede discriminação,
-  não calibração. Acrescentar à comparação de modelos uma medida de
-  calibração (ex.: Brier score ou log-loss nos folds) **[decidir quais]**.
+- [ ] **Medidas de calibração além do AUC** (decidido), todas nos folds de
+  teste: log-loss (seleção), Brier score (relato), intercepto e inclinação
+  de calibração (diagnóstico: ideal 0 e 1) e gráfico de confiabilidade. Não
+  usar ECE (depende das faixas). Referência para as medidas: Van Calster et
+  al. (2019) *BMC Medicine* 17, doi:10.1186/s12916-019-1466-7 (conferir o
+  número do artigo antes de citar).
 
 ## 3. Amostragem (`select_clips()`)
 
@@ -86,9 +96,13 @@ para o DOI do Zenodo acompanhar as vignettes novas.
   local ou noite, contagem contra o mínimo recomendado).
 - [ ] **Excluir clipes usados no treino** de rodadas de validação
   posteriores (depende da proveniência no manifesto).
-- [ ] **Vários revisores**: dividir os pacotes entre revisores e, quando um
-  subconjunto for revisado por dois, medir a concordância (kappa) **[decidir
-  se entra]**.
+- [ ] **Vários revisores** (decidido): `assign_reviewers()` divide os
+  pacotes com uma fração sobreposta (ex.: 10 %) estratificada por espécie;
+  concordância por espécie com kappa de Cohen (dois revisores; Cohen 1960,
+  doi:10.1177/001316446002000104) ou de Fleiss (mais de dois; Fleiss 1971,
+  doi:10.1037/h0031619); discordâncias vão para uma lista de consenso; o
+  manifesto guarda o revisor de cada clipe; com concordância baixa, a
+  calibração pode incluir o revisor como efeito aleatório.
 - [ ] **Leitura das tabelas de validação "cruas"**: helper que empilha os
   `validation_by_clip.csv` mantendo `species_folder` e `verdict` (hoje as
   vignettes fazem isso à mão; `read_validations()` devolve só o formato da
@@ -96,11 +110,17 @@ para o DOI do Zenodo acompanhar as vignettes novas.
 
 ## 5. Matrizes de comunidade
 
-- [ ] **Escolha das espécies-núcleo**: helper que sugere as espécies a
-  partir dos diagnósticos da calibração (ex.: P(TP) ≥ `p_min` atingível em
-  todos os locais) em vez de o usuário escolher à mão. A vignette usa
-  "confiável em todos os locais" como aproximação, que não separa ausência de
-  falha de calibração **[decidir o critério]**.
+- [ ] **Espécies-núcleo por estado das células** (decidido): `cell_status()`
+  classifica cada local x espécie em
+  * *confiável*: a curva calibrada atinge `p_min` dentro da faixa de scores
+    observada e há >= `min_n` clipes revisados;
+  * *provavelmente ausente*: poucas detecções e nenhum TP revisado (entra
+    como zero);
+  * *não confiável*: há TP revisados, mas a curva não atinge `p_min`, ou há
+    clipes de menos (não pode entrar como zero).
+  Espécies-núcleo = sem células não confiáveis. Alternativa: matrizes com
+  `NA` nas células não confiáveis (o GLLVM aceita; a PCoA não). A escolha
+  final continua com o usuário.
 - [ ] **Linhas só com zeros**: `community_matrices()` pode devolver amostras
   sem nenhuma detecção das espécies-núcleo; documentar ou oferecer
   `drop_empty = TRUE`.
@@ -113,7 +133,7 @@ para o DOI do Zenodo acompanhar as vignettes novas.
   Liliana (pedido enviado). Link para a documentação oficial da GUI.
 - [ ] **README**: listar `summarise_history()` e as funções novas; revisar a
   tabela de funções após a 3.0.0.
-- [ ] **Guia de migração 2.x → 3.0.0** (seleção do modelo, leitura legada).
+- [ ] **Guia de migração 2.x → 3.0.0** (critério de seleção do modelo).
 
 ## 7. Infraestrutura
 
@@ -133,6 +153,7 @@ para o DOI do Zenodo acompanhar as vignettes novas.
    mensagens, medida de calibração), amostragem (estratos, pesos,
    proveniência), `build_training_set()`, helpers das matrizes, vignette da
    GUI.
-3. 2.9.x: avisos de depreciação da leitura v1.2.0 e do critério de seleção.
-4. 3.0.0: novo padrão de seleção, remoção da leitura legada, guia de
-   migração; avaliar CRAN e artigo.
+3. 2.9.x: aviso de que o critério padrão de seleção vai mudar.
+4. 3.0.0: novo padrão de seleção (log-loss + 1 EP, sem singulares) e guia
+   de migração; `brms` e vários revisores, se não tiverem entrado antes;
+   avaliar CRAN e artigo.
