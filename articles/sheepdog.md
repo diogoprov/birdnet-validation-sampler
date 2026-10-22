@@ -14,14 +14,14 @@ library(sheepdog)
 ## Example data
 
 The package ships a small simulated data set: BirdNET selection tables
-(Raven format) of four sites (`ARA`, `XAR`, `BAI`, `NHE`) recorded over
-six months (October 2021 to March 2022), with predictions for five
-anuran species. False-positive rates vary among species and sites, and
-the confidence scores of false positives overlap those of true
-detections. The generator is `data-raw/make_example_data.R` in the
-source repository. The `Begin Path` column points to recordings on a
-fictitious network drive (`N:\pam\audio\...`); the audio files
-themselves are not distributed.
+(Raven format) of several sites recorded from October 2021 to March
+2022, with predictions of a custom classifier for anuran species.
+False-positive rates vary among species and sites, and the confidence
+scores of false positives overlap those of true detections. The
+generator is `data-raw/make_example_data.R` in the source repository.
+The `Begin Path` column points to recordings on a fictitious network
+drive (`N:\pam\audio\...`); the audio files themselves are not
+distributed.
 
 ``` r
 
@@ -47,37 +47,43 @@ det <- read_selection_tables(file.path(ex, "birdnet"))
 #>   - /home/runner/work/_temp/Library/sheepdog/extdata/example/birdnet/BAI/BirdNET_SelectionTable.txt
 #>   - /home/runner/work/_temp/Library/sheepdog/extdata/example/birdnet/NHE/BirdNET_SelectionTable.txt
 #>   - /home/runner/work/_temp/Library/sheepdog/extdata/example/birdnet/XAR/BirdNET_SelectionTable.txt
-#> 5781 predictions read from 4 site(s).
+#> 7553 predictions read from 4 site(s).
 det |>
   dplyr::select(site, species_code, confidence, begin_path, file_offset) |>
   head()
 #> # A tibble: 6 × 5
-#>   site  species_code                 confidence begin_path           file_offset
-#>   <chr> <chr>                             <dbl> <chr>                      <dbl>
-#> 1 ARA   Dendropsophus nanus_den-nan       0.727 "N:\\pam\\audio\\AR…           0
-#> 2 ARA   Dendropsophus nanus_den-nan       0.670 "N:\\pam\\audio\\AR…         156
-#> 3 ARA   Dendropsophus nanus_den-nan       0.682 "N:\\pam\\audio\\AR…         246
-#> 4 ARA   Leptodactylus fuscus_lep-fus      0.392 "N:\\pam\\audio\\AR…         276
-#> 5 ARA   Dendropsophus nanus_den-nan       0.195 "N:\\pam\\audio\\AR…         291
-#> 6 ARA   Leptodactylus fuscus_lep-fus      0.374 "N:\\pam\\audio\\AR…         297
+#>   site  species_code                      confidence begin_path      file_offset
+#>   <chr> <chr>                                  <dbl> <chr>                 <dbl>
+#> 1 ARA   Boana raniceps_boa-ran                 0.504 "N:\\pam\\audi…          57
+#> 2 ARA   Dendropsophus nanus_den-nan            0.372 "N:\\pam\\audi…          66
+#> 3 ARA   Leptodactylus fuscus_lep-fus           0.267 "N:\\pam\\audi…         150
+#> 4 ARA   Pseudis platensis_pse-pla              0.873 "N:\\pam\\audi…         165
+#> 5 ARA   Leptodactylus podicipinus_lep-pod      0.846 "N:\\pam\\audi…         174
+#> 6 ARA   Leptodactylus podicipinus_lep-pod      0.479 "N:\\pam\\audi…         177
 dplyr::count(det, site)
 #> # A tibble: 4 × 2
 #>   site      n
 #>   <chr> <int>
-#> 1 ARA    1178
-#> 2 BAI    1167
-#> 3 NHE    2014
-#> 4 XAR    1422
+#> 1 ARA    1753
+#> 2 BAI    1427
+#> 3 NHE    2507
+#> 4 XAR    1866
 dplyr::count(det, species_code)
-#> # A tibble: 5 × 2
-#>   species_code                     n
-#>   <chr>                        <int>
-#> 1 Boana raniceps_boa-ran        1264
-#> 2 Dendropsophus nanus_den-nan   1689
-#> 3 Leptodactylus fuscus_lep-fus   440
-#> 4 Pseudis platensis_pse-pla     1261
-#> 5 Scinax nasicus_sci-nas        1127
+#> # A tibble: 8 × 2
+#>   species_code                          n
+#>   <chr>                             <int>
+#> 1 Boana raniceps_boa-ran              874
+#> 2 Dendropsophus nanus_den-nan        1366
+#> 3 Elachistocleis bicolor_ela-bic      739
+#> 4 Leptodactylus fuscus_lep-fus        545
+#> 5 Leptodactylus podicipinus_lep-pod   699
+#> 6 Physalaemus cuvieri_phy-cuv         850
+#> 7 Pseudis platensis_pse-pla          1209
+#> 8 Scinax nasicus_sci-nas             1271
 ```
+
+The tables hold 7553 predictions of 8 species at 4 sites (ARA, BAI, NHE,
+XAR).
 
 ## Selecting the clips to review
 
@@ -93,42 +99,34 @@ night before.
 
 ``` r
 
+n_max <- 40
 man <- select_clips(det,
                     sampling_mode   = "top",
                     n_top           = 2,
                     hour_start      = 18, hour_end = 2,
-                    max_per_species = 40)
+                    max_per_species = n_max)
 #> Sampling mode: top (occasion = file).
 #> The hour window crosses midnight: grouping by night (small hours count as the night before).
-#> Hour window 18h-2h: 5781 -> 5781 predictions.
+#> Hour window 18h-2h: 7553 -> 7553 predictions.
 #> 0 predictions dropped by the filter confidence < 0.1.
-#> 2836 clips selected (top 2 per site x species x night x hour) of 5 species.
-#> Limit of 40 clips per species (per site): 2836 -> 800 clips.
-dplyr::count(man, site, species_folder)
-#> # A tibble: 20 × 3
-#>    site  species_folder     n
-#>    <chr> <chr>          <int>
-#>  1 ARA   boa_ran           40
-#>  2 ARA   den_nan           40
-#>  3 ARA   lep_fus           40
-#>  4 ARA   pse_pla           40
-#>  5 ARA   sci_nas           40
-#>  6 BAI   boa_ran           40
-#>  7 BAI   den_nan           40
-#>  8 BAI   lep_fus           40
-#>  9 BAI   pse_pla           40
-#> 10 BAI   sci_nas           40
-#> 11 NHE   boa_ran           40
-#> 12 NHE   den_nan           40
-#> 13 NHE   lep_fus           40
-#> 14 NHE   pse_pla           40
-#> 15 NHE   sci_nas           40
-#> 16 XAR   boa_ran           40
-#> 17 XAR   den_nan           40
-#> 18 XAR   lep_fus           40
-#> 19 XAR   pse_pla           40
-#> 20 XAR   sci_nas           40
+#> 4099 clips selected (top 2 per site x species x night x hour) of 8 species.
+#> Limit of 40 clips per species (per site): 4099 -> 1273 clips.
+dplyr::count(man, site, species_folder) |>
+  tidyr::pivot_wider(names_from = site, values_from = n)
+#> # A tibble: 8 × 5
+#>   species_folder   ARA   BAI   NHE   XAR
+#>   <chr>          <int> <int> <int> <int>
+#> 1 boa_ran           40    40    40    40
+#> 2 den_nan           40    40    40    40
+#> 3 ela_bic           40    40    40    40
+#> 4 lep_fus           33    40    40    40
+#> 5 lep_pod           40    40    40    40
+#> 6 phy_cuv           40    40    40    40
+#> 7 pse_pla           40    40    40    40
+#> 8 sci_nas           40    40    40    40
 ```
+
+The manifest has 1273 clips.
 
 The `"top"` design serves classifier retraining and the
 score-to-probability calibration of stage 2. It should not be used to
@@ -143,24 +141,24 @@ defined in
 ``` r
 
 dplyr::glimpse(man)
-#> Rows: 800
+#> Rows: 1,273
 #> Columns: 18
 #> $ site                  <chr> "ARA", "ARA", "ARA", "ARA", "ARA", "ARA", "ARA",…
 #> $ species_code          <chr> "Boana raniceps_boa-ran", "Boana raniceps_boa-ra…
 #> $ species_folder        <chr> "boa_ran", "boa_ran", "boa_ran", "boa_ran", "boa…
-#> $ recording_date        <chr> "20211201", "20220311", "20220317", "20220106", …
-#> $ night                 <chr> "20211201", "20220311", "20220316", "20220106", …
-#> $ recording_hour        <chr> "19", "22", "01", "22", "01", "19", "19", "01", …
-#> $ rank                  <int> 1, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 2, 2, 1, …
-#> $ confidence            <dbl> 0.9016, 0.7746, 0.8864, 0.8709, 0.8086, 0.8483, …
-#> $ clip_file             <chr> "0.902_1_ARA01_20211201_190000_21.0s_24.0s.wav",…
-#> $ clip_start            <dbl> 21, 258, 183, 267, 156, 114, 252, 216, 177, 21, …
-#> $ clip_end              <dbl> 24, 261, 186, 270, 159, 117, 255, 219, 180, 24, …
+#> $ recording_date        <chr> "20211016", "20220201", "20220302", "20211201", …
+#> $ night                 <chr> "20211016", "20220201", "20220301", "20211201", …
+#> $ recording_hour        <chr> "19", "22", "01", "22", "01", "19", "01", "22", …
+#> $ rank                  <int> 2, 1, 2, 1, 2, 1, 1, 2, 2, 1, 2, 1, 1, 2, 2, 1, …
+#> $ confidence            <dbl> 0.4693, 0.8042, 0.8667, 0.8505, 0.8473, 0.9318, …
+#> $ clip_file             <chr> "0.469_2_ARA01_20211016_190000_165.0s_168.0s.wav…
+#> $ clip_start            <dbl> 165, 114, 219, 24, 27, 246, 0, 297, 33, 6, 90, 1…
+#> $ clip_end              <dbl> 168, 117, 222, 27, 30, 249, 3, 300, 36, 9, 93, 2…
 #> $ duration              <dbl> 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, …
-#> $ source_audio          <chr> "N:/pam/audio/ARA/ARA01_20211201_190000.wav", "N…
-#> $ begin_path            <chr> "N:\\pam\\audio\\ARA\\ARA01_20211201_190000.wav"…
+#> $ source_audio          <chr> "N:/pam/audio/ARA/ARA01_20211016_190000.wav", "N…
+#> $ begin_path            <chr> "N:\\pam\\audio\\ARA\\ARA01_20211016_190000.wav"…
 #> $ sampling_mode         <chr> "top", "top", "top", "top", "top", "top", "top",…
-#> $ occasion_id           <chr> "ARA01_20211201_190000", "ARA01_20220311_220000"…
+#> $ occasion_id           <chr> "ARA01_20211016_190000", "ARA01_20220201_220000"…
 #> $ n_detections_occasion <int> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
 #> $ inclusion_prob        <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
 ```
@@ -220,9 +218,12 @@ invisible(file.create(paths))
 
 list.dirs(review_dir, full.names = FALSE)
 #>  [1] ""                 "boa_ran"          "boa_ran/Negative" "boa_ran/Positive"
-#>  [5] "den_nan"          "den_nan/Negative" "den_nan/Positive" "lep_fus"         
-#>  [9] "lep_fus/Negative" "lep_fus/Positive" "pse_pla"          "pse_pla/Negative"
-#> [13] "pse_pla/Positive" "sci_nas"          "sci_nas/Negative" "sci_nas/Positive"
+#>  [5] "den_nan"          "den_nan/Negative" "den_nan/Positive" "ela_bic"         
+#>  [9] "ela_bic/Negative" "ela_bic/Positive" "lep_fus"          "lep_fus/Negative"
+#> [13] "lep_fus/Positive" "lep_pod"          "lep_pod/Negative" "lep_pod/Positive"
+#> [17] "phy_cuv"          "phy_cuv/Negative" "phy_cuv/Positive" "pse_pla"         
+#> [21] "pse_pla/Negative" "pse_pla/Positive" "sci_nas"          "sci_nas/Negative"
+#> [25] "sci_nas/Positive"
 ```
 
 ## Summarising the review
@@ -235,23 +236,29 @@ not found at all are flagged `"clip_missing"`.
 ``` r
 
 val <- classify_review(man, review_dir)
-#> Clips in the manifest: 800
-#>   negative: 316
-#>   positive: 484
+#> Clips in the manifest: 1273
+#>   negative: 432
+#>   positive: 841
 dplyr::count(val, species_folder, verdict)
-#> # A tibble: 10 × 3
+#> # A tibble: 16 × 3
 #>    species_folder verdict      n
 #>    <chr>          <chr>    <int>
-#>  1 boa_ran        negative    46
-#>  2 boa_ran        positive   114
-#>  3 den_nan        negative    55
-#>  4 den_nan        positive   105
-#>  5 lep_fus        negative    94
-#>  6 lep_fus        positive    66
-#>  7 pse_pla        negative    59
-#>  8 pse_pla        positive   101
-#>  9 sci_nas        negative    62
-#> 10 sci_nas        positive    98
+#>  1 boa_ran        negative    57
+#>  2 boa_ran        positive   103
+#>  3 den_nan        negative    66
+#>  4 den_nan        positive    94
+#>  5 ela_bic        negative    41
+#>  6 ela_bic        positive   119
+#>  7 lep_fus        negative    77
+#>  8 lep_fus        positive    76
+#>  9 lep_pod        negative    36
+#> 10 lep_pod        positive   124
+#> 11 phy_cuv        negative    32
+#> 12 phy_cuv        positive   128
+#> 13 pse_pla        negative    60
+#> 14 pse_pla        positive   100
+#> 15 sci_nas        negative    63
+#> 16 sci_nas        positive    97
 ```
 
 [`precision_by_bin()`](https://provetelab.org/sheepdog/reference/precision_by_bin.md)
@@ -266,23 +273,23 @@ head(prec, 10)
 #> # A tibble: 10 × 7
 #>    site  species_folder bin       n_reviewed n_positive precision low_support
 #>    <chr> <chr>          <fct>          <int>      <int>     <dbl> <lgl>      
-#>  1 ARA   boa_ran        [0.3,0.4)          3          1     0.333 TRUE       
+#>  1 ARA   boa_ran        [0.3,0.4)          1          0     0     TRUE       
 #>  2 ARA   boa_ran        [0.4,0.5)          2          1     0.5   TRUE       
 #>  3 ARA   boa_ran        [0.5,0.6)          1          1     1     TRUE       
-#>  4 ARA   boa_ran        [0.6,0.7)          1          1     1     TRUE       
-#>  5 ARA   boa_ran        [0.7,0.8)         13          9     0.692 TRUE       
-#>  6 ARA   boa_ran        [0.8,0.9)         14         10     0.714 TRUE       
-#>  7 ARA   boa_ran        [0.9,1]            6          5     0.833 TRUE       
-#>  8 ARA   den_nan        [0.4,0.5)          3          0     0     TRUE       
-#>  9 ARA   den_nan        [0.5,0.6)          2          2     1     TRUE       
-#> 10 ARA   den_nan        [0.6,0.7)         10          7     0.7   TRUE
+#>  4 ARA   boa_ran        [0.6,0.7)          6          3     0.5   TRUE       
+#>  5 ARA   boa_ran        [0.7,0.8)          5          4     0.8   TRUE       
+#>  6 ARA   boa_ran        [0.8,0.9)         16         14     0.875 FALSE      
+#>  7 ARA   boa_ran        [0.9,1]            9          8     0.889 TRUE       
+#>  8 ARA   den_nan        [0.2,0.3)          1          0     0     TRUE       
+#>  9 ARA   den_nan        [0.3,0.4)          3          2     0.667 TRUE       
+#> 10 ARA   den_nan        [0.4,0.5)          3          0     0     TRUE
 ```
 
 [`suggest_thresholds()`](https://provetelab.org/sheepdog/reference/suggest_thresholds.md)
 returns, for each site and species, the lowest confidence at which the
 precision among the clips at or above it reaches `target_precision`,
 with at least `min_n` clips. `NA` means that no cut reached the target
-with the clips reviewed. With only 40 clips per site x species, many
+with the clips reviewed. With at most 40 clips per site x species, many
 cells lack the support to reach the target;
 [`vignette("validation-effort")`](https://provetelab.org/sheepdog/articles/validation-effort.md)
 discusses how many clips are needed.
@@ -290,29 +297,20 @@ discusses how many clips are needed.
 ``` r
 
 suggest_thresholds(val, target_precision = 0.90, min_n = 15)
-#> # A tibble: 20 × 5
+#> # A tibble: 32 × 5
 #>    site  species_folder threshold n_support precision_at_threshold
 #>    <chr> <chr>              <dbl>     <int>                  <dbl>
 #>  1 ARA   boa_ran            NA           NA                 NA    
 #>  2 ARA   den_nan            NA           NA                 NA    
-#>  3 ARA   lep_fus            NA           NA                 NA    
-#>  4 ARA   pse_pla             0.63        23                  0.913
-#>  5 ARA   sci_nas            NA           NA                 NA    
-#>  6 BAI   boa_ran            NA           NA                 NA    
-#>  7 BAI   den_nan            NA           NA                 NA    
-#>  8 BAI   lep_fus            NA           NA                 NA    
-#>  9 BAI   pse_pla            NA           NA                 NA    
-#> 10 BAI   sci_nas            NA           NA                 NA    
-#> 11 NHE   boa_ran             0.77        20                  0.9  
-#> 12 NHE   den_nan             0.73        22                  0.909
-#> 13 NHE   lep_fus            NA           NA                 NA    
-#> 14 NHE   pse_pla            NA           NA                 NA    
-#> 15 NHE   sci_nas             0.68        20                  0.9  
-#> 16 XAR   boa_ran             0.8         19                  0.947
-#> 17 XAR   den_nan            NA           NA                 NA    
-#> 18 XAR   lep_fus            NA           NA                 NA    
-#> 19 XAR   pse_pla            NA           NA                 NA    
-#> 20 XAR   sci_nas            NA           NA                 NA
+#>  3 ARA   ela_bic             0.65        36                  0.917
+#>  4 ARA   lep_fus            NA           NA                 NA    
+#>  5 ARA   lep_pod             0.64        30                  0.9  
+#>  6 ARA   phy_cuv             0.82        22                  0.909
+#>  7 ARA   pse_pla            NA           NA                 NA    
+#>  8 ARA   sci_nas            NA           NA                 NA    
+#>  9 BAI   boa_ran            NA           NA                 NA    
+#> 10 BAI   den_nan            NA           NA                 NA    
+#> # ℹ 22 more rows
 ```
 
 [`nightly_presence()`](https://provetelab.org/sheepdog/reference/nightly_presence.md)
@@ -327,26 +325,32 @@ head(pres)
 #>   site  species_folder night    n_clips n_reviewed n_positive presence          
 #>   <chr> <chr>          <chr>      <int>      <int>      <int> <chr>             
 #> 1 ARA   boa_ran        20211016       1          1          1 confirmed         
-#> 2 ARA   boa_ran        20211101       1          1          0 not_detected_in_r…
-#> 3 ARA   boa_ran        20211111       1          1          1 confirmed         
-#> 4 ARA   boa_ran        20211116       1          1          1 confirmed         
-#> 5 ARA   boa_ran        20211201       2          2          2 confirmed         
-#> 6 ARA   boa_ran        20211206       2          2          2 confirmed         
+#> 2 ARA   boa_ran        20211021       1          1          0 not_detected_in_r…
+#> 3 ARA   boa_ran        20211101       3          3          3 confirmed         
+#> 4 ARA   boa_ran        20211106       1          1          1 confirmed         
+#> 5 ARA   boa_ran        20211111       2          2          2 confirmed         
+#> 6 ARA   boa_ran        20211116       1          1          1 confirmed         
 #> # ℹ 1 more variable: max_confidence_positive <dbl>
 dplyr::count(pres, species_folder, presence)
-#> # A tibble: 10 × 3
+#> # A tibble: 16 × 3
 #>    species_folder presence                     n
 #>    <chr>          <chr>                    <int>
-#>  1 boa_ran        confirmed                   74
-#>  2 boa_ran        not_detected_in_reviewed    17
-#>  3 den_nan        confirmed                   71
-#>  4 den_nan        not_detected_in_reviewed    19
-#>  5 lep_fus        confirmed                   50
-#>  6 lep_fus        not_detected_in_reviewed    35
-#>  7 pse_pla        confirmed                   76
-#>  8 pse_pla        not_detected_in_reviewed    19
-#>  9 sci_nas        confirmed                   69
-#> 10 sci_nas        not_detected_in_reviewed    23
+#>  1 boa_ran        confirmed                   62
+#>  2 boa_ran        not_detected_in_reviewed    25
+#>  3 den_nan        confirmed                   69
+#>  4 den_nan        not_detected_in_reviewed    27
+#>  5 ela_bic        confirmed                   71
+#>  6 ela_bic        not_detected_in_reviewed    11
+#>  7 lep_fus        confirmed                   59
+#>  8 lep_fus        not_detected_in_reviewed    28
+#>  9 lep_pod        confirmed                   61
+#> 10 lep_pod        not_detected_in_reviewed    12
+#> 11 phy_cuv        confirmed                   69
+#> 12 phy_cuv        not_detected_in_reviewed    13
+#> 13 pse_pla        confirmed                   72
+#> 14 pse_pla        not_detected_in_reviewed    19
+#> 15 sci_nas        confirmed                   64
+#> 16 sci_nas        not_detected_in_reviewed    28
 ```
 
 [`plot_precision()`](https://provetelab.org/sheepdog/reference/plot_precision.md)
@@ -389,6 +393,9 @@ together with the figure.
   from calibrated detections to community analyses (stage 3):
   [`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md),
   the `k_min` rule, the effort filter and ordinations with ‘vegan’.
+- [`vignette("retraining")`](https://provetelab.org/sheepdog/articles/retraining.md):
+  turning the reviewed clips into training folders for BirdNET-Analyzer,
+  with an independent test set.
 - [`vignette("crywolf-integration")`](https://provetelab.org/sheepdog/articles/crywolf-integration.md):
   the clip manifest and validation tables as input to occupancy models
   with false positives.

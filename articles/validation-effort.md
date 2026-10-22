@@ -22,13 +22,14 @@ package.
 
 ## Example data
 
-The example holds BirdNET predictions simulated for five frog species at
-four sites over six months (`data-raw/make_example_data.R` in the source
-repository). False-positive confidences overlap those of true
+The example holds BirdNET predictions simulated for frog species at
+several sites over six months (`data-raw/make_example_data.R` in the
+source repository). False-positive confidences overlap those of true
 detections, and false-positive rates differ among species and sites. The
 reviewed clips were drawn with the `"top"` design (the two highest
 confidences per site x species x night x hour, up to 80 clips per site x
-species) and their verdicts come from the simulated truth.
+species) and their verdicts come from the simulated truth. Species with
+few detections at a site yield fewer than 80 clips there.
 
 ``` r
 
@@ -49,22 +50,23 @@ score, in the form used by the calibration models:
 ``` r
 
 val <- read_validations(val_files)
-#> 1600 reviewed clips (809 TP / 791 FP) of 5 species at 4 sites.
+#> 2467 reviewed clips (1577 TP / 890 FP) of 8 species at 4 sites.
 val |>
   summarise(precision = round(mean(tp), 2), .by = c(site, species)) |>
   tidyr::pivot_wider(names_from = species, values_from = precision)
-#> # A tibble: 4 × 6
-#>   site  boa_ran den_nan lep_fus pse_pla sci_nas
-#>   <fct>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>
-#> 1 ARA      0.92    0.92    0.58    0.31    0.5 
-#> 2 BAI      0.92    0.46    0.26    0.28    0.4 
-#> 3 NHE      0.88    0.76    0       0.14    0.36
-#> 4 XAR      0.78    0.68    0.38    0.28    0.31
+#> # A tibble: 4 × 9
+#>   site  boa_ran den_nan ela_bic lep_fus lep_pod phy_cuv pse_pla sci_nas
+#>   <fct>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>
+#> 1 ARA      0.98    0.82    0.91    0       0.91    0.98    0.61    0.81
+#> 2 BAI      0.78    0.35    0.94    0       0.79    0.96    0.21    0.42
+#> 3 NHE      0.44    0.51    0.8     0.62    0.76    0.89    0.3     0.24
+#> 4 XAR      0.71    0.3     0.92    0.6     0.94    0.78    0.12    0.51
 ```
 
 The table gives the share of true positives among the reviewed clips of
-each cell (20 cells of 80 clips). It already shows that the same design
-yields very different precision across species and sites.
+each cell (8 species x 4 sites = 32 cells of 33 to 80 clips). It already
+shows that the same design yields very different precision across
+species and sites.
 
 ## Stage 2: the effort curve
 
@@ -93,13 +95,13 @@ cv <- compare_calibration_models(val, models)
 #> Cross-validation (5 folds) of 5 models...
 select(cv, model, auc_mean, auc_sd)
 #> # A tibble: 5 × 3
-#>   model                auc_mean auc_sd
-#>   <chr>                   <dbl>  <dbl>
-#> 1 m4_species_x_site       0.885 0.0181
-#> 2 m3_plus_site            0.882 0.0194
-#> 3 m2_species_slope        0.872 0.0183
-#> 4 m1_species_intercept    0.865 0.0221
-#> 5 m0_global               0.804 0.0256
+#>   model                auc_mean  auc_sd
+#>   <chr>                   <dbl>   <dbl>
+#> 1 m4_species_x_site       0.942 0.00564
+#> 2 m3_plus_site            0.928 0.00640
+#> 3 m2_species_slope        0.916 0.00556
+#> 4 m1_species_intercept    0.902 0.00544
+#> 5 m0_global               0.862 0.0120
 ```
 
 The effort curve below is drawn for the global model (`m0_global`, a
@@ -121,9 +123,21 @@ AUC.
 
 ``` r
 
-n_train <- c(5, 10, 20, 30, 45, 60, 70)
+cell_min <- min(count(val, site, species)$n)
+cell_min
+#> [1] 33
+n_train <- c(5, 10, 15, 20, 25)
 n_reps  <- 15
 ```
+
+The smallest cell holds 33 clips, so the largest training size that
+every cell can supply is 28, and `n_train` stops below it. Larger sizes
+would trigger the warning, and `n_train_mean` would fall below
+`n_per_cell`: the small cells would contribute fewer clips than
+requested, and the curve would no longer describe a uniform effort per
+cell. To explore larger efforts, draw the curve on the subset of cells
+large enough to supply them, keeping in mind that this subset excludes
+the species with few detections, often the hardest to calibrate.
 
 ### The two curves
 
@@ -133,16 +147,14 @@ eff_m0 <- calibration_effort(val, models$m0_global,
                              n_train = n_train, n_reps = n_reps)
 #> Effort curve (15 repetitions per n)...
 eff_m0
-#> # A tibble: 7 × 6
+#> # A tibble: 5 × 6
 #>   n_per_cell auc_mean  auc_sd n_train_mean n_test_mean n_failed
 #>        <dbl>    <dbl>   <dbl>        <dbl>       <dbl>    <int>
-#> 1          5    0.803 0.00291            5        1500        0
-#> 2         10    0.803 0.00361           10        1400        0
-#> 3         20    0.803 0.00692           20        1200        0
-#> 4         30    0.802 0.00684           30        1000        0
-#> 5         45    0.808 0.0103            45         700        0
-#> 6         60    0.808 0.0148            60         400        0
-#> 7         70    0.795 0.0236            70         200        0
+#> 1          5    0.862 0.00188            5        2307        0
+#> 2         10    0.860 0.00217           10        2147        0
+#> 3         15    0.862 0.00348           15        1987        0
+#> 4         20    0.860 0.00414           20        1827        0
+#> 5         25    0.860 0.00611           25        1667        0
 ```
 
 ``` r
@@ -151,16 +163,14 @@ eff_m4 <- calibration_effort(val, models$m4_species_x_site,
                              n_train = n_train, n_reps = n_reps)
 #> Effort curve (15 repetitions per n)...
 eff_m4
-#> # A tibble: 7 × 6
+#> # A tibble: 5 × 6
 #>   n_per_cell auc_mean  auc_sd n_train_mean n_test_mean n_failed
 #>        <dbl>    <dbl>   <dbl>        <dbl>       <dbl>    <int>
-#> 1          5    0.855 0.0104             5        1500        0
-#> 2         10    0.870 0.00503           10        1400        0
-#> 3         20    0.875 0.00625           20        1200        0
-#> 4         30    0.881 0.00608           30        1000        0
-#> 5         45    0.887 0.00905           45         700        0
-#> 6         60    0.883 0.0115            60         400        0
-#> 7         70    0.887 0.0153            70         200        0
+#> 1          5    0.918 0.00896            5        2307        0
+#> 2         10    0.930 0.00449           10        2147        0
+#> 3         15    0.934 0.00325           15        1987        0
+#> 4         20    0.936 0.00331           20        1827        0
+#> 5         25    0.937 0.00335           25        1667        0
 ```
 
 The draws depend only on `seed`, `n_train`, `n_reps` and the data, not
@@ -193,16 +203,17 @@ models.](validation-effort_files/figure-html/unnamed-chunk-9-1.png)
 ### Reading the curve
 
 **Which formula.** The curve belongs to a model, not to the data. The
-mean AUC of the global model stays between 0.795 and 0.808 at every
+mean AUC of the global model stays between 0.86 and 0.862 at every
 training size: it has only two parameters, which are estimated well from
 a few clips per cell, and more clips cannot correct its structural
 limitation, that one score-to-probability curve is shared by all species
-and sites. The hierarchical model starts higher (0.855 with 5 clips per
-cell) and keeps improving (0.875 with 20 and 0.887 with 70), because
-each additional clip also informs the species- and site-specific terms.
-The gap between the curves is the gain from modelling how species and
-sites differ; its size, not only the height of either curve, is what the
-choice of formula rests on. Draw the curve for the formula that
+and sites. The hierarchical model is higher at every size (0.918 with 5
+clips per cell, 0.936 with 20 and 0.937 with 25) and, unlike the global
+model, it gains from additional clips, because each clip also informs
+the species- and site-specific terms. The gap between the curves is the
+gain from modelling how species and sites differ; its size, not only the
+height of either curve, is what the choice of formula rests on. Draw the
+curve for the formula that
 [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md)
 selects (or that
 [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
@@ -212,22 +223,27 @@ refits), with `m0_global` as a baseline.
 stops increasing, extra clips in every cell add little discrimination.
 With a tolerance of 0.005 below the best mean AUC of each curve (an
 illustrative choice, not a rule of the package), the global model is
-flat from 10 clips per cell and the hierarchical model from 45. For the
+flat from 5 clips per cell and the hierarchical model from 15. For the
 hierarchical model the gain per clip falls with effort: the first 5
-extra clips per cell (from 5 to 10) add 0.015 to the mean AUC, and the
-next 35 (from 10 to 45) add 0.017 in total. The first clips of a cell
-fix its intercept and slope; the later ones only refine them. Small dips
-in the mean between neighbouring training sizes are within the spread of
-the repetitions and should not be read as losses.
+extra clips per cell (from 5 to 10) add 0.012 to the mean AUC, and the
+next 15 (from 10 to 25) add 0.007 in total. The first clips of a cell
+fix its intercept and slope; the later ones only refine them. Whether
+the curve keeps rising beyond 28 clips per cell cannot be assessed with
+every cell in the curve (see above). Small dips in the mean between
+neighbouring training sizes are within the spread of the repetitions and
+should not be read as losses.
 
 **The variability across repetitions.** At small *n* the standard
 deviation measures how much the calibration depends on *which* clips
 were reviewed; a large spread means that a single validation round of
-that size may produce a poor model by chance. At large *n* the spread
-grows for a different reason: the test set is what is left of each cell,
-so it shrinks as *n* grows (with 70 training clips per cell, only 200 of
-the 1600 clips are left for testing). The right end of the curve is
-therefore estimated less precisely than its middle.
+that size may produce a poor model by chance. For the hierarchical model
+it is largest with 5 clips per cell (sd = 0.009) and halves by 15. The
+spread can also grow with *n* for a different reason: the test set is
+what is left of each cell, so it shrinks as *n* grows (`n_test_mean`;
+with 25 training clips per cell, 1667 of the 2467 clips remain for
+testing). The standard deviation of the global model, which gains
+nothing from extra clips, rises from 0.002 to 0.006 for that reason
+alone.
 
 AUC measures discrimination (whether true detections score higher than
 false ones), not whether the calibrated probabilities are accurate. A
@@ -255,32 +271,35 @@ val_raw <- purrr::map(val_files, readr::read_csv, show_col_types = FALSE) |>
 
 prec <- precision_by_bin(val_raw, min_n = 15)
 prec |>
-  filter(site == "BAI", species_folder %in% c("lep_fus", "pse_pla")) |>
+  filter(site == "BAI", species_folder %in% c("phy_cuv", "pse_pla")) |>
   mutate(precision = round(precision, 2)) |>
   select(species_folder, bin, n = n_reviewed, precision) |>
   tidyr::pivot_wider(names_from = species_folder,
-                     values_from = c(n, precision))
+                     values_from = c(n, precision)) |>
+  arrange(bin)
 #> # A tibble: 9 × 5
-#>   bin       n_lep_fus n_pse_pla precision_lep_fus precision_pse_pla
+#>   bin       n_phy_cuv n_pse_pla precision_phy_cuv precision_pse_pla
 #>   <fct>         <int>     <int>             <dbl>             <dbl>
-#> 1 [0.1,0.2)        15         2              0                 0.5 
-#> 2 [0.2,0.3)        15         7              0.2               0.43
-#> 3 [0.3,0.4)        12         6              0.08              0.33
-#> 4 [0.4,0.5)        11         8              0                 0.12
-#> 5 [0.5,0.6)        10        15              0.4               0.07
-#> 6 [0.6,0.7)        12        11              0.67              0.09
-#> 7 [0.7,0.8)         3        14              1                 0.5 
-#> 8 [0.8,0.9)         2        13              1                 0.15
-#> 9 [0.9,1]          NA         4             NA                 1
+#> 1 [0.1,0.2)         1        NA               0               NA   
+#> 2 [0.2,0.3)         1         5               0                0.4 
+#> 3 [0.3,0.4)        NA         6              NA                0   
+#> 4 [0.4,0.5)         2        10               0.5              0.3 
+#> 5 [0.5,0.6)         4        18               1                0.22
+#> 6 [0.6,0.7)         5        11               1                0.45
+#> 7 [0.7,0.8)        12        19               1                0.11
+#> 8 [0.8,0.9)        31         8               1                0   
+#> 9 [0.9,1]          24         3               1                0.33
 ```
 
 A bin is flagged `low_support` when it holds fewer than `min_n` reviewed
-clips (here, bins with `n` below 15). The two cells shown fail in
-different ways. For *lep_fus* at BAI the few clips in the upper bins are
-all true positives, but those bins are flagged: the precision at high
-scores rests on a handful of clips. For *pse_pla* at BAI the upper bins
-hold more clips, and precision there is still low: the classifier
-confuses this species even at high scores.
+clips (here, bins with `n` below 15). The two cells shown differ in how
+the flags should be read. For *phy_cuv* at BAI the reviewed clips
+concentrate in the upper bins, as expected from the `"top"` design, and
+precision there is high; the flagged low bins matter only if the study
+needs a low threshold. For *pse_pla* at BAI the clips spread over the
+whole range and precision stays low at high scores, including the upper
+bins that reach `min_n`: the classifier confuses this species at high
+scores, and more clips would not change that.
 
 [`suggest_thresholds()`](https://provetelab.org/sheepdog/reference/suggest_thresholds.md)
 returns, for each cell, the lowest confidence at which precision reaches
@@ -295,16 +314,16 @@ thr |>
                              format(threshold, nsmall = 2))) |>
   select(site, species_folder, threshold) |>
   tidyr::pivot_wider(names_from = species_folder, values_from = threshold)
-#> # A tibble: 4 × 6
-#>   site  boa_ran den_nan lep_fus pse_pla sci_nas
-#>   <chr> <chr>   <chr>   <chr>   <chr>   <chr>  
-#> 1 ARA   0.18    0.20    0.55    -       -      
-#> 2 BAI   0.15    -       -       -       -      
-#> 3 NHE   0.35    0.84    -       -       -      
-#> 4 XAR   0.49    -       -       -       -
+#> # A tibble: 4 × 9
+#>   site  boa_ran den_nan ela_bic lep_fus lep_pod phy_cuv pse_pla sci_nas
+#>   <chr> <chr>   <chr>   <chr>   <chr>   <chr>   <chr>   <chr>   <chr>  
+#> 1 ARA   0.36    0.56    0.13    -       0.10    0.19    -       0.69   
+#> 2 BAI   0.39    -       0.23    -       0.32    0.11    -       -      
+#> 3 NHE   0.55    0.77    0.26    -       0.35    0.22    -       -      
+#> 4 XAR   0.58    -       0.11    0.70    0.16    0.27    -       -
 ```
 
-The target is reached in 7 of the 20 cells. A missing threshold has two
+The target is reached in 20 of the 32 cells. A missing threshold has two
 possible causes, and they call for opposite decisions: too few reviewed
 clips at high scores (more review may help) or low precision even at
 high scores (more review will not). To tell them apart, count the
@@ -344,29 +363,41 @@ support <- val |>
          diagnosis) |>
   arrange(diagnosis, species, site)
 print(support, n = Inf)
-#> # A tibble: 20 × 7
+#> # A tibble: 32 × 7
 #>    site  species  n_fp n_high prec_high unreviewed_high diagnosis  
 #>    <chr> <chr>   <int>  <int>     <dbl>           <int> <chr>      
-#>  1 BAI   lep_fus    59      5      1                  0 exhausted  
-#>  2 NHE   lep_fus    80      3      0                  2 exhausted  
-#>  3 XAR   lep_fus    50     10      1                  0 exhausted  
-#>  4 ARA   boa_ran     6     62      0.97              87 reached    
-#>  5 BAI   boa_ran     6     63      1                 97 reached    
-#>  6 NHE   boa_ran    10     55      0.96             104 reached    
-#>  7 XAR   boa_ran    18     50      0.96              84 reached    
-#>  8 ARA   den_nan     6     48      0.98              65 reached    
-#>  9 NHE   den_nan    19     54      0.85              85 reached    
-#> 10 ARA   lep_fus    34     16      1                  1 reached    
-#> 11 BAI   den_nan    43     27      0.81              28 review more
-#> 12 XAR   den_nan    26     38      0.84              53 review more
-#> 13 ARA   sci_nas    40     32      0.69              18 review more
-#> 14 BAI   sci_nas    48     33      0.73              16 review more
-#> 15 NHE   sci_nas    51     40      0.52              47 review more
-#> 16 XAR   sci_nas    55     23      0.61              29 review more
-#> 17 ARA   pse_pla    55     25      0.4               22 unreliable 
-#> 18 BAI   pse_pla    58     31      0.42              20 unreliable 
-#> 19 NHE   pse_pla    69     34      0.18              60 unreliable 
-#> 20 XAR   pse_pla    58     36      0.33              36 unreliable
+#>  1 ARA   lep_fus    33      1      0                  0 exhausted  
+#>  2 BAI   lep_fus    56      3      0                  0 exhausted  
+#>  3 ARA   boa_ran     2     59      1                122 reached    
+#>  4 BAI   boa_ran    18     45      1                 25 reached    
+#>  5 NHE   boa_ran    45     26      0.96              18 reached    
+#>  6 XAR   boa_ran    23     49      0.98              29 reached    
+#>  7 ARA   den_nan    14     35      0.94              57 reached    
+#>  8 NHE   den_nan    39     33      0.82              47 reached    
+#>  9 ARA   ela_bic     7     61      1                 42 reached    
+#> 10 BAI   ela_bic     5     55      1                 51 reached    
+#> 11 NHE   ela_bic    16     53      1                 65 reached    
+#> 12 XAR   ela_bic     6     57      1                 46 reached    
+#> 13 XAR   lep_fus    32     16      0.94              17 reached    
+#> 14 ARA   lep_pod     7     62      1                 48 reached    
+#> 15 BAI   lep_pod    12     39      1                 12 reached    
+#> 16 NHE   lep_pod    19     53      1                 53 reached    
+#> 17 XAR   lep_pod     5     64      1                 91 reached    
+#> 18 ARA   phy_cuv     2     71      1                 64 reached    
+#> 19 BAI   phy_cuv     3     67      1                 68 reached    
+#> 20 NHE   phy_cuv     9     63      1                111 reached    
+#> 21 XAR   phy_cuv    18     59      0.98              39 reached    
+#> 22 ARA   sci_nas    15     40      0.92              34 reached    
+#> 23 BAI   den_nan    52     23      0.7               21 review more
+#> 24 XAR   den_nan    56     27      0.63              20 review more
+#> 25 NHE   lep_fus    30     18      0.78              19 review more
+#> 26 ARA   pse_pla    31     26      0.62              23 review more
+#> 27 BAI   sci_nas    46     30      0.7               30 review more
+#> 28 NHE   sci_nas    61     21      0.52              42 review more
+#> 29 XAR   sci_nas    39     36      0.69              39 review more
+#> 30 BAI   pse_pla    63     30      0.1               16 unreliable 
+#> 31 NHE   pse_pla    56     37      0.32              61 unreliable 
+#> 32 XAR   pse_pla    70     26      0.15              34 unreliable
 ```
 
 A cell is `"reached"` when
@@ -376,28 +407,29 @@ found a threshold. The other labels use illustrative cut-offs
 from the precision the study needs. In this example they separate three
 groups of cells that lack support:
 
-- **`"review more"`:** den_nan at BAI, den_nan at XAR, sci_nas at ARA,
-  sci_nas at BAI, sci_nas at NHE, sci_nas at XAR. Precision at high
-  scores is intermediate and unreviewed high-score detections remain, so
-  a further round of review restricted to high scores in these cells may
-  reveal a cut that reaches the target.
-- **`"exhausted"`:** lep_fus at BAI, lep_fus at NHE, lep_fus at XAR. The
-  `"top"` design has already taken almost every high-score detection of
-  these cells; more effort cannot add support. Treat the species at that
-  site as poorly calibrated.
-- **`"unreliable"`:** pse_pla at ARA, pse_pla at BAI, pse_pla at NHE,
-  pse_pla at XAR. Most high-score detections are false positives; more
-  review would only confirm it. These cells call for retraining the
-  classifier (with the clips of
+- **`"review more"`:** den_nan at BAI, den_nan at XAR, lep_fus at NHE,
+  pse_pla at ARA, sci_nas at BAI, sci_nas at NHE, sci_nas at XAR.
+  Precision at high scores is intermediate and unreviewed high-score
+  detections remain, so a further round of review restricted to high
+  scores in these cells may reveal a cut that reaches the target.
+- **`"exhausted"`:** lep_fus at ARA, lep_fus at BAI. The `"top"` design
+  has already taken almost every high-score detection of these cells;
+  more effort cannot add support. Treat the species at that site as
+  poorly calibrated. In this example these cells have 0 true positives
+  among their reviewed clips in total (see `n_fp` below).
+- **`"unreliable"`:** pse_pla at BAI, pse_pla at NHE, pse_pla at XAR.
+  Most high-score detections are false positives; more review would only
+  confirm it. These cells call for retraining the classifier (with the
+  clips of
   [`retraining_clips()`](https://provetelab.org/sheepdog/reference/retraining_clips.md))
   rather than for more validation.
 
 The column `n_fp` deserves a look of its own. The calibration slope is
 estimated from the contrast between true and false positives, so a cell
-with few false positives (here as few as 6) carries little information
-about the low end of its calibration curve, even with the same number of
-reviewed clips as the other cells. At the other extreme, a cell whose
-reviewed clips are all false positives (lep_fus at NHE) gives no
+with few false positives (here as few as 2) carries little information
+about the low end of its calibration curve, even when its total number
+of reviewed clips is large. At the other extreme, a cell whose reviewed
+clips are all false positives (lep_fus at ARA, lep_fus at BAI) gives no
 information on true detections at all; it may be a site where the
 species is absent. These are interpretations of the model structure, not
 flags computed by the package.
@@ -449,7 +481,7 @@ res <- calibrate(
   prediction_tables = setNames(
     file.path(ex, "birdnet", sites, "BirdNET_SelectionTable.txt"), sites),
   output_dir   = file.path(tempdir(), "calibration"),
-  effort_curve = TRUE, effort_n = c(5, 10, 20, 30, 45, 60, 70),
+  effort_curve = TRUE, effort_n = c(5, 10, 15, 20, 25),
   effort_reps  = 50
 )
 res$effort

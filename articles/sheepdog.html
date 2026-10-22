@@ -46,7 +46,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibrating confidence scores</a></li>
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Integration and case study</h6></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
+    <li><a class="dropdown-item" href="../articles/retraining.html">Retraining the classifier with validated clips</a></li>
     <li><a class="dropdown-item" href="../articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
     <li><a class="dropdown-item" href="../articles/frognet-workflow.html">The FrogNet workflow</a></li>
   </ul>
@@ -90,9 +91,8 @@ matrices (stage 3) are covered in other articles (see <a href="#where-next">Wher
 <h2 id="example-data">Example data<a class="anchor" aria-label="anchor" href="#example-data"></a>
 </h2>
 <p>The package ships a small simulated data set: BirdNET selection
-tables (Raven format) of four sites (<code>ARA</code>, <code>XAR</code>,
-<code>BAI</code>, <code>NHE</code>) recorded over six months (October
-2021 to March 2022), with predictions for five anuran species.
+tables (Raven format) of several sites recorded from October 2021 to
+March 2022, with predictions of a custom classifier for anuran species.
 False-positive rates vary among species and sites, and the confidence
 scores of false positives overlap those of true detections. The
 generator is <code>data-raw/make_example_data.R</code> in the source
@@ -120,36 +120,41 @@ standardised (e.g. <code>Begin Time (s)</code> becomes
 <span><span class="co">#&gt;   - /home/runner/work/_temp/Library/sheepdog/extdata/example/birdnet/BAI/BirdNET_SelectionTable.txt</span></span>
 <span><span class="co">#&gt;   - /home/runner/work/_temp/Library/sheepdog/extdata/example/birdnet/NHE/BirdNET_SelectionTable.txt</span></span>
 <span><span class="co">#&gt;   - /home/runner/work/_temp/Library/sheepdog/extdata/example/birdnet/XAR/BirdNET_SelectionTable.txt</span></span>
-<span><span class="co">#&gt; 5781 predictions read from 4 site(s).</span></span>
+<span><span class="co">#&gt; 7553 predictions read from 4 site(s).</span></span>
 <span><span class="va">det</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">site</span>, <span class="va">species_code</span>, <span class="va">confidence</span>, <span class="va">begin_path</span>, <span class="va">file_offset</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
-<span><span class="co">#&gt;   site  species_code                 confidence begin_path           file_offset</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ARA   Dendropsophus nanus_den-nan       0.727 <span style="color: #949494;">"</span>N:\\pam\\audio\\AR…           0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ARA   Dendropsophus nanus_den-nan       0.670 <span style="color: #949494;">"</span>N:\\pam\\audio\\AR…         156</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> ARA   Dendropsophus nanus_den-nan       0.682 <span style="color: #949494;">"</span>N:\\pam\\audio\\AR…         246</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> ARA   Leptodactylus fuscus_lep-fus      0.392 <span style="color: #949494;">"</span>N:\\pam\\audio\\AR…         276</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> ARA   Dendropsophus nanus_den-nan       0.195 <span style="color: #949494;">"</span>N:\\pam\\audio\\AR…         291</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> ARA   Leptodactylus fuscus_lep-fus      0.374 <span style="color: #949494;">"</span>N:\\pam\\audio\\AR…         297</span></span>
+<span><span class="co">#&gt;   site  species_code                      confidence begin_path      file_offset</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ARA   Boana raniceps_boa-ran                 0.504 <span style="color: #949494;">"</span>N:\\pam\\audi…          57</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ARA   Dendropsophus nanus_den-nan            0.372 <span style="color: #949494;">"</span>N:\\pam\\audi…          66</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> ARA   Leptodactylus fuscus_lep-fus           0.267 <span style="color: #949494;">"</span>N:\\pam\\audi…         150</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> ARA   Pseudis platensis_pse-pla              0.873 <span style="color: #949494;">"</span>N:\\pam\\audi…         165</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> ARA   Leptodactylus podicipinus_lep-pod      0.846 <span style="color: #949494;">"</span>N:\\pam\\audi…         174</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> ARA   Leptodactylus podicipinus_lep-pod      0.479 <span style="color: #949494;">"</span>N:\\pam\\audi…         177</span></span>
 <span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">det</span>, <span class="va">site</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 2</span></span></span>
 <span><span class="co">#&gt;   site      n</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ARA    <span style="text-decoration: underline;">1</span>178</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> BAI    <span style="text-decoration: underline;">1</span>167</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> NHE    <span style="text-decoration: underline;">2</span>014</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> XAR    <span style="text-decoration: underline;">1</span>422</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ARA    <span style="text-decoration: underline;">1</span>753</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> BAI    <span style="text-decoration: underline;">1</span>427</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> NHE    <span style="text-decoration: underline;">2</span>507</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> XAR    <span style="text-decoration: underline;">1</span>866</span></span>
 <span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">det</span>, <span class="va">species_code</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 2</span></span></span>
-<span><span class="co">#&gt;   species_code                     n</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Boana raniceps_boa-ran        <span style="text-decoration: underline;">1</span>264</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Dendropsophus nanus_den-nan   <span style="text-decoration: underline;">1</span>689</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Leptodactylus fuscus_lep-fus   440</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Pseudis platensis_pse-pla     <span style="text-decoration: underline;">1</span>261</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Scinax nasicus_sci-nas        <span style="text-decoration: underline;">1</span>127</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 2</span></span></span>
+<span><span class="co">#&gt;   species_code                          n</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Boana raniceps_boa-ran              874</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Dendropsophus nanus_den-nan        <span style="text-decoration: underline;">1</span>366</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Elachistocleis bicolor_ela-bic      739</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Leptodactylus fuscus_lep-fus        545</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Leptodactylus podicipinus_lep-pod   699</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Physalaemus cuvieri_phy-cuv         850</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> Pseudis platensis_pse-pla          <span style="text-decoration: underline;">1</span>209</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> Scinax nasicus_sci-nas             <span style="text-decoration: underline;">1</span>271</span></span></code></pre></div>
+<p>The tables hold 7553 predictions of 8 species at 4 sites (ARA, BAI,
+NHE, XAR).</p>
 </div>
 <div class="section level2">
 <h2 id="selecting-the-clips-to-review">Selecting the clips to review<a class="anchor" aria-label="anchor" href="#selecting-the-clips-to-review"></a>
@@ -164,41 +169,32 @@ night (<code>balance_by_hour = TRUE</code>). Because the hour window
 below crosses midnight, recordings made after midnight are assigned to
 the night before.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">det</span>,</span>
+<code class="sourceCode R"><span><span class="va">n_max</span> <span class="op">&lt;-</span> <span class="fl">40</span></span>
+<span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">det</span>,</span>
 <span>                    sampling_mode   <span class="op">=</span> <span class="st">"top"</span>,</span>
 <span>                    n_top           <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>                    hour_start      <span class="op">=</span> <span class="fl">18</span>, hour_end <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>                    max_per_species <span class="op">=</span> <span class="fl">40</span><span class="op">)</span></span>
+<span>                    max_per_species <span class="op">=</span> <span class="va">n_max</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Sampling mode: top (occasion = file).</span></span>
 <span><span class="co">#&gt; The hour window crosses midnight: grouping by night (small hours count as the night before).</span></span>
-<span><span class="co">#&gt; Hour window 18h-2h: 5781 -&gt; 5781 predictions.</span></span>
+<span><span class="co">#&gt; Hour window 18h-2h: 7553 -&gt; 7553 predictions.</span></span>
 <span><span class="co">#&gt; 0 predictions dropped by the filter confidence &lt; 0.1.</span></span>
-<span><span class="co">#&gt; 2836 clips selected (top 2 per site x species x night x hour) of 5 species.</span></span>
-<span><span class="co">#&gt; Limit of 40 clips per species (per site): 2836 -&gt; 800 clips.</span></span>
-<span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">man</span>, <span class="va">site</span>, <span class="va">species_folder</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 20 × 3</span></span></span>
-<span><span class="co">#&gt;    site  species_folder     n</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ARA   boa_ran           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ARA   den_nan           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ARA   lep_fus           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ARA   pse_pla           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ARA   sci_nas           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> BAI   boa_ran           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> BAI   den_nan           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> BAI   lep_fus           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> BAI   pse_pla           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> BAI   sci_nas           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> NHE   boa_ran           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> NHE   den_nan           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> NHE   lep_fus           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> NHE   pse_pla           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> NHE   sci_nas           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> XAR   boa_ran           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> XAR   den_nan           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> XAR   lep_fus           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> XAR   pse_pla           40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> XAR   sci_nas           40</span></span></code></pre></div>
+<span><span class="co">#&gt; 4099 clips selected (top 2 per site x species x night x hour) of 8 species.</span></span>
+<span><span class="co">#&gt; Limit of 40 clips per species (per site): 4099 -&gt; 1273 clips.</span></span>
+<span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">man</span>, <span class="va">site</span>, <span class="va">species_folder</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">pivot_wider</a></span><span class="op">(</span>names_from <span class="op">=</span> <span class="va">site</span>, values_from <span class="op">=</span> <span class="va">n</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 5</span></span></span>
+<span><span class="co">#&gt;   species_folder   ARA   BAI   NHE   XAR</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> boa_ran           40    40    40    40</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> den_nan           40    40    40    40</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> ela_bic           40    40    40    40</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> lep_fus           33    40    40    40</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> lep_pod           40    40    40    40</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> phy_cuv           40    40    40    40</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> pse_pla           40    40    40    40</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> sci_nas           40    40    40    40</span></span></code></pre></div>
+<p>The manifest has 1273 clips.</p>
 <p>The <code>"top"</code> design serves classifier retraining and the
 score-to-probability calibration of stage 2. It should not be used to
 estimate false-positive rates, because top-score clips hold fewer false
@@ -208,24 +204,24 @@ positives than a random sample; the random designs are described in
 defined in <code><a href="../articles/crywolf-integration.html">vignette("crywolf-integration")</a></code>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">man</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Rows: 800</span></span>
+<span><span class="co">#&gt; Rows: 1,273</span></span>
 <span><span class="co">#&gt; Columns: 18</span></span>
 <span><span class="co">#&gt; $ site                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "ARA"<span style="color: #949494;">, </span>"ARA"<span style="color: #949494;">, </span>"ARA"<span style="color: #949494;">, </span>"ARA"<span style="color: #949494;">, </span>"ARA"<span style="color: #949494;">, </span>"ARA"<span style="color: #949494;">, </span>"ARA"<span style="color: #949494;">,</span>…</span></span>
 <span><span class="co">#&gt; $ species_code          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Boana raniceps_boa-ran"<span style="color: #949494;">, </span>"Boana raniceps_boa-ra…</span></span>
 <span><span class="co">#&gt; $ species_folder        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "boa_ran"<span style="color: #949494;">, </span>"boa_ran"<span style="color: #949494;">, </span>"boa_ran"<span style="color: #949494;">, </span>"boa_ran"<span style="color: #949494;">, </span>"boa…</span></span>
-<span><span class="co">#&gt; $ recording_date        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "20211201"<span style="color: #949494;">, </span>"20220311"<span style="color: #949494;">, </span>"20220317"<span style="color: #949494;">, </span>"20220106"<span style="color: #949494;">, </span>…</span></span>
-<span><span class="co">#&gt; $ night                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "20211201"<span style="color: #949494;">, </span>"20220311"<span style="color: #949494;">, </span>"20220316"<span style="color: #949494;">, </span>"20220106"<span style="color: #949494;">, </span>…</span></span>
-<span><span class="co">#&gt; $ recording_hour        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "19"<span style="color: #949494;">, </span>"22"<span style="color: #949494;">, </span>"01"<span style="color: #949494;">, </span>"22"<span style="color: #949494;">, </span>"01"<span style="color: #949494;">, </span>"19"<span style="color: #949494;">, </span>"19"<span style="color: #949494;">, </span>"01"<span style="color: #949494;">, </span>…</span></span>
-<span><span class="co">#&gt; $ rank                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>…</span></span>
-<span><span class="co">#&gt; $ confidence            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.9016<span style="color: #949494;">, </span>0.7746<span style="color: #949494;">, </span>0.8864<span style="color: #949494;">, </span>0.8709<span style="color: #949494;">, </span>0.8086<span style="color: #949494;">, </span>0.8483<span style="color: #949494;">, </span>…</span></span>
-<span><span class="co">#&gt; $ clip_file             <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "0.902_1_ARA01_20211201_190000_21.0s_24.0s.wav"<span style="color: #949494;">,</span>…</span></span>
-<span><span class="co">#&gt; $ clip_start            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 21<span style="color: #949494;">, </span>258<span style="color: #949494;">, </span>183<span style="color: #949494;">, </span>267<span style="color: #949494;">, </span>156<span style="color: #949494;">, </span>114<span style="color: #949494;">, </span>252<span style="color: #949494;">, </span>216<span style="color: #949494;">, </span>177<span style="color: #949494;">, </span>21<span style="color: #949494;">, </span>…</span></span>
-<span><span class="co">#&gt; $ clip_end              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 24<span style="color: #949494;">, </span>261<span style="color: #949494;">, </span>186<span style="color: #949494;">, </span>270<span style="color: #949494;">, </span>159<span style="color: #949494;">, </span>117<span style="color: #949494;">, </span>255<span style="color: #949494;">, </span>219<span style="color: #949494;">, </span>180<span style="color: #949494;">, </span>24<span style="color: #949494;">, </span>…</span></span>
+<span><span class="co">#&gt; $ recording_date        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "20211016"<span style="color: #949494;">, </span>"20220201"<span style="color: #949494;">, </span>"20220302"<span style="color: #949494;">, </span>"20211201"<span style="color: #949494;">, </span>…</span></span>
+<span><span class="co">#&gt; $ night                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "20211016"<span style="color: #949494;">, </span>"20220201"<span style="color: #949494;">, </span>"20220301"<span style="color: #949494;">, </span>"20211201"<span style="color: #949494;">, </span>…</span></span>
+<span><span class="co">#&gt; $ recording_hour        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "19"<span style="color: #949494;">, </span>"22"<span style="color: #949494;">, </span>"01"<span style="color: #949494;">, </span>"22"<span style="color: #949494;">, </span>"01"<span style="color: #949494;">, </span>"19"<span style="color: #949494;">, </span>"01"<span style="color: #949494;">, </span>"22"<span style="color: #949494;">, </span>…</span></span>
+<span><span class="co">#&gt; $ rank                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 2<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>…</span></span>
+<span><span class="co">#&gt; $ confidence            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.4693<span style="color: #949494;">, </span>0.8042<span style="color: #949494;">, </span>0.8667<span style="color: #949494;">, </span>0.8505<span style="color: #949494;">, </span>0.8473<span style="color: #949494;">, </span>0.9318<span style="color: #949494;">, </span>…</span></span>
+<span><span class="co">#&gt; $ clip_file             <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "0.469_2_ARA01_20211016_190000_165.0s_168.0s.wav…</span></span>
+<span><span class="co">#&gt; $ clip_start            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 165<span style="color: #949494;">, </span>114<span style="color: #949494;">, </span>219<span style="color: #949494;">, </span>24<span style="color: #949494;">, </span>27<span style="color: #949494;">, </span>246<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>297<span style="color: #949494;">, </span>33<span style="color: #949494;">, </span>6<span style="color: #949494;">, </span>90<span style="color: #949494;">, </span>1…</span></span>
+<span><span class="co">#&gt; $ clip_end              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 168<span style="color: #949494;">, </span>117<span style="color: #949494;">, </span>222<span style="color: #949494;">, </span>27<span style="color: #949494;">, </span>30<span style="color: #949494;">, </span>249<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>300<span style="color: #949494;">, </span>36<span style="color: #949494;">, </span>9<span style="color: #949494;">, </span>93<span style="color: #949494;">, </span>2…</span></span>
 <span><span class="co">#&gt; $ duration              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>…</span></span>
-<span><span class="co">#&gt; $ source_audio          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "N:/pam/audio/ARA/ARA01_20211201_190000.wav"<span style="color: #949494;">, </span>"N…</span></span>
-<span><span class="co">#&gt; $ begin_path            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "N:\\pam\\audio\\ARA\\ARA01_20211201_190000.wav"…</span></span>
+<span><span class="co">#&gt; $ source_audio          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "N:/pam/audio/ARA/ARA01_20211016_190000.wav"<span style="color: #949494;">, </span>"N…</span></span>
+<span><span class="co">#&gt; $ begin_path            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "N:\\pam\\audio\\ARA\\ARA01_20211016_190000.wav"…</span></span>
 <span><span class="co">#&gt; $ sampling_mode         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "top"<span style="color: #949494;">, </span>"top"<span style="color: #949494;">, </span>"top"<span style="color: #949494;">, </span>"top"<span style="color: #949494;">, </span>"top"<span style="color: #949494;">, </span>"top"<span style="color: #949494;">, </span>"top"<span style="color: #949494;">,</span>…</span></span>
-<span><span class="co">#&gt; $ occasion_id           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "ARA01_20211201_190000"<span style="color: #949494;">, </span>"ARA01_20220311_220000"…</span></span>
+<span><span class="co">#&gt; $ occasion_id           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "ARA01_20211016_190000"<span style="color: #949494;">, </span>"ARA01_20220201_220000"…</span></span>
 <span><span class="co">#&gt; $ n_detections_occasion <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span>…</span></span>
 <span><span class="co">#&gt; $ inclusion_prob        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span>…</span></span></code></pre></div>
 <p>The columns used below are <code>species_folder</code> (the folder of
@@ -281,9 +277,12 @@ classifiers do not have.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.dirs</a></span><span class="op">(</span><span class="va">review_dir</span>, full.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] ""                 "boa_ran"          "boa_ran/Negative" "boa_ran/Positive"</span></span>
-<span><span class="co">#&gt;  [5] "den_nan"          "den_nan/Negative" "den_nan/Positive" "lep_fus"         </span></span>
-<span><span class="co">#&gt;  [9] "lep_fus/Negative" "lep_fus/Positive" "pse_pla"          "pse_pla/Negative"</span></span>
-<span><span class="co">#&gt; [13] "pse_pla/Positive" "sci_nas"          "sci_nas/Negative" "sci_nas/Positive"</span></span></code></pre></div>
+<span><span class="co">#&gt;  [5] "den_nan"          "den_nan/Negative" "den_nan/Positive" "ela_bic"         </span></span>
+<span><span class="co">#&gt;  [9] "ela_bic/Negative" "ela_bic/Positive" "lep_fus"          "lep_fus/Negative"</span></span>
+<span><span class="co">#&gt; [13] "lep_fus/Positive" "lep_pod"          "lep_pod/Negative" "lep_pod/Positive"</span></span>
+<span><span class="co">#&gt; [17] "phy_cuv"          "phy_cuv/Negative" "phy_cuv/Positive" "pse_pla"         </span></span>
+<span><span class="co">#&gt; [21] "pse_pla/Negative" "pse_pla/Positive" "sci_nas"          "sci_nas/Negative"</span></span>
+<span><span class="co">#&gt; [25] "sci_nas/Positive"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="summarising-the-review">Summarising the review<a class="anchor" aria-label="anchor" href="#summarising-the-review"></a>
@@ -294,23 +293,29 @@ folder to the manifest. Clips left in the species folder are flagged
 flagged <code>"clip_missing"</code>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">val</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/classify_review.html">classify_review</a></span><span class="op">(</span><span class="va">man</span>, <span class="va">review_dir</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Clips in the manifest: 800</span></span>
-<span><span class="co">#&gt;   negative: 316</span></span>
-<span><span class="co">#&gt;   positive: 484</span></span>
+<span><span class="co">#&gt; Clips in the manifest: 1273</span></span>
+<span><span class="co">#&gt;   negative: 432</span></span>
+<span><span class="co">#&gt;   positive: 841</span></span>
 <span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">val</span>, <span class="va">species_folder</span>, <span class="va">verdict</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 16 × 3</span></span></span>
 <span><span class="co">#&gt;    species_folder verdict      n</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> boa_ran        negative    46</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> boa_ran        positive   114</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> den_nan        negative    55</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> den_nan        positive   105</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> lep_fus        negative    94</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> lep_fus        positive    66</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> pse_pla        negative    59</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> pse_pla        positive   101</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> sci_nas        negative    62</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> sci_nas        positive    98</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> boa_ran        negative    57</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> boa_ran        positive   103</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> den_nan        negative    66</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> den_nan        positive    94</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ela_bic        negative    41</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ela_bic        positive   119</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> lep_fus        negative    77</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> lep_fus        positive    76</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> lep_pod        negative    36</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> lep_pod        positive   124</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> phy_cuv        negative    32</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> phy_cuv        positive   128</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> pse_pla        negative    60</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> pse_pla        positive   100</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> sci_nas        negative    63</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> sci_nas        positive    97</span></span></code></pre></div>
 <p><code><a href="../reference/precision_by_bin.html">precision_by_bin()</a></code> gives the share of positive verdicts
 by site, species and confidence bin. Bins with fewer than
 <code>min_n</code> reviewed clips are flagged in
@@ -321,49 +326,40 @@ by site, species and confidence bin. Bins with fewer than
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 7</span></span></span>
 <span><span class="co">#&gt;    site  species_folder bin       n_reviewed n_positive precision low_support</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ARA   boa_ran        [0.3,0.4)          3          1     0.333 TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ARA   boa_ran        [0.3,0.4)          1          0     0     TRUE       </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ARA   boa_ran        [0.4,0.5)          2          1     0.5   TRUE       </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ARA   boa_ran        [0.5,0.6)          1          1     1     TRUE       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ARA   boa_ran        [0.6,0.7)          1          1     1     TRUE       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ARA   boa_ran        [0.7,0.8)         13          9     0.692 TRUE       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ARA   boa_ran        [0.8,0.9)         14         10     0.714 TRUE       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ARA   boa_ran        [0.9,1]            6          5     0.833 TRUE       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ARA   den_nan        [0.4,0.5)          3          0     0     TRUE       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ARA   den_nan        [0.5,0.6)          2          2     1     TRUE       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ARA   den_nan        [0.6,0.7)         10          7     0.7   TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ARA   boa_ran        [0.6,0.7)          6          3     0.5   TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ARA   boa_ran        [0.7,0.8)          5          4     0.8   TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ARA   boa_ran        [0.8,0.9)         16         14     0.875 FALSE      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ARA   boa_ran        [0.9,1]            9          8     0.889 TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ARA   den_nan        [0.2,0.3)          1          0     0     TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ARA   den_nan        [0.3,0.4)          3          2     0.667 TRUE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ARA   den_nan        [0.4,0.5)          3          0     0     TRUE</span></span></code></pre></div>
 <p><code><a href="../reference/suggest_thresholds.html">suggest_thresholds()</a></code> returns, for each site and species,
 the lowest confidence at which the precision among the clips at or above
 it reaches <code>target_precision</code>, with at least
 <code>min_n</code> clips. <code>NA</code> means that no cut reached the
-target with the clips reviewed. With only 40 clips per site x species,
-many cells lack the support to reach the target;
+target with the clips reviewed. With at most 40 clips per site x
+species, many cells lack the support to reach the target;
 <code><a href="../articles/validation-effort.html">vignette("validation-effort")</a></code> discusses how many clips are
 needed.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/suggest_thresholds.html">suggest_thresholds</a></span><span class="op">(</span><span class="va">val</span>, target_precision <span class="op">=</span> <span class="fl">0.90</span>, min_n <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 20 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 32 × 5</span></span></span>
 <span><span class="co">#&gt;    site  species_folder threshold n_support precision_at_threshold</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ARA   boa_ran            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ARA   den_nan            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ARA   lep_fus            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ARA   pse_pla             0.63        23                  0.913</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ARA   sci_nas            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> BAI   boa_ran            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> BAI   den_nan            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> BAI   lep_fus            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> BAI   pse_pla            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> BAI   sci_nas            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> NHE   boa_ran             0.77        20                  0.9  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> NHE   den_nan             0.73        22                  0.909</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> NHE   lep_fus            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> NHE   pse_pla            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> NHE   sci_nas             0.68        20                  0.9  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> XAR   boa_ran             0.8         19                  0.947</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> XAR   den_nan            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> XAR   lep_fus            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> XAR   pse_pla            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> XAR   sci_nas            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ARA   ela_bic             0.65        36                  0.917</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ARA   lep_fus            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ARA   lep_pod             0.64        30                  0.9  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ARA   phy_cuv             0.82        22                  0.909</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ARA   pse_pla            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ARA   sci_nas            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> BAI   boa_ran            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> BAI   den_nan            <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 22 more rows</span></span></span></code></pre></div>
 <p><code><a href="../reference/nightly_presence.html">nightly_presence()</a></code> summarises the verdicts by site,
 species and night: a night is <code>"confirmed"</code> when at least one
 clip is positive.</p>
@@ -374,26 +370,32 @@ clip is positive.</p>
 <span><span class="co">#&gt;   site  species_folder night    n_clips n_reviewed n_positive presence          </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ARA   boa_ran        20211016       1          1          1 confirmed         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ARA   boa_ran        20211101       1          1          0 not_detected_in_r…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> ARA   boa_ran        20211111       1          1          1 confirmed         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> ARA   boa_ran        20211116       1          1          1 confirmed         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> ARA   boa_ran        20211201       2          2          2 confirmed         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> ARA   boa_ran        20211206       2          2          2 confirmed         </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ARA   boa_ran        20211021       1          1          0 not_detected_in_r…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> ARA   boa_ran        20211101       3          3          3 confirmed         </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> ARA   boa_ran        20211106       1          1          1 confirmed         </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> ARA   boa_ran        20211111       2          2          2 confirmed         </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> ARA   boa_ran        20211116       1          1          1 confirmed         </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: max_confidence_positive &lt;dbl&gt;</span></span></span>
 <span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">pres</span>, <span class="va">species_folder</span>, <span class="va">presence</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 16 × 3</span></span></span>
 <span><span class="co">#&gt;    species_folder presence                     n</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> boa_ran        confirmed                   74</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> boa_ran        not_detected_in_reviewed    17</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> den_nan        confirmed                   71</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> den_nan        not_detected_in_reviewed    19</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> lep_fus        confirmed                   50</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> lep_fus        not_detected_in_reviewed    35</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> pse_pla        confirmed                   76</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> pse_pla        not_detected_in_reviewed    19</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> sci_nas        confirmed                   69</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> sci_nas        not_detected_in_reviewed    23</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> boa_ran        confirmed                   62</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> boa_ran        not_detected_in_reviewed    25</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> den_nan        confirmed                   69</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> den_nan        not_detected_in_reviewed    27</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ela_bic        confirmed                   71</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ela_bic        not_detected_in_reviewed    11</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> lep_fus        confirmed                   59</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> lep_fus        not_detected_in_reviewed    28</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> lep_pod        confirmed                   61</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> lep_pod        not_detected_in_reviewed    12</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> phy_cuv        confirmed                   69</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> phy_cuv        not_detected_in_reviewed    13</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> pse_pla        confirmed                   72</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> pse_pla        not_detected_in_reviewed    19</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> sci_nas        confirmed                   64</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> sci_nas        not_detected_in_reviewed    28</span></span></code></pre></div>
 <p><code><a href="../reference/plot_precision.html">plot_precision()</a></code> draws the precision curve of each
 species, with the target precision as a dashed line and bins with low
 support faded. It needs ‘ggplot2’. With several sites, each site is
@@ -430,6 +432,10 @@ histories (<code>p_min</code>, k).</li>
 detections to community analyses (stage 3):
 <code><a href="../reference/community_matrices.html">community_matrices()</a></code>, the <code>k_min</code> rule, the
 effort filter and ordinations with ‘vegan’.</li>
+<li>
+<code><a href="../articles/retraining.html">vignette("retraining")</a></code>: turning the reviewed clips into
+training folders for BirdNET-Analyzer, with an independent test
+set.</li>
 <li>
 <code><a href="../articles/crywolf-integration.html">vignette("crywolf-integration")</a></code>: the clip manifest and
 validation tables as input to occupancy models with false

@@ -288,8 +288,10 @@ Effort-standardised site x month matrices from calibrated histories.
 - [From detections to community
   analyses](https://provetelab.org/sheepdog/articles/community-matrices.md):
 
-### Integration and case study
+### Beyond the three stages
 
+- [Retraining the classifier with validated
+  clips](https://provetelab.org/sheepdog/articles/retraining.md):
 - [Integration with crywolf: clip manifest and validation
   tables](https://provetelab.org/sheepdog/articles/crywolf-integration.md):
 - [The FrogNet

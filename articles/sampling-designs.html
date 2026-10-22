@@ -46,7 +46,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibrating confidence scores</a></li>
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Integration and case study</h6></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
+    <li><a class="dropdown-item" href="../articles/retraining.html">Retraining the classifier with validated clips</a></li>
     <li><a class="dropdown-item" href="../articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
     <li><a class="dropdown-item" href="../articles/frognet-workflow.html">The FrogNet workflow</a></li>
   </ul>
@@ -141,11 +142,11 @@ reads audio, this does not prevent any of the steps below.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 2</span></span></span>
 <span><span class="co">#&gt;   site      n</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ARA    <span style="text-decoration: underline;">1</span>178</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> BAI    <span style="text-decoration: underline;">1</span>167</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> NHE    <span style="text-decoration: underline;">2</span>014</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> XAR    <span style="text-decoration: underline;">1</span>422</span></span></code></pre></div>
-<p>There are 5781 predictions of 5 species at 4 sites, from 354
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ARA    <span style="text-decoration: underline;">1</span>753</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> BAI    <span style="text-decoration: underline;">1</span>427</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> NHE    <span style="text-decoration: underline;">2</span>507</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> XAR    <span style="text-decoration: underline;">1</span>866</span></span></code></pre></div>
+<p>There are 7553 predictions of 8 species at 4 sites, from 354
 recordings of 300 s. Recording effort differs among sites:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">recs</span>, <span class="va">site</span>, name <span class="op">=</span> <span class="st">"recordings"</span><span class="op">)</span></span>
@@ -164,7 +165,7 @@ with confidence
 <code class="sourceCode R"><span><span class="va">threshold</span> <span class="op">&lt;-</span> <span class="fl">0.5</span></span>
 <span><span class="va">above</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">pred</span>, <span class="va">confidence</span> <span class="op">&gt;=</span> <span class="va">threshold</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">above</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 3263</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 4738</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="top-the-highest-scores">
@@ -177,8 +178,8 @@ Predictions below <code>min_confidence</code> are discarded first.</p>
 <code class="sourceCode R"><span><span class="va">top</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">pred</span>, sampling_mode <span class="op">=</span> <span class="st">"top"</span>, n_top <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>                    min_confidence <span class="op">=</span> <span class="va">threshold</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Sampling mode: top (occasion = file).</span></span>
-<span><span class="co">#&gt; 2518 predictions dropped by the filter confidence &lt; 0.5.</span></span>
-<span><span class="co">#&gt; 1253 clips selected (top 1 per site x species x night x hour) of 5 species.</span></span></code></pre></div>
+<span><span class="co">#&gt; 2815 predictions dropped by the filter confidence &lt; 0.5.</span></span>
+<span><span class="co">#&gt; 1876 clips selected (top 1 per site x species x night x hour) of 8 species.</span></span></code></pre></div>
 <p>This design is appropriate for two purposes. First, retraining the
 classifier, where confirmed high-score examples of each species are the
 most useful additions to the training set. Second, the
@@ -227,12 +228,12 @@ occasions scored as detections in the model.</p>
 <span>                        occasion_unit <span class="op">=</span> <span class="st">"file"</span>, threshold <span class="op">=</span> <span class="va">threshold</span>,</span>
 <span>                        n_top <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Sampling mode: random_detections (occasion = file).</span></span>
-<span><span class="co">#&gt; 1253 occasions drawn (1 per site x species x night x hour) among 1253 with a prediction &gt;= 0.5.</span></span>
-<span><span class="co">#&gt; 3263 clips (every prediction &gt;= 0.5 of the 1253 occasions drawn).</span></span>
+<span><span class="co">#&gt; 1876 occasions drawn (1 per site x species x night x hour) among 1876 with a prediction &gt;= 0.5.</span></span>
+<span><span class="co">#&gt; 4738 clips (every prediction &gt;= 0.5 of the 1876 occasions drawn).</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">rd_file</span><span class="op">$</span><span class="va">inclusion_prob</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    1 </span></span>
-<span><span class="co">#&gt; 3263</span></span>
+<span><span class="co">#&gt; 4738</span></span>
 <span></span>
 <span><span class="va">files_per_stratum</span> <span class="op">&lt;-</span> <span class="va">recs</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>stamp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">".*_(\\d{8})_(\\d{2}).*"</span>, <span class="st">"\\1_\\2"</span>, <span class="va">source_audio</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -253,8 +254,8 @@ five candidate minutes per recording, and one is drawn:</p>
 <span>                   occasion_unit <span class="op">=</span> <span class="st">"minute"</span>, threshold <span class="op">=</span> <span class="va">threshold</span>,</span>
 <span>                   n_top <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Sampling mode: random_detections (occasion = minute).</span></span>
-<span><span class="co">#&gt; 1253 occasions drawn (1 per site x species x night x hour) among 2586 with a prediction &gt;= 0.5.</span></span>
-<span><span class="co">#&gt; 1555 clips (every prediction &gt;= 0.5 of the 1253 occasions drawn).</span></span></code></pre></div>
+<span><span class="co">#&gt; 1876 occasions drawn (1 per site x species x night x hour) among 3824 with a prediction &gt;= 0.5.</span></span>
+<span><span class="co">#&gt; 2288 clips (every prediction &gt;= 0.5 of the 1876 occasions drawn).</span></span></code></pre></div>
 <p><code>occasion_id</code> identifies the occasion,
 <code>n_detections_occasion</code> counts the predictions
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≥</mo><annotation encoding="application/x-tex">\geq</annotation></semantics></math><code>threshold</code> of the species in it, and
@@ -268,20 +269,20 @@ drawn:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 7</span></span></span>
 <span><span class="co">#&gt;   site  species_code          occasion_id  rank confidence n_detections_occasion</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.505                     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.691                     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> ARA   Boana raniceps_boa-r… ARA01_2021…     2      0.597                     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.697                     2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.504                     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.586                     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.924                     2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> ARA   Boana raniceps_boa-r… ARA01_2021…     2      0.796                     2</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: inclusion_prob &lt;dbl&gt;</span></span></span>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">rd</span>, <span class="va">inclusion_prob</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 2</span></span></span>
 <span><span class="co">#&gt;   inclusion_prob     n</span></span>
 <span><span class="co">#&gt;            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          0.2      21</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>          0.25    131</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>          0.333   353</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>          0.5     530</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>          1       520</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          0.2      36</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>          0.25    176</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>          0.333   502</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>          0.5     764</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>          1       810</span></span></code></pre></div>
 <p><code>inclusion_prob</code> is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">min</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>n</mi><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">p</mi></mrow></msub><mo>,</mo><mi>N</mi><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">\min(n_\mathrm{top}, N) / N</annotation></semantics></math>,
 where
@@ -324,7 +325,7 @@ the list instead:</p>
 <span>                   species <span class="op">=</span> <span class="st">"boa-ran"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Sampling mode: random_recordings (occasion = file).</span></span>
 <span><span class="co">#&gt; 354 recordings listed at 4 site(s).</span></span>
-<span><span class="co">#&gt; Filter of 1 species: 5781 -&gt; 1264 predictions.</span></span>
+<span><span class="co">#&gt; Filter of 1 species: 7553 -&gt; 874 predictions.</span></span>
 <span><span class="co">#&gt; 35 file(s) drawn among 354 recorded, to annotate 1 species.</span></span>
 <span><span class="va">rr</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">site</span>, <span class="va">species_code</span>, <span class="va">clip_file</span>, <span class="va">clip_start</span>, <span class="va">clip_end</span>,</span>
@@ -347,7 +348,11 @@ the list instead:</p>
 <p>The number drawn per site follows its recording effort: with
 <code>recording_fraction = 0.1</code>, the site with the fewest
 recordings (XAR, 84) contributes 8 recordings, and
-<code>inclusion_prob</code> is the fraction drawn at that site.</p>
+<code>inclusion_prob</code> is the fraction drawn at that site. The
+default <code>recording_fraction = 0.01</code> suits large projects:
+with fewer than 150 recordings per site it draws a single recording per
+site, so small projects should raise it or set
+<code>n_recordings_per_site</code>.</p>
 <p>Each clip is a whole recording (or minute); <code>confidence</code>
 is <code>NA</code> and <code>rank</code> is <code>NA</code>.
 <code>recording_duration</code> sets <code>clip_end</code>; without it,
@@ -365,7 +370,7 @@ multiplies the listening effort by the number of species:</p>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>recordings <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/n_distinct.html" class="external-link">n_distinct</a></span><span class="op">(</span><span class="va">rr_all</span><span class="op">$</span><span class="va">occasion_id</span><span class="op">)</span>, clips <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">rr_all</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; recordings      clips </span></span>
-<span><span class="co">#&gt;         35        175</span></span></code></pre></div>
+<span><span class="co">#&gt;         35        280</span></span></code></pre></div>
 <p>Restrict <code>species</code> to the species that will actually be
 annotated. Recordings of <code>"random_recordings"</code> are not
 confirmations of detections and are handled differently downstream (see
@@ -397,12 +402,12 @@ strata with many candidates have a lower probability of being drawn.</p>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">score_quantiles</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                     10%   25%   50%   75%   90%</span></span>
-<span><span class="co">#&gt; all &gt;= threshold  0.534 0.591 0.688 0.798 0.879</span></span>
-<span><span class="co">#&gt; random_detections 0.533 0.592 0.685 0.800 0.882</span></span>
-<span><span class="co">#&gt; top               0.578 0.671 0.783 0.867 0.925</span></span></code></pre></div>
+<span><span class="co">#&gt; all &gt;= threshold  0.547 0.616 0.725 0.836 0.912</span></span>
+<span><span class="co">#&gt; random_detections 0.545 0.617 0.725 0.831 0.907</span></span>
+<span><span class="co">#&gt; top               0.592 0.687 0.809 0.897 0.948</span></span></code></pre></div>
 <p>The weighted quantiles of <code>"random_detections"</code> track
-those of all detections (median 0.69 against 0.69), whereas
-<code>"top"</code> is shifted upwards (median 0.78). To the extent that
+those of all detections (median 0.72 against 0.72), whereas
+<code>"top"</code> is shifted upwards (median 0.81). To the extent that
 false positives receive lower scores than true detections, as they do on
 average in the simulated data (although the two distributions overlap),
 a false-positive rate estimated from the <code>"top"</code> clips is
@@ -457,16 +462,16 @@ with a warning.</li>
 <span><span class="va">top_cap</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">pred</span>, sampling_mode <span class="op">=</span> <span class="st">"top"</span>, n_top <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>                        min_confidence <span class="op">=</span> <span class="va">threshold</span>, target_total <span class="op">=</span> <span class="va">target</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Sampling mode: top (occasion = file).</span></span>
-<span><span class="co">#&gt; 2518 predictions dropped by the filter confidence &lt; 0.5.</span></span>
-<span><span class="co">#&gt; 1253 clips selected (top 1 per site x species x night x hour) of 5 species.</span></span>
-<span><span class="co">#&gt; Target of 40 clips per site (balanced by species and hour): 1253 -&gt; 160 clips.</span></span>
+<span><span class="co">#&gt; 2815 predictions dropped by the filter confidence &lt; 0.5.</span></span>
+<span><span class="co">#&gt; 1876 clips selected (top 1 per site x species x night x hour) of 8 species.</span></span>
+<span><span class="co">#&gt; Target of 40 clips per site (balanced by species and hour): 1876 -&gt; 160 clips.</span></span>
 <span><span class="va">rd_cap</span>  <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_clips.html">select_clips</a></span><span class="op">(</span><span class="va">pred</span>, sampling_mode <span class="op">=</span> <span class="st">"random_detections"</span>,</span>
 <span>                        occasion_unit <span class="op">=</span> <span class="st">"minute"</span>, threshold <span class="op">=</span> <span class="va">threshold</span>,</span>
 <span>                        n_top <span class="op">=</span> <span class="fl">1</span>, target_total <span class="op">=</span> <span class="va">target</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Sampling mode: random_detections (occasion = minute).</span></span>
-<span><span class="co">#&gt; 1253 occasions drawn (1 per site x species x night x hour) among 2586 with a prediction &gt;= 0.5.</span></span>
-<span><span class="co">#&gt; Target of 40 occasions per site (balanced by species and hour): 1253 -&gt; 160 occasions.</span></span>
-<span><span class="co">#&gt; 189 clips (every prediction &gt;= 0.5 of the 160 occasions drawn).</span></span></code></pre></div>
+<span><span class="co">#&gt; 1876 occasions drawn (1 per site x species x night x hour) among 3824 with a prediction &gt;= 0.5.</span></span>
+<span><span class="co">#&gt; Target of 40 occasions per site (balanced by species and hour): 1876 -&gt; 160 occasions.</span></span>
+<span><span class="co">#&gt; 191 clips (every prediction &gt;= 0.5 of the 160 occasions drawn).</span></span></code></pre></div>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rd_cap</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="va">site</span>, <span class="va">species_code</span>, <span class="va">occasion_id</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -476,12 +481,12 @@ with a warning.</li>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 4</span></span></span>
 <span><span class="co">#&gt;   site  occasions clips top_clips</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ARA          40    44        40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> BAI          40    49        40</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ARA          40    49        40</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> BAI          40    47        40</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> NHE          40    50        40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> XAR          40    46        40</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> XAR          40    45        40</span></span></code></pre></div>
 <p>The same target of 40 units per site yields 160 clips in
-<code>"top"</code> but 189 clips in <code>"random_detections"</code> (4
+<code>"top"</code> but 191 clips in <code>"random_detections"</code> (4
 sites), because every detection of a drawn occasion must be reviewed.
 Plan the target in occasions and expect a larger number of clips.</p>
 <p>The second-stage draw enters <code>inclusion_prob</code>, which is
@@ -490,13 +495,12 @@ occasions kept in the stratum (site × species, and hour when
 <code>balance_by_hour = TRUE</code>):</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">rd_cap</span><span class="op">$</span><span class="va">inclusion_prob</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span><span class="co">#&gt; 0.01724 0.03846 0.06818 0.11474 0.14286 0.60000</span></span></code></pre></div>
-<p>Because <code>target_total</code> allocates the same number of
-occasions to each species, rare species are sampled with a higher
-probability than common ones. The unweighted pool of clips therefore
-over-represents rare species, and estimates pooled across species must
-use the design weights.</p>
+<span><span class="co">#&gt;     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. </span></span>
+<span><span class="co">#&gt; 0.009615 0.029040 0.047619 0.080117 0.076923 1.000000</span></span></code></pre></div>
+<p>Because the target is split evenly among species, rare species have
+higher inclusion probabilities than common ones: the unweighted pool of
+clips over-represents them, and estimates pooled across species must
+weight the clips by <code>1 / inclusion_prob</code>.</p>
 <p>In <code>"random_recordings"</code> the cap is not applied:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
@@ -507,7 +511,7 @@ use the design weights.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Sampling mode: random_recordings (occasion = file).</span></span>
 <span><span class="co">#&gt; 354 recordings listed at 4 site(s).</span></span>
-<span><span class="co">#&gt; 4 file(s) drawn among 354 recorded, to annotate 5 species.</span></span>
+<span><span class="co">#&gt; 4 file(s) drawn among 354 recorded, to annotate 8 species.</span></span>
 <span><span class="co">#&gt; [1] "target_total/max_per_species are ignored in \"random_recordings\" (recording_fraction or n_recordings_per_site apply)."</span></span></code></pre></div>
 </div>
 <div class="section level2">

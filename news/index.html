@@ -26,7 +26,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibrating confidence scores</a></li>
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Integration and case study</h6></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
+    <li><a class="dropdown-item" href="../articles/retraining.html">Retraining the classifier with validated clips</a></li>
     <li><a class="dropdown-item" href="../articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
     <li><a class="dropdown-item" href="../articles/frognet-workflow.html">The FrogNet workflow</a></li>
   </ul></li>
@@ -47,11 +48,12 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sheepdog-development-version">sheepdog (development version)<a class="anchor" aria-label="anchor" href="#sheepdog-development-version"></a></h2>
-<ul><li>New articles, run on a simulated example data set: <code><a href="../articles/sheepdog.html">vignette("sheepdog")</a></code> (Get started), <code><a href="../articles/sampling-designs.html">vignette("sampling-designs")</a></code>, <code><a href="../articles/validation-effort.html">vignette("validation-effort")</a></code>, <code><a href="../articles/calibration.html">vignette("calibration")</a></code> and <code><a href="../articles/community-matrices.html">vignette("community-matrices")</a></code>.</li>
-<li>The example data set (4 sites x 5 species x 6 months; selection tables, the list of recordings, reviewed clips and a calibrated nightly history) ships in <code>system.file("extdata", "example", package = "sheepdog")</code>; <code>data-raw/make_example_data.R</code> generates it.</li>
+<ul><li>New articles, run on a simulated example data set: <code><a href="../articles/sheepdog.html">vignette("sheepdog")</a></code> (Get started), <code><a href="../articles/sampling-designs.html">vignette("sampling-designs")</a></code>, <code><a href="../articles/validation-effort.html">vignette("validation-effort")</a></code>, <code><a href="../articles/calibration.html">vignette("calibration")</a></code>, <code><a href="../articles/community-matrices.html">vignette("community-matrices")</a></code> and <code><a href="../articles/retraining.html">vignette("retraining")</a></code> (training folders for BirdNET-Analyzer from the reviewed clips).</li>
+<li>The example data set (4 sites x 8 species x 6 months; selection tables, the list of recordings, reviewed clips and a calibrated nightly history) ships in <code>system.file("extdata", "example", package = "sheepdog")</code>; <code>data-raw/make_example_data.R</code> generates it.</li>
 <li>
 <code><a href="../reference/plot_precision.html">plot_precision()</a></code> draws one line per site when the table has several sites; before, the lines of different sites were joined in the same panel (also in the <code>precision_by_bin.png</code> of <code><a href="../reference/post_validation.html">post_validation()</a></code>).</li>
-<li>‘vegan’ is a suggested package, used only in <code><a href="../articles/community-matrices.html">vignette("community-matrices")</a></code>.</li>
+<li>
+<code><a href="../articles/community-matrices.html">vignette("community-matrices")</a></code> uses a PCoA on square-root Bray-Curtis (<code><a href="https://rdrr.io/pkg/ape/man/pcoa.html" class="external-link">ape::pcoa()</a></code>) and a binomial GLLVM (‘gllvm’) for a model-based ordination and a test of the season effect; ‘ape’, ‘gllvm’ and ‘vegan’ are suggested packages, used only there.</li>
 <li>The vignette <code>crywolf-contract</code> is now <code>crywolf-integration</code> (“Integration with crywolf”).</li>
 </ul></div>
     <div class="section level2">

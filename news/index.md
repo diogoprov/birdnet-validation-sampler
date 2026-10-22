@@ -7,10 +7,12 @@
   (Get started),
   [`vignette("sampling-designs")`](https://provetelab.org/sheepdog/articles/sampling-designs.md),
   [`vignette("validation-effort")`](https://provetelab.org/sheepdog/articles/validation-effort.md),
-  [`vignette("calibration")`](https://provetelab.org/sheepdog/articles/calibration.md)
+  [`vignette("calibration")`](https://provetelab.org/sheepdog/articles/calibration.md),
+  [`vignette("community-matrices")`](https://provetelab.org/sheepdog/articles/community-matrices.md)
   and
-  [`vignette("community-matrices")`](https://provetelab.org/sheepdog/articles/community-matrices.md).
-- The example data set (4 sites x 5 species x 6 months; selection
+  [`vignette("retraining")`](https://provetelab.org/sheepdog/articles/retraining.md)
+  (training folders for BirdNET-Analyzer from the reviewed clips).
+- The example data set (4 sites x 8 species x 6 months; selection
   tables, the list of recordings, reviewed clips and a calibrated
   nightly history) ships in
   `system.file("extdata", "example", package = "sheepdog")`;
@@ -20,8 +22,12 @@
   lines of different sites were joined in the same panel (also in the
   `precision_by_bin.png` of
   [`post_validation()`](https://provetelab.org/sheepdog/reference/post_validation.md)).
-- ‘vegan’ is a suggested package, used only in
-  [`vignette("community-matrices")`](https://provetelab.org/sheepdog/articles/community-matrices.md).
+- [`vignette("community-matrices")`](https://provetelab.org/sheepdog/articles/community-matrices.md)
+  uses a PCoA on square-root Bray-Curtis
+  ([`ape::pcoa()`](https://rdrr.io/pkg/ape/man/pcoa.html)) and a
+  binomial GLLVM (‘gllvm’) for a model-based ordination and a test of
+  the season effect; ‘ape’, ‘gllvm’ and ‘vegan’ are suggested packages,
+  used only there.
 - The vignette `crywolf-contract` is now `crywolf-integration`
   (“Integration with crywolf”).
 

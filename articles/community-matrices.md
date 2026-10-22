@@ -2,8 +2,10 @@
 
 Stage 3 of sheepdog turns the calibrated nightly detection history into
 site x month community matrices for multivariate analyses. This vignette
-runs that stage on the example data shipped with the package and closes
-with an illustrative ordination.
+runs that stage on the example data shipped with the package, and then
+uses the matrices in a distance-based ordination (PCoA) and in a
+model-based ordination and test with generalised linear latent variable
+models (GLLVM).
 
 ``` r
 
@@ -14,12 +16,13 @@ library(sheepdog)
 
 The example history is the output of
 [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
-on simulated BirdNET predictions for four sites, five species and six
-months (October 2021 to March 2022), with five recorded nights per site
-x month, except for one recorder failure. In the simulation, occupancy
-is seasonal (higher in the rainy months, November to February) and
-differs among sites and species; the false-positive scores overlap those
-of true detections, at rates that vary among species and sites
+on simulated BirdNET predictions for four sites and six months (October
+2021 to March 2022), with five recorded nights per site x month, except
+for one recorder failure. In the simulation, occupancy depends on
+species-specific seasonality (most species prefer the rainy months,
+November to February; one prefers the dry months) and on species x site
+preferences; the false-positive scores overlap those of true detections,
+at rates that vary among species and sites
 (`data-raw/make_example_data.R`).
 
 ``` r
@@ -29,27 +32,27 @@ history_file <- file.path(ex, "nightly_detection_history.csv")
 history <- readr::read_csv(history_file, show_col_types = FALSE,
                            col_types = readr::cols(night = "c"))
 history
-#> # A tibble: 579 × 10
+#> # A tibble: 872 × 10
 #>    site  species night    n_detections n_reliable p_tp_max detection_k1
 #>    <chr> <chr>   <chr>           <dbl>      <dbl>    <dbl>        <dbl>
-#>  1 ARA   boa_ran 20211001            1          0   0.436             0
-#>  2 ARA   boa_ran 20211016            1          0   0.425             0
-#>  3 ARA   boa_ran 20211021            1          0   0.0658            0
-#>  4 ARA   boa_ran 20211101           11          5   0.995             1
-#>  5 ARA   boa_ran 20211106           11          5   0.996             1
-#>  6 ARA   boa_ran 20211111           13          5   0.998             1
-#>  7 ARA   boa_ran 20211116           17         12   1.000             1
-#>  8 ARA   boa_ran 20211121            6          3   0.999             1
-#>  9 ARA   boa_ran 20211201            9          3   0.997             1
-#> 10 ARA   boa_ran 20211206            8          3   1.000             1
-#> # ℹ 569 more rows
+#>  1 ARA   boa_ran 20211001           10          4    0.999            1
+#>  2 ARA   boa_ran 20211006           13         10    1.000            1
+#>  3 ARA   boa_ran 20211011           16         12    1.000            1
+#>  4 ARA   boa_ran 20211016           11          5    1.000            1
+#>  5 ARA   boa_ran 20211021            8          3    1.000            1
+#>  6 ARA   boa_ran 20211101           13          9    1.000            1
+#>  7 ARA   boa_ran 20211106            9          7    1.000            1
+#>  8 ARA   boa_ran 20211111           11          5    0.997            1
+#>  9 ARA   boa_ran 20211116           12          8    1.000            1
+#> 10 ARA   boa_ran 20211121            7          3    0.999            1
+#> # ℹ 862 more rows
 #> # ℹ 3 more variables: detection_k2 <dbl>, detection_k3 <dbl>, detection <dbl>
 ```
 
-The history covers 4 sites (ARA, BAI, NHE, XAR) and 5 species (boa_ran,
-den_nan, lep_fus, pse_pla, sci_nas). Each row is a site x species x
-night. `n_reliable` counts the detections whose calibrated probability
-of being a true positive reached `p_min` in
+The history covers 4 sites (ARA, BAI, NHE, XAR) and 8 species (boa_ran,
+den_nan, ela_bic, lep_fus, lep_pod, phy_cuv, pse_pla, sci_nas). Each row
+is a site x species x night. `n_reliable` counts the detections whose
+calibrated probability of being a true positive reached `p_min` in
 [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md);
 `detection_k1` to `detection_k3` flag nights with at least one, two or
 three such detections.
@@ -98,38 +101,36 @@ by_site <- summarise_history(history)
 by_site |>
   dplyr::select(site, species, nights_k1) |>
   tidyr::pivot_wider(names_from = site, values_from = nights_k1)
-#> # A tibble: 5 × 5
+#> # A tibble: 8 × 5
 #>   species   ARA   BAI   NHE   XAR
 #>   <chr>   <dbl> <dbl> <dbl> <dbl>
-#> 1 boa_ran    25    30    30    23
-#> 2 den_nan    30     8    15     8
-#> 3 lep_fus     6     0     0     2
-#> 4 pse_pla     0     0     0     0
-#> 5 sci_nas     0     0     0     0
+#> 1 boa_ran    30    15    10    13
+#> 2 den_nan    22     3     5     0
+#> 3 ela_bic    20    20    20    25
+#> 4 lep_fus     0     0     2     1
+#> 5 lep_pod    20    10    20    28
+#> 6 phy_cuv    21    20    25    15
+#> 7 pse_pla     0     0     0     0
+#> 8 sci_nas    11     0     0     2
 ```
 
-Species with no reliable detection anywhere (pse_pla, sci_nas) are cases
-in which calibrated probabilities rarely reach `p_min`, because their
-false-positive scores overlap those of true detections; in the
-simulation every species has a non-zero probability of occupancy at
-every site. Species reliably detected at some sites only (lep_fus) are
-the case the core rule targets: their absence from a site may reflect
-the classifier rather than the community. Here the core species are
-taken as those with at least one night with a reliable detection at
-every site (boa_ran, den_nan). This is a convenient proxy for the
-example; with real data the decision rests on the calibration
-diagnostics, and a species that is truly absent from some sites should
-not be excluded on this criterion alone.
+Some species have no reliable detection anywhere (pse_pla): their
+calibrated probabilities rarely reach `p_min`, because their
+false-positive scores overlap those of true detections. Others are
+reliably detected at some sites only (den_nan, lep_fus, sci_nas); they
+are the case the core rule targets, because their absence from a site
+may reflect the classifier rather than the community. Here the core
+species are taken as those with at least one night with a reliable
+detection at every site. This is a convenient proxy for the example;
+with real data the decision rests on the calibration diagnostics, and a
+species that is truly absent from some sites should not be excluded on
+this criterion alone.
 
 ``` r
 
-core <- by_site |>
-  dplyr::summarise(all_sites = all(nights_k1 > 0), .by = species) |>
-  dplyr::filter(all_sites) |>
-  dplyr::pull(species) |>
-  sort()
+core <- n_sites_ok$species[n_sites_ok$n == length(sites)] |> sort()
 core
-#> [1] "boa_ran" "den_nan"
+#> [1] "boa_ran" "ela_bic" "lep_pod" "phy_cuv"
 ```
 
 ## Building the matrices
@@ -182,34 +183,34 @@ frequency matrix divides it by the recorded nights:
 ``` r
 
 mats$counts
-#> # A tibble: 23 × 5
-#>    site  month   n_nights_recorded boa_ran den_nan
-#>    <chr> <chr>               <int>   <int>   <int>
-#>  1 ARA   2021-10                 5       0       2
-#>  2 ARA   2021-11                 5       5       4
-#>  3 ARA   2021-12                 5       5       3
-#>  4 ARA   2022-01                 5       5       4
-#>  5 ARA   2022-02                 5       5       5
-#>  6 ARA   2022-03                 5       5       5
-#>  7 BAI   2021-10                 5       5       0
-#>  8 BAI   2021-11                 5       5       0
-#>  9 BAI   2021-12                 5       5       1
-#> 10 BAI   2022-01                 5       5       0
+#> # A tibble: 23 × 7
+#>    site  month   n_nights_recorded boa_ran ela_bic lep_pod phy_cuv
+#>    <chr> <chr>               <int>   <int>   <int>   <int>   <int>
+#>  1 ARA   2021-10                 5       5       0       5       0
+#>  2 ARA   2021-11                 5       5       5       0       5
+#>  3 ARA   2021-12                 5       5       5       0       5
+#>  4 ARA   2022-01                 5       5       5       4       5
+#>  5 ARA   2022-02                 5       5       5       5       5
+#>  6 ARA   2022-03                 5       5       0       4       0
+#>  7 BAI   2021-10                 5       0       0       0       0
+#>  8 BAI   2021-11                 5       0       5       5       5
+#>  9 BAI   2021-12                 5       4       5       0       5
+#> 10 BAI   2022-01                 5       5       5       0       5
 #> # ℹ 13 more rows
 mats$frequency
-#> # A tibble: 23 × 5
-#>    site  month   n_nights_recorded boa_ran den_nan
-#>    <chr> <chr>               <int>   <dbl>   <dbl>
-#>  1 ARA   2021-10                 5       0     0.4
-#>  2 ARA   2021-11                 5       1     0.8
-#>  3 ARA   2021-12                 5       1     0.6
-#>  4 ARA   2022-01                 5       1     0.8
-#>  5 ARA   2022-02                 5       1     1  
-#>  6 ARA   2022-03                 5       1     1  
-#>  7 BAI   2021-10                 5       1     0  
-#>  8 BAI   2021-11                 5       1     0  
-#>  9 BAI   2021-12                 5       1     0.2
-#> 10 BAI   2022-01                 5       1     0  
+#> # A tibble: 23 × 7
+#>    site  month   n_nights_recorded boa_ran ela_bic lep_pod phy_cuv
+#>    <chr> <chr>               <int>   <dbl>   <dbl>   <dbl>   <dbl>
+#>  1 ARA   2021-10                 5     1         0     1         0
+#>  2 ARA   2021-11                 5     1         1     0         1
+#>  3 ARA   2021-12                 5     1         1     0         1
+#>  4 ARA   2022-01                 5     1         1     0.8       1
+#>  5 ARA   2022-02                 5     1         1     1         1
+#>  6 ARA   2022-03                 5     1         0     0.8       0
+#>  7 BAI   2021-10                 5     0         0     0         0
+#>  8 BAI   2021-11                 5     0         1     1         1
+#>  9 BAI   2021-12                 5     0.8       1     0         1
+#> 10 BAI   2022-01                 5     1         1     0         1
 #> # ℹ 13 more rows
 ```
 
@@ -228,17 +229,17 @@ sens <- lapply(1:3, function(k) {
 }) |>
   dplyr::bind_rows()
 sens
-#> # A tibble: 3 × 3
-#>   k_min boa_ran den_nan
-#>   <int>   <dbl>   <dbl>
-#> 1     1   0.939   0.530
-#> 2     2   0.870   0.287
-#> 3     3   0.765   0.130
+#> # A tibble: 3 × 5
+#>   k_min boa_ran ela_bic lep_pod phy_cuv
+#>   <int>   <dbl>   <dbl>   <dbl>   <dbl>
+#> 1     1   0.565   0.739   0.652   0.704
+#> 2     2   0.548   0.739   0.617   0.696
+#> 3     3   0.478   0.713   0.591   0.670
 ```
 
-From `k_min = 1` to `3`, the mean frequency of boa_ran falls by 19%,
-whereas that of den_nan falls by 75%. The rule therefore acts unevenly
-among species, and its effect on the ordination should be reported.
+From `k_min = 1` to `3`, the mean frequency of ela_bic falls by 4%,
+whereas that of boa_ran falls by 15%. The rule therefore acts unevenly
+among species, and its effect on later analyses should be reported.
 `k_min = 2` is the default.
 
 ## Writing the matrices to disk
@@ -254,119 +255,306 @@ files:
 out <- file.path(tempdir(), "community_matrices")
 mats <- build_community_matrices(history_file, out, core_species = core,
                                  k_min = 2, min_nights_month = 5)
-#> Matrix: 23 rows (site x month) x 2 species | rule k >= 2
+#> Matrix: 23 rows (site x month) x 4 species | rule k >= 2
 #> Effort: 23 site x month cells included; 1 dropped for having < 5 recorded nights (see effort_site_month.csv)
-#> Files in: /tmp/RtmpPh14tV/community_matrices
+#> Files in: /tmp/RtmpGWDFYu/community_matrices
 list.files(out)
 #> [1] "count_matrix_site_month_k2.csv"     "effort_site_month.csv"             
 #> [3] "frequency_matrix_site_month_k2.csv"
 ```
 
-## An illustrative ordination
+## Preparing the samples
 
-The example has only 4 sites, six months and 2 core species, so the
-ordination below illustrates the workflow; it does not support
-inference. With so few species, the ordination adds little to a plot of
-the raw frequencies. It uses the **vegan** package, which is suggested
-but not required by sheepdog.
-
-The dissimilarity is Bray–Curtis on the frequency matrix, which retains
-the quantitative information of the frequencies; Jaccard on incidence
-would discard it. \[CITAR: properties of Bray–Curtis and Jaccard for
-frequency data in community ordination\] Samples in which no core
-species was detected have undefined Bray–Curtis dissimilarity and must
-be removed first.
+Both analyses below use the same samples. Samples in which no core
+species was detected are removed first: their Bray–Curtis dissimilarity
+is undefined, and they carry no information on species co-occurrence.
+Season is coded as rainy (November to February) or dry.
 
 ``` r
 
-freq <- mats$frequency |>
+samples <- mats$counts |>
   dplyr::mutate(
-    season = ifelse(substr(month, 6, 7) %in% c("11", "12", "01", "02"),
-                    "rainy", "dry"),
-    label  = paste(site, month)
+    season = factor(ifelse(substr(month, 6, 7) %in% c("11", "12", "01", "02"),
+                           "rainy", "dry"), levels = c("dry", "rainy")),
+    site = factor(site)
   )
-Y <- as.matrix(freq[, core])
-rownames(Y) <- freq$label
-empty <- rowSums(Y) == 0
-freq$label[empty] # samples removed
-freq_ord <- freq[!empty, ]
-Y <- Y[!empty, , drop = FALSE]
-d <- vegan::vegdist(Y, method = "bray")
+empty <- rowSums(samples[, core]) == 0
+paste(samples$site, samples$month)[empty] # samples removed
+#> [1] "BAI 2021-10"
+samples <- samples[!empty, ]
+freq <- as.matrix(samples[, core]) / samples$n_nights_recorded
+rownames(freq) <- paste(samples$site, samples$month)
 ```
 
-A principal coordinates analysis (PCoA) on the dissimilarity matrix:
+1 sample(s) removed; 22 samples x 4 species remain. The example has only
+4 sites and six months, so the analyses below illustrate the workflow;
+they do not support general conclusions.
+
+## Distance-based ordination: PCoA on Bray–Curtis
+
+The choice of resemblance coefficient determines what an ordination
+represents; Legendre & Legendre (2012) review the properties of the
+coefficients. Here we use Bray–Curtis on the frequency matrix, which
+retains the quantitative information of the frequencies (Jaccard on
+incidence would discard it). Bray–Curtis is not Euclidean, so a
+principal coordinates analysis (PCoA) of it produces negative
+eigenvalues, which have no geometric representation. Its square root is
+Euclidean (Legendre & Legendre 2012), and we use it below. The PCoA is
+computed with [`ape::pcoa()`](https://rdrr.io/pkg/ape/man/pcoa.html).
 
 ``` r
 
-pcoa <- vegan::wcmdscale(d, eig = TRUE)
-expl <- pcoa$eig[pcoa$eig > 0] / sum(pcoa$eig[pcoa$eig > 0])
-round(100 * expl[1:2], 1)
-sum(pcoa$eig < 0) # negative eigenvalues
-scores_pcoa <- data.frame(freq_ord[, c("site", "month", "season")],
-                          PCo1 = pcoa$points[, 1], PCo2 = pcoa$points[, 2])
+bc      <- vegan::vegdist(freq, method = "bray")
+pcoa_bc <- ape::pcoa(bc)
+pcoa_sq <- ape::pcoa(sqrt(bc))
+tol <- 1e-8
+c(bray_curtis      = sum(pcoa_bc$values$Eigenvalues < -tol),
+  sqrt_bray_curtis = sum(pcoa_sq$values$Eigenvalues < -tol))
+#>      bray_curtis sqrt_bray_curtis 
+#>                6                0
 ```
 
-Bray–Curtis is not Euclidean, so some eigenvalues are negative;
-`wcmdscale()` returns only the axes with positive eigenvalues, and the
-percentages above are relative to their sum.
+Untransformed Bray–Curtis yields 6 negative eigenvalues; its square root
+yields none. An alternative is to keep the untransformed coefficient and
+correct the negative eigenvalues, with the Lingoes or Cailliez
+corrections offered by
+[`ape::pcoa()`](https://rdrr.io/pkg/ape/man/pcoa.html)
+(`correction = "lingoes"` or `correction = "cailliez"`); both are
+described by Legendre & Legendre (2012).
 
 ``` r
 
+head(pcoa_sq$values[, c("Eigenvalues", "Relative_eig")], 3)
+#>   Eigenvalues Relative_eig
+#> 1   2.0806090    0.5464268
+#> 2   0.8939625    0.2347799
+#> 3   0.4381395    0.1150678
+scores_pcoa <- data.frame(samples[, c("site", "month", "season")],
+                          PCo1 = pcoa_sq$vectors[, 1],
+                          PCo2 = pcoa_sq$vectors[, 2])
+```
+
+``` r
+
+# amostras com frequencias identicas cairiam no mesmo ponto: um pequeno
+# deslocamento aleatorio deixa todas visiveis
+jit <- 0.02 * diff(range(scores_pcoa$PCo1))
 ggplot2::ggplot(scores_pcoa,
                 ggplot2::aes(PCo1, PCo2, colour = site, shape = season)) +
-  ggplot2::geom_point(size = 3, alpha = 0.8) +
+  ggplot2::geom_point(size = 3, alpha = 0.7,
+                      position = ggplot2::position_jitter(jit, jit, seed = 1)) +
   ggplot2::labs(
-    x = sprintf("PCo1 (%.1f%%)", 100 * expl[1]),
-    y = sprintf("PCo2 (%.1f%%)", 100 * expl[2]),
+    x = sprintf("PCo1 (%.1f%%)", rel[1]),
+    y = sprintf("PCo2 (%.1f%%)", rel[2]),
     colour = "Site", shape = "Season"
   ) +
   ggplot2::theme_bw()
 ```
 
-Samples with identical frequencies share a single point. Non-metric
-multidimensional scaling (NMDS) on the same dissimilarity, with stress
-reported:
+![PCoA of the site x month samples on square-root Bray-Curtis, coloured
+by site, with shape by
+season.](community-matrices_files/figure-html/unnamed-chunk-20-1.png)
+
+Samples with identical frequencies would share a single point; the
+points are jittered slightly so that all of them are visible.
+
+## Model-based ordination: GLLVM
+
+The response in each cell is a count out of a known number of trials:
+nights with detection out of nights recorded. A distance-based
+ordination discards that structure; frequencies from cells with
+different effort are treated alike, and the mean–variance relationship
+of the counts is ignored, which can confound differences in location
+with differences in dispersion (Warton, Wright & Wang 2012). A binomial
+GLLVM models the counts directly: effort enters through the number of
+trials (`Ntrials`), the binomial variance handles the mean–variance
+relationship, and the latent variables give a model-based ordination of
+the samples (Warton et al. 2015; Niku et al. 2019). Jupke & Schäfer
+(2020) compare model- and distance-based multivariate methods.
 
 ``` r
 
-set.seed(2026)
-nmds <- vegan::metaMDS(d, k = 2, trymax = 50, trace = FALSE)
-nmds$stress
+Y  <- as.matrix(samples[, core])
+storage.mode(Y) <- "double"
+rownames(Y) <- rownames(freq)
+Nt <- matrix(samples$n_nights_recorded, nrow(Y), ncol(Y))
+```
+
+`Ntrials` is given as a matrix with the dimensions of the response,
+because effort varies among samples. With 4 species, the default
+starting values of `gllvm()` fail for two latent variables, so the model
+starts from zero (`starting.val = "zero"`).
+
+``` r
+
+fit_lv <- gllvm::gllvm(y = Y, family = "binomial", Ntrials = Nt,
+                       num.lv = 2, starting.val = "zero", seed = 2026)
+fit_lv
+#> Call: 
+#> gllvm::gllvm(y = Y, family = "binomial", num.lv = 2, Ntrials = Nt, 
+#>     seed = 2026, starting.val = "zero")
+#> family: 
+#> [1] "binomial"
+#> method: 
+#> [1] "VA"
+#> 
+#> log-likelihood:  -146.1153 
+#> Residual degrees of freedom:  77 
+#> AIC:  314.2305 
+#> AICc:  317.7042 
+#> BIC:  341.4812
 ```
 
 ``` r
 
-scores_nmds <- data.frame(freq_ord[, c("site", "season")],
-                          vegan::scores(nmds))
-ggplot2::ggplot(scores_nmds,
-                ggplot2::aes(NMDS1, NMDS2, colour = site, shape = season)) +
-  ggplot2::geom_point(size = 3, alpha = 0.8) +
+lv <- data.frame(samples[, c("site", "season")], gllvm::getLV(fit_lv))
+ld <- data.frame(species = core, gllvm::getLoadings(fit_lv))
+k  <- max(abs(lv[, c("LV1", "LV2")])) / max(abs(ld[, c("LV1", "LV2")]))
+jit <- 0.02 * diff(range(lv$LV1))
+ggplot2::ggplot(lv, ggplot2::aes(LV1, LV2)) +
+  ggplot2::geom_point(ggplot2::aes(colour = site, shape = season),
+                      size = 3, alpha = 0.7,
+                      position = ggplot2::position_jitter(jit, jit, seed = 1)) +
+  ggplot2::geom_text(data = ld,
+                     ggplot2::aes(LV1 * k, LV2 * k, label = species),
+                     colour = "grey30", size = 3.5) +
+  ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.15)) +
+  ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = 0.1)) +
   ggplot2::labs(colour = "Site", shape = "Season",
-                caption = sprintf("Stress = %.3f", nmds$stress)) +
+                caption = "Species loadings (labels) rescaled to the LV range; points jittered slightly") +
   ggplot2::theme_bw()
 ```
 
-The low stress is expected: 2 species define a low-dimensional
-configuration, and a two-dimensional NMDS reproduces it almost exactly.
+![Latent variables of the binomial GLLVM for the site x month samples,
+coloured by site, with shape by season; species loadings shown as
+labels.](community-matrices_files/figure-html/unnamed-chunk-23-1.png)
 
-### A note on inference
-
-A PERMANOVA (`vegan::adonis2()`) could test for differences between
-seasons, but the example does not support that test. There are only a
-few samples from 4 sites, and months within a site are not independent
-replicates: they share the site, its species pool and its recorder, and
-consecutive months are temporally autocorrelated. Restricting
-permutations to within sites (`strata = site`) respects the blocking by
-site but not the temporal dependence, and the cell dropped for low
-effort leaves the blocks unbalanced. The code is shown for completeness
-and its p-value should not be interpreted:
+The residual correlations among species, induced by the latent
+variables, summarise which species tend to be detected in the same
+samples:
 
 ``` r
 
-set.seed(2026)
-vegan::adonis2(d ~ season, data = freq_ord, strata = freq_ord$site,
-               permutations = 999)
+round(gllvm::getResidualCor(fit_lv), 2)
+#>         boa_ran ela_bic lep_pod phy_cuv
+#> boa_ran    1.00    0.56   -0.66    0.37
+#> ela_bic    0.56    1.00   -0.78    0.81
+#> lep_pod   -0.66   -0.78    1.00   -0.67
+#> phy_cuv    0.37    0.81   -0.67    1.00
 ```
 
-A design that supports inference would need more sites per treatment, or
-a model that accounts explicitly for repeated measures within sites.
+With 22 samples, 4 species and two latent variables, the loadings and
+residual correlations are weakly identified, and solutions can change
+with the starting values; they are shown here as an illustration.
+
+## Model-based inference: species responses to season
+
+A GLLVM can also test hypotheses, by adding covariates with
+species-specific coefficients. The question here is whether species
+respond to season. The model includes:
+
+- species-specific season effects (`formula = ~ season`);
+- effort, through `Ntrials`;
+- a random intercept for site, shared by all species
+  (`row.eff = ~(1 | site)`, with `studyDesign` naming the site of each
+  sample), which accounts for months of the same site not being
+  independent;
+- one latent variable, for residual co-occurrence (for instance, from
+  species x site preferences not captured by the site intercept).
+
+The test is a likelihood-ratio test between this model and the same
+model without season ([`anova()`](https://rdrr.io/r/stats/anova.html) on
+the two fits).
+
+``` r
+
+X      <- data.frame(season = samples$season)
+design <- data.frame(site = samples$site)
+fit_season <- gllvm::gllvm(y = Y, X = X, formula = ~ season,
+                           family = "binomial", Ntrials = Nt, num.lv = 1,
+                           row.eff = ~ (1 | site), studyDesign = design,
+                           starting.val = "zero", seed = 2026)
+fit_null   <- gllvm::gllvm(y = Y, family = "binomial", Ntrials = Nt,
+                           num.lv = 1, row.eff = ~ (1 | site),
+                           studyDesign = design,
+                           starting.val = "zero", seed = 2026)
+lrt <- anova(fit_null, fit_season)
+#> Model  1 :  y ~ NULL 
+#> Model  2 :  ~ season
+```
+
+The likelihood-ratio statistic is D = 83.1 on 4 degrees of freedom (one
+season coefficient per species; P \< 0.0001). The estimated standard
+deviation of the site intercept is 1.2e-05, so in this example the
+shared site effect is negligible once the species-specific terms are in
+the model.
+
+The species-specific season coefficients (rainy relative to dry, on the
+logit scale) and their 95% Wald intervals:
+
+``` r
+
+ci <- confint(fit_season, parm = "Xcoef")
+season_coef <- data.frame(species = core,
+                          estimate = fit_season$params$Xcoef[, "seasonrainy"],
+                          lower = ci[, 1], upper = ci[, 2],
+                          row.names = NULL)
+season_coef |>
+  dplyr::mutate(dplyr::across(estimate:upper, \(x) signif(x, 3))) |>
+  tibble::as_tibble()
+#> # A tibble: 4 × 4
+#>   species estimate     lower     upper
+#>   <chr>      <dbl>     <dbl>     <dbl>
+#> 1 boa_ran     2.22 -4.9 e- 2  4.5 e+ 0
+#> 2 ela_bic    13.2  -1.22e+10  1.22e+10
+#> 3 lep_pod    -3.41 -5.94e+ 0 -8.72e- 1
+#> 4 phy_cuv     2.62  1.74e+ 0  3.5 e+ 0
+```
+
+The negative coefficient of lep_pod matches its preference for the dry
+season in the simulation. The estimate of ela_bic is large and its
+interval is degenerate: the species was detected in every rainy-season
+sample, so the data are close to complete separation and the coefficient
+is not identified. Such intervals should not be read as estimates of
+precision.
+
+### Caveats
+
+- The test uses 22 samples from 4 sites. The site random intercept is
+  estimated from 4 levels, and the likelihood-ratio test relies on
+  large-sample approximations; P-values are approximate.
+- Months within a site are also temporally autocorrelated; the site
+  intercept accounts for their shared site, not for that
+  autocorrelation.
+- In our trials on these data, the model with two latent variables and
+  covariates did not converge reliably, and fits with random starting
+  values reached lower likelihoods; hence one latent variable and zero
+  starting values. With few species the latent part is weakly
+  identified, and results should be checked against several starting
+  values (`starting.val`, `n.init`).
+- The test concerns detection frequency, not occupancy: season may
+  change calling activity as well as occurrence.
+
+## References
+
+Legendre, P., & Legendre, L. (2012). *Numerical ecology* (3rd English
+ed.). Developments in Environmental Modelling 24. Elsevier.
+<https://doi.org/10.1016/C2010-0-66470-4>
+
+Jupke, J. F., & Schäfer, R. B. (2020). Should ecologists prefer model-
+over distance-based multivariate methods? *Ecology and Evolution*, 10,
+2417–2435. <https://doi.org/10.1002/ece3.6059>
+
+Niku, J., Hui, F. K. C., Taskinen, S., & Warton, D. I. (2019). gllvm:
+Fast analysis of multivariate abundance data with generalized linear
+latent variable models in R. *Methods in Ecology and Evolution*, 10,
+2173–2182. <https://doi.org/10.1111/2041-210X.13303>
+
+Warton, D. I., Foster, S. D., De’ath, G., Stoklosa, J., & Dunstan, P. K.
+(2015). Model-based thinking for community ecology. *Plant Ecology*,
+216, 669–682. <https://doi.org/10.1007/s11258-014-0366-3>
+
+Warton, D. I., Wright, S. T., & Wang, Y. (2012). Distance-based
+multivariate analyses confound location and dispersion effects. *Methods
+in Ecology and Evolution*, 3, 89–101.
+<https://doi.org/10.1111/j.2041-210X.2011.00127.x>

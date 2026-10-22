@@ -37,13 +37,13 @@ count(pred, site)
 #> # A tibble: 4 × 2
 #>   site      n
 #>   <chr> <int>
-#> 1 ARA    1178
-#> 2 BAI    1167
-#> 3 NHE    2014
-#> 4 XAR    1422
+#> 1 ARA    1753
+#> 2 BAI    1427
+#> 3 NHE    2507
+#> 4 XAR    1866
 ```
 
-There are 5781 predictions of 5 species at 4 sites, from 354 recordings
+There are 7553 predictions of 8 species at 4 sites, from 354 recordings
 of 300 s. Recording effort differs among sites:
 
 ``` r
@@ -66,7 +66,7 @@ confidence $`\geq`$ 0.5 as a detection:
 threshold <- 0.5
 above <- filter(pred, confidence >= threshold)
 nrow(above)
-#> [1] 3263
+#> [1] 4738
 ```
 
 ## `"top"`: the highest scores
@@ -80,8 +80,8 @@ each site × species × night × hour stratum. Predictions below
 top <- select_clips(pred, sampling_mode = "top", n_top = 1,
                     min_confidence = threshold)
 #> Sampling mode: top (occasion = file).
-#> 2518 predictions dropped by the filter confidence < 0.5.
-#> 1253 clips selected (top 1 per site x species x night x hour) of 5 species.
+#> 2815 predictions dropped by the filter confidence < 0.5.
+#> 1876 clips selected (top 1 per site x species x night x hour) of 8 species.
 ```
 
 This design is appropriate for two purposes. First, retraining the
@@ -131,12 +131,12 @@ rd_file <- select_clips(pred, sampling_mode = "random_detections",
                         occasion_unit = "file", threshold = threshold,
                         n_top = 1)
 #> Sampling mode: random_detections (occasion = file).
-#> 1253 occasions drawn (1 per site x species x night x hour) among 1253 with a prediction >= 0.5.
-#> 3263 clips (every prediction >= 0.5 of the 1253 occasions drawn).
+#> 1876 occasions drawn (1 per site x species x night x hour) among 1876 with a prediction >= 0.5.
+#> 4738 clips (every prediction >= 0.5 of the 1876 occasions drawn).
 table(rd_file$inclusion_prob)
 #> 
 #>    1 
-#> 3263
+#> 4738
 
 files_per_stratum <- recs |>
   mutate(stamp = sub(".*_(\\d{8})_(\\d{2}).*", "\\1_\\2", source_audio)) |>
@@ -161,8 +161,8 @@ rd <- select_clips(pred, sampling_mode = "random_detections",
                    occasion_unit = "minute", threshold = threshold,
                    n_top = 1)
 #> Sampling mode: random_detections (occasion = minute).
-#> 1253 occasions drawn (1 per site x species x night x hour) among 2586 with a prediction >= 0.5.
-#> 1555 clips (every prediction >= 0.5 of the 1253 occasions drawn).
+#> 1876 occasions drawn (1 per site x species x night x hour) among 3824 with a prediction >= 0.5.
+#> 2288 clips (every prediction >= 0.5 of the 1876 occasions drawn).
 ```
 
 `occasion_id` identifies the occasion, `n_detections_occasion` counts
@@ -178,20 +178,20 @@ rd |>
 #> # A tibble: 4 × 7
 #>   site  species_code          occasion_id  rank confidence n_detections_occasion
 #>   <chr> <chr>                 <chr>       <int>      <dbl>                 <int>
-#> 1 ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.505                     1
-#> 2 ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.691                     2
-#> 3 ARA   Boana raniceps_boa-r… ARA01_2021…     2      0.597                     2
-#> 4 ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.697                     2
+#> 1 ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.504                     1
+#> 2 ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.586                     1
+#> 3 ARA   Boana raniceps_boa-r… ARA01_2021…     1      0.924                     2
+#> 4 ARA   Boana raniceps_boa-r… ARA01_2021…     2      0.796                     2
 #> # ℹ 1 more variable: inclusion_prob <dbl>
 count(rd, inclusion_prob)
 #> # A tibble: 5 × 2
 #>   inclusion_prob     n
 #>            <dbl> <int>
-#> 1          0.2      21
-#> 2          0.25    131
-#> 3          0.333   353
-#> 4          0.5     530
-#> 5          1       520
+#> 1          0.2      36
+#> 2          0.25    176
+#> 3          0.333   502
+#> 4          0.5     764
+#> 5          1       810
 ```
 
 `inclusion_prob` is $`\min(n_\mathrm{top}, N) / N`$, where $`N`$ is the
@@ -236,7 +236,7 @@ rr <- select_clips(pred, sampling_mode = "random_recordings",
                    species = "boa-ran")
 #> Sampling mode: random_recordings (occasion = file).
 #> 354 recordings listed at 4 site(s).
-#> Filter of 1 species: 5781 -> 1264 predictions.
+#> Filter of 1 species: 7553 -> 874 predictions.
 #> 35 file(s) drawn among 354 recorded, to annotate 1 species.
 rr |>
   select(site, species_code, clip_file, clip_start, clip_end,
@@ -261,7 +261,10 @@ count(rr, site)
 The number drawn per site follows its recording effort: with
 `recording_fraction = 0.1`, the site with the fewest recordings (XAR,
 84) contributes 8 recordings, and `inclusion_prob` is the fraction drawn
-at that site.
+at that site. The default `recording_fraction = 0.01` suits large
+projects: with fewer than 150 recordings per site it draws a single
+recording per site, so small projects should raise it or set
+`n_recordings_per_site`.
 
 Each clip is a whole recording (or minute); `confidence` is `NA` and
 `rank` is `NA`. `recording_duration` sets `clip_end`; without it,
@@ -281,7 +284,7 @@ rr_all <- suppressMessages(
 )
 c(recordings = n_distinct(rr_all$occasion_id), clips = nrow(rr_all))
 #> recordings      clips 
-#>         35        175
+#>         35        280
 ```
 
 Restrict `species` to the species that will actually be annotated.
@@ -315,14 +318,14 @@ score_quantiles <- rbind(
 )
 round(score_quantiles, 3)
 #>                     10%   25%   50%   75%   90%
-#> all >= threshold  0.534 0.591 0.688 0.798 0.879
-#> random_detections 0.533 0.592 0.685 0.800 0.882
-#> top               0.578 0.671 0.783 0.867 0.925
+#> all >= threshold  0.547 0.616 0.725 0.836 0.912
+#> random_detections 0.545 0.617 0.725 0.831 0.907
+#> top               0.592 0.687 0.809 0.897 0.948
 ```
 
 The weighted quantiles of `"random_detections"` track those of all
-detections (median 0.69 against 0.69), whereas `"top"` is shifted
-upwards (median 0.78). To the extent that false positives receive lower
+detections (median 0.72 against 0.72), whereas `"top"` is shifted
+upwards (median 0.81). To the extent that false positives receive lower
 scores than true detections, as they do on average in the simulated data
 (although the two distributions overlap), a false-positive rate
 estimated from the `"top"` clips is biased low.
@@ -378,16 +381,16 @@ target <- 40
 top_cap <- select_clips(pred, sampling_mode = "top", n_top = 1,
                         min_confidence = threshold, target_total = target)
 #> Sampling mode: top (occasion = file).
-#> 2518 predictions dropped by the filter confidence < 0.5.
-#> 1253 clips selected (top 1 per site x species x night x hour) of 5 species.
-#> Target of 40 clips per site (balanced by species and hour): 1253 -> 160 clips.
+#> 2815 predictions dropped by the filter confidence < 0.5.
+#> 1876 clips selected (top 1 per site x species x night x hour) of 8 species.
+#> Target of 40 clips per site (balanced by species and hour): 1876 -> 160 clips.
 rd_cap  <- select_clips(pred, sampling_mode = "random_detections",
                         occasion_unit = "minute", threshold = threshold,
                         n_top = 1, target_total = target)
 #> Sampling mode: random_detections (occasion = minute).
-#> 1253 occasions drawn (1 per site x species x night x hour) among 2586 with a prediction >= 0.5.
-#> Target of 40 occasions per site (balanced by species and hour): 1253 -> 160 occasions.
-#> 189 clips (every prediction >= 0.5 of the 160 occasions drawn).
+#> 1876 occasions drawn (1 per site x species x night x hour) among 3824 with a prediction >= 0.5.
+#> Target of 40 occasions per site (balanced by species and hour): 1876 -> 160 occasions.
+#> 191 clips (every prediction >= 0.5 of the 160 occasions drawn).
 ```
 
 ``` r
@@ -400,13 +403,13 @@ rd_cap |>
 #> # A tibble: 4 × 4
 #>   site  occasions clips top_clips
 #>   <chr>     <int> <int>     <int>
-#> 1 ARA          40    44        40
-#> 2 BAI          40    49        40
+#> 1 ARA          40    49        40
+#> 2 BAI          40    47        40
 #> 3 NHE          40    50        40
-#> 4 XAR          40    46        40
+#> 4 XAR          40    45        40
 ```
 
-The same target of 40 units per site yields 160 clips in `"top"` but 189
+The same target of 40 units per site yields 160 clips in `"top"` but 191
 clips in `"random_detections"` (4 sites), because every detection of a
 drawn occasion must be reviewed. Plan the target in occasions and expect
 a larger number of clips.
@@ -418,15 +421,14 @@ in the stratum (site × species, and hour when `balance_by_hour = TRUE`):
 ``` r
 
 summary(rd_cap$inclusion_prob)
-#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-#> 0.01724 0.03846 0.06818 0.11474 0.14286 0.60000
+#>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+#> 0.009615 0.029040 0.047619 0.080117 0.076923 1.000000
 ```
 
-Because `target_total` allocates the same number of occasions to each
-species, rare species are sampled with a higher probability than common
-ones. The unweighted pool of clips therefore over-represents rare
-species, and estimates pooled across species must use the design
-weights.
+Because the target is split evenly among species, rare species have
+higher inclusion probabilities than common ones: the unweighted pool of
+clips over-represents them, and estimates pooled across species must
+weight the clips by `1 / inclusion_prob`.
 
 In `"random_recordings"` the cap is not applied:
 
@@ -440,7 +442,7 @@ tryCatch(
 )
 #> Sampling mode: random_recordings (occasion = file).
 #> 354 recordings listed at 4 site(s).
-#> 4 file(s) drawn among 354 recorded, to annotate 5 species.
+#> 4 file(s) drawn among 354 recorded, to annotate 8 species.
 #> [1] "target_total/max_per_species are ignored in \"random_recordings\" (recording_fraction or n_recordings_per_site apply)."
 ```
 
