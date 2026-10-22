@@ -34,12 +34,21 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="../articles/sheepdog.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/frognet-workflow.html">The FrogNet workflow</a></li>
+<li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>The three stages</h6></li>
+    <li><a class="dropdown-item" href="../articles/sampling-designs.html">Choosing a sampling design</a></li>
+    <li><a class="dropdown-item" href="../articles/validation-effort.html">How many clips should I validate?</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibrating confidence scores</a></li>
+    <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Integration and case study</h6></li>
     <li><a class="dropdown-item" href="../articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
+    <li><a class="dropdown-item" href="../articles/frognet-workflow.html">The FrogNet workflow</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -312,7 +321,7 @@ verdicts. Clips of <code>"random_recordings"</code>
 multiple-method design (Miller et al. 2011, <a href="https://doi.org/10.1890/10-1396.1" class="external-link uri">https://doi.org/10.1890/10-1396.1</a>), that is, manual
 annotation of recordings. They are not confirmations of detections and
 must not go to the <code>validation</code> argument of
-<code>crywolf::fp_aggregate()</code>.</p>
+<code><a href="https://provetelab.org/crywolf/reference/fp_aggregate.html" class="external-link">crywolf::fp_aggregate()</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="files-written-by-v1-2-0">Files written by v1.2.0<a class="anchor" aria-label="anchor" href="#files-written-by-v1-2-0"></a>
@@ -416,7 +425,7 @@ and <code>random_recordings</code>; <code>positivo</code>,
 <h2 id="reading-the-validation-in-crywolf">Reading the validation in crywolf<a class="anchor" aria-label="anchor" href="#reading-the-validation-in-crywolf"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">v</span> <span class="op">&lt;-</span> <span class="fu">crywolf</span><span class="fu">::</span><span class="fu">fp_read_validation</span><span class="op">(</span><span class="va">validation</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">v</span> <span class="op">&lt;-</span> <span class="fu">crywolf</span><span class="fu">::</span><span class="fu"><a href="https://provetelab.org/crywolf/reference/fp_read_validation.html" class="external-link">fp_read_validation</a></span><span class="op">(</span><span class="va">validation</span><span class="op">)</span></span></code></pre></div>
 <p><code>fp_read_validation()</code> reads the v1.2.0 format; reading
 the column names above needs a crywolf version that supports them.</p>
 </div>

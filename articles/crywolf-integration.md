@@ -102,7 +102,8 @@ Only `positive` and `negative` are reviewed verdicts. Clips of
 multiple-method design (Miller et al. 2011,
 <https://doi.org/10.1890/10-1396.1>), that is, manual annotation of
 recordings. They are not confirmations of detections and must not go to
-the `validation` argument of `crywolf::fp_aggregate()`.
+the `validation` argument of
+[`crywolf::fp_aggregate()`](https://provetelab.org/crywolf/reference/fp_aggregate.html).
 
 ## Files written by v1.2.0
 

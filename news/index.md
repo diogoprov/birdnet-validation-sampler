@@ -2,6 +2,26 @@
 
 ## sheepdog (development version)
 
+- New articles, run on a simulated example data set:
+  [`vignette("sheepdog")`](https://provetelab.org/sheepdog/articles/sheepdog.md)
+  (Get started),
+  [`vignette("sampling-designs")`](https://provetelab.org/sheepdog/articles/sampling-designs.md),
+  [`vignette("validation-effort")`](https://provetelab.org/sheepdog/articles/validation-effort.md),
+  [`vignette("calibration")`](https://provetelab.org/sheepdog/articles/calibration.md)
+  and
+  [`vignette("community-matrices")`](https://provetelab.org/sheepdog/articles/community-matrices.md).
+- The example data set (4 sites x 5 species x 6 months; selection
+  tables, the list of recordings, reviewed clips and a calibrated
+  nightly history) ships in
+  `system.file("extdata", "example", package = "sheepdog")`;
+  `data-raw/make_example_data.R` generates it.
+- [`plot_precision()`](https://provetelab.org/sheepdog/reference/plot_precision.md)
+  draws one line per site when the table has several sites; before, the
+  lines of different sites were joined in the same panel (also in the
+  `precision_by_bin.png` of
+  [`post_validation()`](https://provetelab.org/sheepdog/reference/post_validation.md)).
+- ‘vegan’ is a suggested package, used only in
+  [`vignette("community-matrices")`](https://provetelab.org/sheepdog/articles/community-matrices.md).
 - The vignette `crywolf-contract` is now `crywolf-integration`
   (“Integration with crywolf”).
 

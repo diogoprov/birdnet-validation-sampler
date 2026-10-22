@@ -159,8 +159,9 @@ specifies their columns, types and the definition of an occasion;
 example files are in `system.file("extdata", package = "sheepdog")`. Do
 not pass the whole-recording clips of `"random_recordings"`
 (`confidence = NA`) to the `validation` argument of
-`crywolf::fp_aggregate()`: they are the second method (manual
-annotation), not confirmations of detections.
+[`crywolf::fp_aggregate()`](https://provetelab.org/crywolf/reference/fp_aggregate.html):
+they are the second method (manual annotation), not confirmations of
+detections.
 
 ## From the scripts (v1.2.0) to the package (v2.0.0)
 
