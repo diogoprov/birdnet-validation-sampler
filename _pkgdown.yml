@@ -83,6 +83,7 @@ articles:
     navbar: The three stages
     contents:
       - sampling-designs
+      - articles/reviewing-in-the-gui
       - validation-effort
       - calibration
       - bayesian-calibration
