@@ -35,7 +35,7 @@ for (nm in c("top_default", "det_minute_meta", "rec_table")) {
       do.call(extract_validation_clips, args)))
     novo <- read_as_text(file.path(saida, "clip_manifest.csv"))
     novo[] <- lapply(novo, \(x) gsub(sim_root(), "<ROOT>", x, fixed = TRUE))
-    expect_identical(novo, ref_table(nm, "manifesto_clipes.csv"))
+    expect_same_table(novo, ref_table(nm, "manifesto_clipes.csv"))
   })
 }
 

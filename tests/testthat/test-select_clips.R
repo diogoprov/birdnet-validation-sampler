@@ -16,7 +16,7 @@ for (nm in cenarios) {
     novo <- as_written(manifesto_cenario(nm))
     ref  <- ref_table(nm, "manifesto_clipes.csv") |> dplyr::select(-status)
     expect_identical(names(novo), names(ref))
-    expect_identical(novo, ref)
+    expect_same_table(novo, ref)
   })
 }
 

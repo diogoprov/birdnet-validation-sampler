@@ -33,7 +33,7 @@ test_that("calibrate() reproduces v1.2.0", {
       ref$formula <- gsub("local", "site", gsub("especie", "species",
                                                 ref$formula))
     }
-    expect_identical(read_as_text(file.path(saida, f)), ref, label = f)
+    expect_same_table(read_as_text(file.path(saida, f)), ref, label = f)
   }
   expect_true(file.exists(file.path(saida, "calibration_model.rds")))
   expect_s4_class(res$fit, "glmerMod")
