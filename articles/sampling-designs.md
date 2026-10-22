@@ -131,7 +131,7 @@ rd_file <- select_clips(pred, sampling_mode = "random_detections",
                         occasion_unit = "file", threshold = threshold,
                         n_top = 1)
 #> Sampling mode: random_detections (occasion = file).
-#> 1876 occasions drawn (1 per site x species x night x hour) among 1876 with a prediction >= 0.5.
+#> 1876 occasions drawn (1 per site x species_code x night x recording_hour) among 1876 with a prediction >= 0.5.
 #> 4738 clips (every prediction >= 0.5 of the 1876 occasions drawn).
 table(rd_file$inclusion_prob)
 #> 
@@ -163,14 +163,71 @@ rd_night <- select_clips(pred, sampling_mode = "random_detections",
                          occasion_unit = "file", threshold = threshold,
                          n_top = 1, strata = "night")
 #> Sampling mode: random_detections (occasion = file).
-#> 1343 occasions drawn (1 per site x species x night) among 1876 with a prediction >= 0.5.
+#> 1343 occasions drawn (1 per site x species_code x night) among 1876 with a prediction >= 0.5.
 #> 3339 clips (every prediction >= 0.5 of the 1343 occasions drawn).
 summary(rd_night$inclusion_prob)
 #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 #>  0.5000  0.5000  1.0000  0.7929  1.0000  1.0000
 ```
 
-The strata must still not depend on the score; any of the three is
+Besides `"night_hour"`, `"night"` and `"site_species"`, the presets
+`"hour"` (pooling the nights), `"week"` and `"month"` spread the draw
+over the diel cycle or the season. With `strata = "month"`, the files of
+a month compete with each other:
+
+``` r
+
+rd_month <- select_clips(pred, sampling_mode = "random_detections",
+                         occasion_unit = "file", threshold = threshold,
+                         n_top = 2, strata = "month")
+#> Sampling mode: random_detections (occasion = file).
+#> 332 occasions drawn (2 per site x species_code x month) among 1876 with a prediction >= 0.5.
+#> 780 clips (every prediction >= 0.5 of the 332 occasions drawn).
+summary(rd_month$inclusion_prob)
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>  0.1333  0.1429  0.1429  0.2028  0.1667  1.0000
+```
+
+`strata` also takes a vector of column names, for strata defined by the
+user. Any column added to the predictions before the call can be used.
+Since site and species are always part of the strata, a useful column
+varies within a site: the rain of the night, a recorder when a site has
+several, or, as here, the moon phase, approximated from the date of the
+night (days since a reference new moon, modulo the synodic month of
+29.53 days) and crossed with the month.
+
+``` r
+
+moon_phase <- function(night) {
+  days <- as.numeric(as.Date(night, "%Y%m%d") - as.Date("2000-01-06"))
+  cut(days %% 29.530588, breaks = c(0, 7.38, 14.77, 22.15, 29.54),
+      labels = c("new", "first_quarter", "full", "last_quarter"),
+      include.lowest = TRUE)
+}
+# the date (YYYYMMDD) comes from the name of the recording
+rd_moon <- pred |>
+  mutate(date = regmatches(begin_path, regexpr("\\d{8}(?=_\\d{6})",
+                                                begin_path, perl = TRUE)),
+         moon = as.character(moon_phase(date))) |>
+  select_clips(sampling_mode = "random_detections", occasion_unit = "file",
+               threshold = threshold, n_top = 1,
+               strata = c("month", "moon"))
+#> Sampling mode: random_detections (occasion = file).
+#> 581 occasions drawn (1 per site x species_code x month x moon) among 1876 with a prediction >= 0.5.
+#> 1419 clips (every prediction >= 0.5 of the 581 occasions drawn).
+rd_moon |>
+  distinct(site, species_code, occasion_id) |>
+  nrow()
+#> [1] 581
+```
+
+`site` and `species_code` are always part of the strata, so that
+`inclusion_prob` stays exact when `target_total` or `max_per_species`
+draw again within site × species. The strata must not depend on the
+score:
+[`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md)
+refuses `confidence` and `rank`, and every stratum column must be
+constant within an occasion. Any stratum that meets these conditions is
 compatible with the observation-confirmation design.
 
 With `occasion_unit = "minute"`, a stratum holds up to five candidate
@@ -182,7 +239,7 @@ rd <- select_clips(pred, sampling_mode = "random_detections",
                    occasion_unit = "minute", threshold = threshold,
                    n_top = 1)
 #> Sampling mode: random_detections (occasion = minute).
-#> 1876 occasions drawn (1 per site x species x night x hour) among 3824 with a prediction >= 0.5.
+#> 1876 occasions drawn (1 per site x species_code x night x recording_hour) among 3824 with a prediction >= 0.5.
 #> 2288 clips (every prediction >= 0.5 of the 1876 occasions drawn).
 ```
 
@@ -374,7 +431,7 @@ ggplot(curves, aes(confidence, ecdf, colour = design)) +
 
 ![Empirical cumulative distribution of confidence for all detections,
 random_detections clips and top
-clips.](sampling-designs_files/figure-html/unnamed-chunk-15-1.png)
+clips.](sampling-designs_files/figure-html/unnamed-chunk-17-1.png)
 
 ## Limiting the effort
 
@@ -409,7 +466,7 @@ rd_cap  <- select_clips(pred, sampling_mode = "random_detections",
                         occasion_unit = "minute", threshold = threshold,
                         n_top = 1, target_total = target)
 #> Sampling mode: random_detections (occasion = minute).
-#> 1876 occasions drawn (1 per site x species x night x hour) among 3824 with a prediction >= 0.5.
+#> 1876 occasions drawn (1 per site x species_code x night x recording_hour) among 3824 with a prediction >= 0.5.
 #> Target of 40 occasions per site (balanced by species and hour): 1876 -> 160 occasions.
 #> 191 clips (every prediction >= 0.5 of the 160 occasions drawn).
 ```

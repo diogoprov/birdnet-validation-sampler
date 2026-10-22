@@ -70,7 +70,7 @@ audio is read or written; cut the clips with <code><a href="cut_clips.html">cut_
 <span>  occasion_unit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"file"</span>, <span class="st">"minute"</span><span class="op">)</span>,</span>
 <span>  threshold <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_top <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  strata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"night_hour"</span>, <span class="st">"night"</span>, <span class="st">"site_species"</span><span class="op">)</span>,</span>
+<span>  strata <span class="op">=</span> <span class="st">"night_hour"</span>,</span>
 <span>  recording_fraction <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  n_recordings_per_site <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  recordings <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -124,15 +124,33 @@ hour. <code>"random_detections"</code>: occasions drawn per stratum (<code>strat
 
 
 <dt id="arg-strata">strata<a class="anchor" aria-label="anchor" href="#arg-strata"></a></dt>
-<dd><p><code>"random_detections"</code>: the strata of the occasion draw.
-<code>"night_hour"</code> (site x species x night x hour, the rule of 2.0.0),
-<code>"night"</code> (site x species x night) or <code>"site_species"</code>. With one
-recording per hour and <code>occasion_unit = "file"</code>, <code>"night_hour"</code> holds
-a single occasion per stratum and draws nothing (every
-<code>inclusion_prob</code> is 1); a coarser stratum makes the draw random.
-With a coarser stratum and <code>balance_by_hour = TRUE</code> under
-<code>target_total</code> or <code>max_per_species</code>, <code>inclusion_prob</code> is conditional
-on the first draw (a warning says so).</p></dd>
+<dd><p><code>"random_detections"</code>: the strata of the occasion draw
+(ignored by the other modes). Either one of the presets, all within
+site x species:</p><ul><li><p><code>"night_hour"</code>: night x hour (the rule of 2.0.0);</p></li>
+<li><p><code>"night"</code>: night;</p></li>
+<li><p><code>"hour"</code>: hour of the day, pooling the nights (covers the diel
+cycle without fixing the night);</p></li>
+<li><p><code>"week"</code>: ISO week of the night (<code>YYYY-Www</code>);</p></li>
+<li><p><code>"month"</code>: month of the night (<code>YYYY-MM</code>), which spreads the draw
+over the season;</p></li>
+<li><p><code>"site_species"</code>: no further stratification;</p></li>
+</ul><p>or a character vector of column names of <code>detections</code>, e.g.
+<code>c("site", "species_code", "habitat", "night")</code>, for strata defined by
+the user. Columns can be added to <code>detections</code> before the call (a
+habitat, a recorder, the moon phase, the rain of the night); <code>month</code>
+and <code>week</code> can also be used and are derived from the night when absent.
+<code>site</code> and <code>species_code</code> are always added to the strata, which keeps
+<code>inclusion_prob</code> exact when <code>target_total</code> or <code>max_per_species</code> draw
+again within site x species. Columns that depend on the score
+(<code>confidence</code>, <code>rank</code>) are refused, since the observation-confirmation
+design needs strata independent of the score, and every stratum
+column must be constant within an occasion.</p>
+<p>With one recording per hour and <code>occasion_unit = "file"</code>,
+<code>"night_hour"</code> holds a single occasion per stratum and draws nothing
+(every <code>inclusion_prob</code> is 1); a coarser stratum makes the draw
+random. With strata without the hour and <code>balance_by_hour = TRUE</code>
+under <code>target_total</code> or <code>max_per_species</code>, <code>inclusion_prob</code> is
+conditional on the first draw (a warning says so).</p></dd>
 
 
 <dt id="arg-recording-fraction">recording_fraction<a class="anchor" aria-label="anchor" href="#arg-recording-fraction"></a></dt>

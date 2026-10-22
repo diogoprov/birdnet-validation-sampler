@@ -16,7 +16,7 @@ select_clips(
   occasion_unit = c("file", "minute"),
   threshold = NULL,
   n_top = 2,
-  strata = c("night_hour", "night", "site_species"),
+  strata = "night_hour",
   recording_fraction = 0.01,
   n_recordings_per_site = NULL,
   recordings = NULL,
@@ -69,14 +69,41 @@ select_clips(
 
 - strata:
 
-  `"random_detections"`: the strata of the occasion draw. `"night_hour"`
-  (site x species x night x hour, the rule of 2.0.0), `"night"` (site x
-  species x night) or `"site_species"`. With one recording per hour and
-  `occasion_unit = "file"`, `"night_hour"` holds a single occasion per
-  stratum and draws nothing (every `inclusion_prob` is 1); a coarser
-  stratum makes the draw random. With a coarser stratum and
-  `balance_by_hour = TRUE` under `target_total` or `max_per_species`,
-  `inclusion_prob` is conditional on the first draw (a warning says so).
+  `"random_detections"`: the strata of the occasion draw (ignored by the
+  other modes). Either one of the presets, all within site x species:
+
+  - `"night_hour"`: night x hour (the rule of 2.0.0);
+
+  - `"night"`: night;
+
+  - `"hour"`: hour of the day, pooling the nights (covers the diel cycle
+    without fixing the night);
+
+  - `"week"`: ISO week of the night (`YYYY-Www`);
+
+  - `"month"`: month of the night (`YYYY-MM`), which spreads the draw
+    over the season;
+
+  - `"site_species"`: no further stratification;
+
+  or a character vector of column names of `detections`, e.g.
+  `c("site", "species_code", "habitat", "night")`, for strata defined by
+  the user. Columns can be added to `detections` before the call (a
+  habitat, a recorder, the moon phase, the rain of the night); `month`
+  and `week` can also be used and are derived from the night when
+  absent. `site` and `species_code` are always added to the strata,
+  which keeps `inclusion_prob` exact when `target_total` or
+  `max_per_species` draw again within site x species. Columns that
+  depend on the score (`confidence`, `rank`) are refused, since the
+  observation-confirmation design needs strata independent of the score,
+  and every stratum column must be constant within an occasion.
+
+  With one recording per hour and `occasion_unit = "file"`,
+  `"night_hour"` holds a single occasion per stratum and draws nothing
+  (every `inclusion_prob` is 1); a coarser stratum makes the draw
+  random. With strata without the hour and `balance_by_hour = TRUE`
+  under `target_total` or `max_per_species`, `inclusion_prob` is
+  conditional on the first draw (a warning says so).
 
 - recording_fraction:
 

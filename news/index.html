@@ -54,6 +54,16 @@
 <h3 id="documentation-development-version">Documentation<a class="anchor" aria-label="anchor" href="#documentation-development-version"></a></h3>
 <ul><li>New article “Reviewing clips in the BirdNET GUI” (site only): the review in the Review tab of the BirdNET-Analyzer GUI, from the folder of clips to the <code>Positive</code> and <code>Negative</code> folders read by <code><a href="../reference/classify_review.html">classify_review()</a></code>, with screenshots in English and Portuguese (where the result folders are <code>positivo</code> and <code>negativo</code>), the regression panel of the GUI compared with the calibration of stage 2, and the review with several reviewers.</li>
 </ul></div>
+<div class="section level3">
+<h3 id="sampling-development-version">Sampling<a class="anchor" aria-label="anchor" href="#sampling-development-version"></a></h3>
+<ul><li>
+<code>select_clips(strata = )</code> gains the presets <code>"hour"</code> (pooling the nights), <code>"week"</code> (ISO week of the night) and <code>"month"</code>, and accepts a character vector of column names for strata defined by the user, e.g. <code>c("month", "moon")</code> with a column added to the detections before the call. <code>site</code> and <code>species_code</code> are always added to the strata, columns that depend on the score (<code>confidence</code>, <code>rank</code>) are refused, and every stratum column must be constant within an occasion.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="calibration-development-version">Calibration<a class="anchor" aria-label="anchor" href="#calibration-development-version"></a></h3>
+<ul><li>
+<code><a href="../reference/fit_calibration.html">fit_calibration()</a></code> (and <code><a href="../reference/calibrate.html">calibrate()</a></code>) passes on the messages of <code><a href="https://rdrr.io/pkg/lme4/man/glmer.html" class="external-link">lme4::glmer()</a></code>, prefixed by <code>lme4:</code>, instead of hiding them; the message on singular fits is not repeated, since it already becomes a warning. Every message of the fit is kept in the attribute <code>sheepdog_messages</code> of the model, and <code><a href="../reference/calibrate.html">calibrate()</a></code> appends them to <code>calibration_model.txt</code>. The fits of the cross-validation folds and of the effort curve stay quiet.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.2.0" id="sheepdog-220">sheepdog 2.2.0<a class="anchor" aria-label="anchor" href="#sheepdog-220"></a></h2>
