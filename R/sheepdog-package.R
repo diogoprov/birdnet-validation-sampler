@@ -25,5 +25,7 @@ utils::globalVariables(c(
   "faixa", "fold", "hour", "logit_conf", "n_reliable", "p_tp", "prec",
   "species", "tp", "included", "month", "n_nights_detected",
   "n_nights_recorded", "frequency", "logloss_mean", "prop_singular",
-  "complexity", "model", "set", "class_folder", "t_ini", "t_fim", ".linha"
+  "complexity", "model", "set", "class_folder", "t_ini", "t_fim", ".linha",
+  "n_tp", "min_confidence", "max_confidence", "threshold", "reason", "ok",
+  "any_reliable"
 ))

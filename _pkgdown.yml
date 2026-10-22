@@ -43,6 +43,7 @@ reference:
       - read_validations
       - calibration_models
       - compare_calibration_models
+      - select_calibration_model
       - fit_calibration
       - calibration_effort
       - score_detections
@@ -54,6 +55,8 @@ reference:
     contents:
       - build_community_matrices
       - community_matrices
+      - cell_status
+      - suggest_core_species
   - title: Package
     contents:
       - sheepdog-package
