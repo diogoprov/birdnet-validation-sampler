@@ -36,6 +36,13 @@ reference:
       - read_validation_tables
       - build_training_set
       - exclude_training_clips
+  - title: Stage 1 - Several reviewers
+    desc: Split the clips among reviewers, measure their agreement and combine their verdicts.
+    contents:
+      - assign_reviewers
+      - split_by_reviewer
+      - reviewer_agreement
+      - consensus_verdicts
   - title: Stage 2 - Calibration
     desc: Calibrate confidence scores into probabilities of true detection and build nightly detection histories.
     contents:
