@@ -1,4 +1,4 @@
-# sheepdog (development version)
+# sheepdog 2.2.0
 
 ## Calibration
 
