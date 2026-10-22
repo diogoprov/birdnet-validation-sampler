@@ -99,16 +99,21 @@ build_community_matrices("calibration/nightly_detection_history.csv",
 ```
 
 Each stage is also available as separate functions:
-[`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md)
-(a pure function that returns the clip manifest without touching audio),
-[`cut_clips()`](https://provetelab.org/sheepdog/reference/cut_clips.md),
-[`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md),
-[`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md),
-[`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md),
-[`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md)
-and others. See
+
+| Stage | Functions |
+|----|----|
+| 1\. Selecting and cutting clips | [`read_selection_tables()`](https://provetelab.org/sheepdog/reference/read_selection_tables.md), [`select_clips()`](https://provetelab.org/sheepdog/reference/select_clips.md) (a pure function that returns the clip manifest without touching audio), [`cut_clips()`](https://provetelab.org/sheepdog/reference/cut_clips.md), [`pack_clips()`](https://provetelab.org/sheepdog/reference/pack_clips.md) |
+| 1\. Several reviewers | [`assign_reviewers()`](https://provetelab.org/sheepdog/reference/assign_reviewers.md), [`split_by_reviewer()`](https://provetelab.org/sheepdog/reference/split_by_reviewer.md), [`reviewer_agreement()`](https://provetelab.org/sheepdog/reference/reviewer_agreement.md) (Cohen’s or Fleiss’ kappa), [`consensus_verdicts()`](https://provetelab.org/sheepdog/reference/consensus_verdicts.md) |
+| 1\. After the review | [`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md), [`precision_by_bin()`](https://provetelab.org/sheepdog/reference/precision_by_bin.md), [`suggest_thresholds()`](https://provetelab.org/sheepdog/reference/suggest_thresholds.md), [`nightly_presence()`](https://provetelab.org/sheepdog/reference/nightly_presence.md), [`retraining_clips()`](https://provetelab.org/sheepdog/reference/retraining_clips.md), [`read_validation_tables()`](https://provetelab.org/sheepdog/reference/read_validation_tables.md) |
+| 1\. Retraining | [`build_training_set()`](https://provetelab.org/sheepdog/reference/build_training_set.md) (training folders for BirdNET-Analyzer), [`exclude_training_clips()`](https://provetelab.org/sheepdog/reference/exclude_training_clips.md) |
+| 2\. Calibration | [`read_validations()`](https://provetelab.org/sheepdog/reference/read_validations.md), [`calibration_models()`](https://provetelab.org/sheepdog/reference/calibration_models.md), [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md), [`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md), [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md), [`calibration_effort()`](https://provetelab.org/sheepdog/reference/calibration_effort.md), [`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md), [`detection_history()`](https://provetelab.org/sheepdog/reference/detection_history.md), [`summarise_history()`](https://provetelab.org/sheepdog/reference/summarise_history.md) |
+| 2\. Bayesian calibration | [`calibration_prior()`](https://provetelab.org/sheepdog/reference/calibration_prior.md), [`prior_predictive_calibration()`](https://provetelab.org/sheepdog/reference/prior_predictive_calibration.md), [`calibration_diagnostics()`](https://provetelab.org/sheepdog/reference/calibration_diagnostics.md), [`calibration_sensitivity()`](https://provetelab.org/sheepdog/reference/calibration_sensitivity.md), [`plot_calibration_draws()`](https://provetelab.org/sheepdog/reference/plot_calibration_draws.md), [`history_draws()`](https://provetelab.org/sheepdog/reference/history_draws.md) |
+| 3\. Community matrices | [`cell_status()`](https://provetelab.org/sheepdog/reference/cell_status.md), [`suggest_core_species()`](https://provetelab.org/sheepdog/reference/suggest_core_species.md), [`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md), [`community_matrices_draws()`](https://provetelab.org/sheepdog/reference/community_matrices_draws.md) |
+
+The [articles](https://provetelab.org/sheepdog/articles/) cover each
+stage with runnable examples;
 [`vignette("frognet-workflow")`](https://provetelab.org/sheepdog/articles/frognet-workflow.md)
-for the complete workflow.
+shows the complete workflow.
 
 The selection tables must have the standard BirdNET/Raven columns
 `Begin Time (s)`, `End Time (s)`, `Species Code`, `Confidence`,
@@ -162,7 +167,20 @@ extends that approach with a hierarchical multi-species structure,
 
 because the same score corresponds to very different probabilities of a
 true detection across species and sites. The candidate models are
-compared by stratified k-fold cross-validation (AUC).
+compared by stratified k-fold cross-validation, which scores both
+discrimination (AUC) and the predicted probabilities (log-loss, Brier
+score, calibration intercept and slope);
+[`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md)
+picks a model by the highest AUC or by the simplest model within one
+standard error of the lowest log-loss, leaving out singular fits.
+
+The selected model can also be fitted in a Bayesian framework with
+‘brms’ (`engine = "brms"`), with an explicit prior, convergence
+diagnostics, posterior predictive and prior sensitivity checks. Each
+detection then gets the posterior probability that it is reliable, and
+the uncertainty of the calibration can be propagated to the detection
+histories and the community matrices
+([`vignette("bayesian-calibration")`](https://provetelab.org/sheepdog/articles/bayesian-calibration.md)).
 
 ## Integration with crywolf
 
@@ -199,7 +217,7 @@ If sheepdog is useful in your work, please cite it (GitHub’s “Cite this
 repository” button uses `CITATION.cff`):
 
 > Provete, D. B. (2026). *sheepdog: sample, validate and calibrate
-> BirdNET detections for passive acoustic monitoring* (v2.1.0). Zenodo.
+> BirdNET detections for passive acoustic monitoring* (v2.2.0). Zenodo.
 > <https://doi.org/10.5281/zenodo.22696210>
 
 The hex sticker uses a dog silhouette by Mozillian from
@@ -341,6 +359,8 @@ Effort-standardised site x month matrices from calibrated histories.
 
 - [Choosing a sampling
   design](https://provetelab.org/sheepdog/articles/sampling-designs.md):
+- [Reviewing clips in the BirdNET
+  GUI](https://provetelab.org/sheepdog/articles/reviewing-in-the-gui.md):
 - [How many clips should I
   validate?](https://provetelab.org/sheepdog/articles/validation-effort.md):
 - [Calibrating confidence

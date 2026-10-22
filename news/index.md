@@ -2,6 +2,33 @@
 
 ## sheepdog (development version)
 
+### Documentation
+
+- New article “Reviewing clips in the BirdNET GUI” (site only): the
+  review in the Review tab of the BirdNET-Analyzer GUI, from the folder
+  of clips to the `Positive` and `Negative` folders read by
+  [`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md),
+  with screenshots in English and Portuguese (where the result folders
+  are `positivo` and `negativo`), the regression panel of the GUI
+  compared with the calibration of stage 2, and the review with several
+  reviewers.
+
+### Calibration
+
+- [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)
+  (and
+  [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md))
+  passes on the messages of
+  [`lme4::glmer()`](https://rdrr.io/pkg/lme4/man/glmer.html), prefixed
+  by `lme4:`, instead of hiding them; the message on singular fits is
+  not repeated, since it already becomes a warning. Every message of the
+  fit is kept in the attribute `sheepdog_messages` of the model, and
+  [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
+  appends them to `calibration_model.txt`. The fits of the
+  cross-validation folds and of the effort curve stay quiet.
+
+## sheepdog 2.2.0
+
 ### Calibration
 
 - [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md)

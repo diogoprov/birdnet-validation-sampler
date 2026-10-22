@@ -1,0 +1,198 @@
+# Reviewing clips in the BirdNET GUI
+
+The manual review of stage 1 happens outside R, in the Review tab of the
+BirdNET-Analyzer GUI. This article walks through that review, from the
+folder of clips written by
+[`cut_clips()`](https://provetelab.org/sheepdog/reference/cut_clips.md)
+to the `Positive` and `Negative` folders that
+[`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md)
+reads back. The screenshots were taken with GUI version 2.4.0 (model
+V2.4) on Windows, on clips of the FrogNet project; the layout may differ
+in other versions. The [GUI
+documentation](https://birdnet-team.github.io/BirdNET-Analyzer/stable/usage/gui.html)
+describes how to install and launch it, and states that the Review tab
+implements the workflow of Wood & Kahl (2024).
+
+## The folder of clips
+
+[`extract_validation_clips()`](https://provetelab.org/sheepdog/reference/extract_validation_clips.md)
+(or
+[`cut_clips()`](https://provetelab.org/sheepdog/reference/cut_clips.md))
+writes one folder per species under `clips/`, each with the clips to
+review. The name of a clip starts with its confidence score and its
+rank, followed by the name of the source recording and the start and end
+of the clip:
+
+![The clips of one species, ready for
+review.](gui-figures/01-clips-folder.png)
+
+The clips of one species, ready for review.
+
+The GUI reads the species from the names of these subfolders.
+
+## Choosing the species
+
+In the Review tab, *Select input directory* points the GUI to the
+`clips` folder. The *Species* list then shows one entry per subfolder,
+and the counters show the clips still to review (*Todo*) and those
+already classified as *Positive* or *Negative*:
+
+![The Review tab with the list of
+species.](gui-figures/02-species-list.png)
+
+The Review tab with the list of species.
+
+## Reviewing a clip
+
+Each clip is shown as a spectrogram, with an audio player (with
+*Autoplay*, the clip plays as soon as it opens). The name of the clip,
+with its score, is shown above the waveform. *Positive* and *Negative*
+classify the clip and move to the next one; *Undo* reverses the last
+decision and *Skip* moves on without classifying:
+
+![Reviewing a clip. The score of this clip (0.992) is the first field of
+its name.](gui-figures/03-reviewing-clip.webp)
+
+Reviewing a clip. The score of this clip (0.992) is the first field of
+its name.
+
+Review the clip by listening to it, not only by its score: the score is
+what the review is meant to check. For the random designs of
+[`vignette("sampling-designs")`](https://provetelab.org/sheepdog/articles/sampling-designs.md),
+the order in which the clips are reviewed does not matter, but every
+clip of a drawn occasion must be reviewed (see
+[`vignette("crywolf-integration")`](https://provetelab.org/sheepdog/articles/crywolf-integration.md)).
+
+## The regression panel
+
+Once clips have been classified, the *Regression* panel shows a logistic
+regression of the verdicts on the score for the selected species, with
+the scores at which the predicted probability of a true detection
+reaches 0.85, 0.90, 0.95 and 0.99:
+
+![The Review tab after the review of one species: 72 positive and 7
+negative clips, and the fitted curve.](gui-figures/04-regression.png)
+
+The Review tab after the review of one species: 72 positive and 7
+negative clips, and the fitted curve.
+
+This curve is a quick check during the review. It is fitted to one
+species at a time, pooling every site, on the clips reviewed so far. The
+calibration of stage 2
+([`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md),
+[`vignette("calibration")`](https://provetelab.org/sheepdog/articles/calibration.md))
+fits the species and sites together, lets the curve differ among them,
+compares the candidate models by cross-validation and, with
+`engine = "brms"`, carries the uncertainty of the curve. Use the GUI
+curve to follow the review, and the calibration of stage 2 for the
+analyses.
+
+## The result: Positive and Negative folders
+
+The GUI moves each classified clip into a `Positive` or a `Negative`
+subfolder of the species folder:
+
+![The species folder after the
+review.](gui-figures/05-positive-negative.png)
+
+The species folder after the review.
+
+This is the structure that
+[`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md)
+and
+[`post_validation()`](https://provetelab.org/sheepdog/reference/post_validation.md)
+read. The verdict of each clip comes from the name of the subfolder in
+which it is found, matched by the regular expressions `positive_pattern`
+(`"positiv"` by default) and `negative_pattern` (`"negativ"`), case
+insensitive. A clip left in the species folder, outside `Positive` and
+`Negative` (for instance when the review was interrupted), is counted as
+`not_reviewed`; a clip of the manifest not found at all, as
+`clip_missing`.
+
+``` r
+
+library(sheepdog)
+res <- post_validation(review_dir    = "C:/clips",
+                       manifest_path = "C:/validation/clip_manifest.csv",
+                       output_dir    = "C:/validation/results")
+```
+
+## The interface in Portuguese
+
+The GUI can be switched to Portuguese in its settings (the translation
+is by Larissa Sugai, according to the GUI documentation). The buttons
+become *Positivo*, *Negativo*, *Desfazer* and *Pular*, and the
+regression panel, *Regressão*:
+
+![The Review tab in
+Portuguese.](gui-figures/06-portuguese-interface.webp)
+
+The Review tab in Portuguese.
+
+![The list of species in
+Portuguese.](gui-figures/07-species-list-pt.png)
+
+The list of species in Portuguese.
+
+![Reviewing a clip in
+Portuguese.](gui-figures/08-reviewing-clip-pt.webp)
+
+Reviewing a clip in Portuguese.
+
+With the interface in Portuguese, the GUI names the result folders
+`positivo` and `negativo` instead of `Positive` and `Negative`. The
+default patterns of
+[`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md)
+(`"positiv"`, `"negativ"`, case insensitive) match both, so the review
+can be read back in either language, and clips reviewed partly in each
+language end up in the right verdict. The regression panel of a species
+with more false positives looks different: here the curve reaches 0.85
+only at a score of 0.81, and 0.90 at 0.93, and the higher probabilities
+are not reached within the range of scores:
+
+![The regression panel for a species with more false
+positives.](gui-figures/09-regression-pt.png)
+
+The regression panel for a species with more false positives.
+
+Species like this are those that
+[`cell_status()`](https://provetelab.org/sheepdog/reference/cell_status.md)
+flags as unreliable at `p_min = 0.95` (see
+[`vignette("community-matrices")`](https://provetelab.org/sheepdog/articles/community-matrices.md)).
+
+## Several reviewers
+
+When the clips are split among reviewers, each reviewer reviews their
+own copy of the folder tree in the GUI.
+[`assign_reviewers()`](https://provetelab.org/sheepdog/reference/assign_reviewers.md)
+splits the clips (with a fraction reviewed twice),
+[`split_by_reviewer()`](https://provetelab.org/sheepdog/reference/split_by_reviewer.md)
+copies them, and after the review
+[`reviewer_agreement()`](https://provetelab.org/sheepdog/reference/reviewer_agreement.md)
+and
+[`consensus_verdicts()`](https://provetelab.org/sheepdog/reference/consensus_verdicts.md)
+measure the agreement and combine the verdicts:
+
+``` r
+
+man <- assign_reviewers(read.csv("C:/validation/clip_manifest.csv"),
+                        reviewers = c("ana", "bia", "caio"), overlap = 0.1)
+split_by_reviewer(man, clips_dir = "C:/validation/clips",
+                  output_dir = "C:/review")
+
+# after each reviewer has reviewed C:/review/<reviewer> in the GUI
+reviews <- lapply(c(ana = "ana", bia = "bia", caio = "caio"), function(r)
+  classify_review(man, file.path("C:/review", r)))
+reviewer_agreement(reviews)
+validation <- consensus_verdicts(reviews)
+```
+
+Clips with conflicting verdicts get `verdict = "disagreement"` and are
+left out of the precision and the calibration until a consensus review
+settles them.
+
+## References
+
+Wood, C. M., & Kahl, S. (2024). Guidelines for appropriate use of
+BirdNET scores and other detector outputs. *Journal of Ornithology*,
+165, 777–782. <https://doi.org/10.1007/s10336-024-02144-5>

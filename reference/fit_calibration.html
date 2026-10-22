@@ -11,7 +11,7 @@ score_detections() can score new detections."><meta property="og:image" content=
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,7 @@ score_detections() can score new detections."><meta property="og:image" content=
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>The three stages</h6></li>
     <li><a class="dropdown-item" href="../articles/sampling-designs.html">Choosing a sampling design</a></li>
+    <li><a class="dropdown-item" href="../articles/reviewing-in-the-gui.html">Reviewing clips in the BirdNET GUI</a></li>
     <li><a class="dropdown-item" href="../articles/validation-effort.html">How many clips should I validate?</a></li>
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibrating confidence scores</a></li>
     <li><a class="dropdown-item" href="../articles/bayesian-calibration.html">Bayesian calibration with brms</a></li>
@@ -110,7 +111,10 @@ random effects whose fit is singular (a variance estimated at zero or a
 correlation at +-1) raises a warning: the fixed effects and the
 predictions can still be used, but the variance components on the
 boundary should not be interpreted, and a simpler model may predict as
-well. Check them with <code><a href="https://rdrr.io/pkg/nlme/man/VarCorr.html" class="external-link">lme4::VarCorr()</a></code>.</p>
+well. Check them with <code><a href="https://rdrr.io/pkg/nlme/man/VarCorr.html" class="external-link">lme4::VarCorr()</a></code>. The other messages of
+<code><a href="https://rdrr.io/pkg/lme4/man/glmer.html" class="external-link">lme4::glmer()</a></code> are passed on, prefixed by <code>lme4:</code>, and every message of
+the fit is kept in the attribute <code>sheepdog_messages</code> of the model
+(convergence warnings of 'lme4' are warnings and are passed on as such).</p>
 <p>With <code>engine = "brms"</code>, the model is fitted in a Bayesian framework
 with 'brms' (Bernoulli family, logit link). The prior must be given
 explicitly; <code><a href="calibration_prior.html">calibration_prior()</a></code> builds an example centred on an
