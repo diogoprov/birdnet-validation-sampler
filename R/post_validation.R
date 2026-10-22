@@ -205,7 +205,8 @@ retraining_clips <- function(validation) {
 #' Plot the precision curves
 #'
 #' One panel per species: precision by confidence bin, with the target
-#' precision as a dashed line and bins with low support shown faded.
+#' precision as a dashed line and bins with low support shown faded. With
+#' more than one site, each site is a line of its own colour.
 #' Needs the 'ggplot2' package.
 #'
 #' @param precision Table returned by [precision_by_bin()].
@@ -217,14 +218,26 @@ retraining_clips <- function(validation) {
 plot_precision <- function(precision, bins = seq(0.1, 1, by = 0.1),
                            target_precision = 0.90, min_n = 15) {
   require_suggested("ggplot2", "to plot the precision curves")
+  # com varios locais, uma linha por local (antes as linhas de locais
+  # diferentes eram ligadas no mesmo painel)
+  varios_locais <- n_distinct(precision$site) > 1
+  linha <- if (varios_locais) {
+    list(ggplot2::geom_line(ggplot2::aes(colour = site, group = site)),
+         ggplot2::geom_point(ggplot2::aes(size = n_reviewed,
+                                          alpha = !low_support,
+                                          colour = site)))
+  } else {
+    list(ggplot2::geom_line(colour = "#2a7fbf"),
+         ggplot2::geom_point(ggplot2::aes(size = n_reviewed,
+                                          alpha = !low_support),
+                             colour = "#2a7fbf"))
+  }
   precision |>
     mutate(conf_meio = bins[as.integer(bin)] + 0.05) |>
     ggplot2::ggplot(ggplot2::aes(conf_meio, precision)) +
     ggplot2::geom_hline(yintercept = target_precision,
                         linetype = "dashed", colour = "grey50") +
-    ggplot2::geom_line(colour = "#2a7fbf") +
-    ggplot2::geom_point(ggplot2::aes(size = n_reviewed, alpha = !low_support),
-                        colour = "#2a7fbf") +
+    linha +
     ggplot2::scale_alpha_manual(values = c(`TRUE` = 1, `FALSE` = 0.3),
                                 guide = "none") +
     ggplot2::scale_size_continuous(name = "reviewed clips") +

@@ -1,0 +1,315 @@
+---
+title: "From detections to community analyses"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{From detections to community analyses}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+has_vegan   <- requireNamespace("vegan", quietly = TRUE)
+has_ggplot2 <- requireNamespace("ggplot2", quietly = TRUE)
+```
+
+Stage 3 of sheepdog turns the calibrated nightly detection history into
+site x month community matrices for multivariate analyses. This vignette
+runs that stage on the example data shipped with the package and closes
+with an illustrative ordination.
+
+```{r}
+library(sheepdog)
+```
+
+## The calibrated detection history
+
+The example history is the output of `calibrate()` on simulated BirdNET
+predictions for four sites, five species and six months (October 2021 to
+March 2022), with five recorded nights per site x month, except for one
+recorder failure. In the simulation, occupancy is seasonal (higher in the
+rainy months, November to February) and differs among sites and species;
+the false-positive scores overlap those of true detections, at rates that
+vary among species and sites (`data-raw/make_example_data.R`).
+
+```{r}
+ex <- system.file("extdata", "example", package = "sheepdog")
+history_file <- file.path(ex, "nightly_detection_history.csv")
+history <- readr::read_csv(history_file, show_col_types = FALSE,
+                           col_types = readr::cols(night = "c"))
+history
+```
+
+```{r, include = FALSE}
+sites   <- sort(unique(history$site))
+species <- sort(unique(history$species))
+```
+
+The history covers `r length(sites)` sites (`r sites`) and
+`r length(species)` species (`r species`). Each row is a site x species x
+night. `n_reliable` counts the detections whose calibrated probability of
+being a true positive reached `p_min` in `calibrate()`; `detection_k1` to
+`detection_k3` flag nights with at least one, two or three such detections.
+
+## Why the entry rule must be strict
+
+Occupancy models with false positives include an observation layer that
+absorbs misidentifications, provided that part of the detections are
+confirmed (see `vignette("crywolf-integration")`). Dissimilarity indices and
+ordinations have no such layer: a single false positive becomes a species
+"present" in a sample and contributes directly to beta diversity.
+`community_matrices()` therefore applies three filters.
+
+* **Repetition rule (`k_min`).** A species counts as detected on a night
+  only when it had at least `k_min` reliable detections that night (column
+  `detection_k<k_min>`). An isolated high-probability detection is more
+  likely to be an error than repeated ones.
+* **Core species.** Only species whose calibration is reliable at every
+  site enter the matrix. If the classifier has lower recall, or a poorer
+  calibration, at some sites, the resulting differences in detection would
+  appear as artefactual turnover among sites.
+* **Minimum effort (`min_nights_month`).** Each cell is the frequency of
+  nights with detection, standardised by effort (nights with detection /
+  nights recorded at that site x month). Cells with fewer recorded nights
+  than `min_nights_month` give unstable frequencies and are dropped.
+
+## Choosing the core species
+
+The choice of core species is made by the user, from the calibration
+diagnostics written by `calibrate()` (e.g. `calibration_curves.png`); the
+package does not make it automatically. `summarise_history()` gives a
+complementary view: the number of nights with a reliable detection per site
+and species under each repetition rule (shown below for `k_min = 1`).
+
+```{r}
+by_site <- summarise_history(history)
+by_site |>
+  dplyr::select(site, species, nights_k1) |>
+  tidyr::pivot_wider(names_from = site, values_from = nights_k1)
+```
+
+```{r, include = FALSE}
+core <- by_site |>
+  dplyr::summarise(all_sites = all(nights_k1 > 0), .by = species) |>
+  dplyr::filter(all_sites) |>
+  dplyr::pull(species) |>
+  sort()
+never <- by_site |>
+  dplyr::summarise(none = all(nights_k1 == 0), .by = species) |>
+  dplyr::filter(none) |>
+  dplyr::pull(species) |>
+  sort()
+partial <- setdiff(species, c(core, never))
+```
+
+Species with no reliable detection anywhere (`r never`) are cases in which
+calibrated probabilities rarely reach `p_min`, because their false-positive
+scores overlap those of true detections; in the simulation every species
+has a non-zero probability of occupancy at every site. Species reliably detected at some sites only (`r partial`) are
+the case the core rule targets: their absence from a site may reflect the
+classifier rather than the community. Here the core species are taken as
+those with at least one night with a reliable detection at every site
+(`r core`). This is a convenient proxy for the example; with real data the
+decision rests on the calibration diagnostics, and a species that is truly
+absent from some sites should not be excluded on this criterion alone.
+
+```{r}
+core <- by_site |>
+  dplyr::summarise(all_sites = all(nights_k1 > 0), .by = species) |>
+  dplyr::filter(all_sites) |>
+  dplyr::pull(species) |>
+  sort()
+core
+```
+
+## Building the matrices
+
+```{r}
+mats <- community_matrices(history, core_species = core, k_min = 2,
+                           min_nights_month = 5)
+names(mats)
+```
+
+The effort table lists the recorded nights per site x month and whether the
+cell entered the matrices.
+
+```{r}
+mats$effort
+mats$effort |> dplyr::filter(!included)
+```
+
+```{r, include = FALSE}
+n_cells    <- nrow(mats$effort)
+n_included <- sum(mats$effort$included)
+dropped    <- mats$effort |> dplyr::filter(!included)
+dropped_txt <- paste0(dropped$site, " in ", dropped$month, " (",
+                      dropped$n_nights_recorded, " nights)",
+                      collapse = "; ")
+```
+
+Of the `r n_cells` site x month cells, `r n_included` entered the matrices.
+The cell dropped by `min_nights_month = 5` is `r dropped_txt`, the month of
+the simulated recorder failure; it remains listed in the effort table with
+`included = FALSE`. Effort is approximated by the number of distinct nights
+that appear in the history of the site for any species, which is adequate
+when detections are dense, as here.
+
+The count matrix holds the number of nights with detection, and the
+frequency matrix divides it by the recorded nights:
+
+```{r}
+mats$counts
+mats$frequency
+```
+
+## Sensitivity to the repetition rule
+
+The repetition rule trades false positives against missed detections. The
+mean frequency of each core species across cells shows how the matrix
+changes with `k_min`:
+
+```{r}
+sens <- lapply(1:3, function(k) {
+  community_matrices(history, core, k_min = k)$frequency |>
+    dplyr::summarise(dplyr::across(dplyr::all_of(core), mean)) |>
+    dplyr::mutate(k_min = k, .before = 1)
+}) |>
+  dplyr::bind_rows()
+sens
+```
+
+```{r, include = FALSE}
+loss <- round(100 * (1 - unlist(sens[3, core]) / unlist(sens[1, core])))
+most  <- names(which.max(loss))
+least <- names(which.min(loss))
+```
+
+From `k_min = 1` to `3`, the mean frequency of `r least` falls by
+`r loss[least]`%, whereas that of `r most` falls by `r loss[most]`%. The
+rule therefore acts unevenly among species, and its effect on the
+ordination should be reported. `k_min = 2` is the default.
+
+## Writing the matrices to disk
+
+`build_community_matrices()` is the wrapper that reads
+`nightly_detection_history.csv`, calls `community_matrices()` and writes
+the frequency and count matrices and the effort table as CSV files:
+
+```{r}
+out <- file.path(tempdir(), "community_matrices")
+mats <- build_community_matrices(history_file, out, core_species = core,
+                                 k_min = 2, min_nights_month = 5)
+list.files(out)
+```
+
+## An illustrative ordination
+
+The example has only `r length(sites)` sites, six months and
+`r length(core)` core species, so the ordination below illustrates the
+workflow; it does not support inference. With so few species, the
+ordination adds little to a plot of the raw frequencies. It uses the
+**vegan** package, which is suggested but not required by sheepdog.
+
+The dissimilarity is Bray–Curtis on the frequency matrix, which retains the
+quantitative information of the frequencies; Jaccard on incidence would
+discard it. [CITAR: properties of Bray–Curtis and Jaccard for frequency
+data in community ordination] Samples in which no core species was
+detected have undefined Bray–Curtis dissimilarity and must be removed
+first.
+
+```{r, eval = has_vegan}
+freq <- mats$frequency |>
+  dplyr::mutate(
+    season = ifelse(substr(month, 6, 7) %in% c("11", "12", "01", "02"),
+                    "rainy", "dry"),
+    label  = paste(site, month)
+  )
+Y <- as.matrix(freq[, core])
+rownames(Y) <- freq$label
+empty <- rowSums(Y) == 0
+freq$label[empty] # samples removed
+freq_ord <- freq[!empty, ]
+Y <- Y[!empty, , drop = FALSE]
+d <- vegan::vegdist(Y, method = "bray")
+```
+
+```{r, include = FALSE, eval = has_vegan}
+n_empty <- sum(empty)
+n_kept  <- nrow(Y)
+```
+
+`r if (has_vegan) paste0("Samples removed for lacking any core species: ", n_empty, "; samples kept: ", n_kept, ".") else ""`
+
+A principal coordinates analysis (PCoA) on the dissimilarity matrix:
+
+```{r, eval = has_vegan}
+pcoa <- vegan::wcmdscale(d, eig = TRUE)
+expl <- pcoa$eig[pcoa$eig > 0] / sum(pcoa$eig[pcoa$eig > 0])
+round(100 * expl[1:2], 1)
+sum(pcoa$eig < 0) # negative eigenvalues
+scores_pcoa <- data.frame(freq_ord[, c("site", "month", "season")],
+                          PCo1 = pcoa$points[, 1], PCo2 = pcoa$points[, 2])
+```
+
+Bray–Curtis is not Euclidean, so some eigenvalues are negative;
+`wcmdscale()` returns only the axes with positive eigenvalues, and the
+percentages above are relative to their sum.
+
+```{r, eval = has_vegan && has_ggplot2, fig.width = 6, fig.height = 4.5, fig.alt = "PCoA of the site x month samples, coloured by site, with shape by season."}
+ggplot2::ggplot(scores_pcoa,
+                ggplot2::aes(PCo1, PCo2, colour = site, shape = season)) +
+  ggplot2::geom_point(size = 3, alpha = 0.8) +
+  ggplot2::labs(
+    x = sprintf("PCo1 (%.1f%%)", 100 * expl[1]),
+    y = sprintf("PCo2 (%.1f%%)", 100 * expl[2]),
+    colour = "Site", shape = "Season"
+  ) +
+  ggplot2::theme_bw()
+```
+
+Samples with identical frequencies share a single point. Non-metric
+multidimensional scaling (NMDS) on the same dissimilarity, with stress
+reported:
+
+```{r, eval = has_vegan}
+set.seed(2026)
+nmds <- vegan::metaMDS(d, k = 2, trymax = 50, trace = FALSE)
+nmds$stress
+```
+
+```{r, eval = has_vegan && has_ggplot2, fig.width = 6, fig.height = 4.5, fig.alt = "NMDS of the site x month samples, coloured by site, with shape by season."}
+scores_nmds <- data.frame(freq_ord[, c("site", "season")],
+                          vegan::scores(nmds))
+ggplot2::ggplot(scores_nmds,
+                ggplot2::aes(NMDS1, NMDS2, colour = site, shape = season)) +
+  ggplot2::geom_point(size = 3, alpha = 0.8) +
+  ggplot2::labs(colour = "Site", shape = "Season",
+                caption = sprintf("Stress = %.3f", nmds$stress)) +
+  ggplot2::theme_bw()
+```
+
+The low stress is expected: `r length(core)` species define a
+low-dimensional configuration, and a two-dimensional NMDS reproduces it
+almost exactly.
+
+### A note on inference
+
+A PERMANOVA (`vegan::adonis2()`) could test for differences between
+seasons, but the example does not support that test. There are only
+`r if (has_vegan) n_kept else "a few"` samples from `r length(sites)`
+sites, and months within a site are not independent replicates: they share
+the site, its species pool and its recorder, and consecutive months are
+temporally autocorrelated. Restricting permutations to within sites
+(`strata = site`) respects the blocking by site but not the temporal
+dependence, and the cell dropped for low effort leaves the blocks
+unbalanced. The code is shown for completeness and its p-value should not
+be interpreted:
+
+```{r, eval = has_vegan}
+set.seed(2026)
+vegan::adonis2(d ~ season, data = freq_ord, strata = freq_ord$site,
+               permutations = 999)
+```
+
+A design that supports inference would need more sites per treatment, or a
+model that accounts explicitly for repeated measures within sites.

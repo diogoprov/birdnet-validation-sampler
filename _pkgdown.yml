@@ -56,8 +56,15 @@ reference:
       - sheepdog-package
 
 articles:
-  - title: Articles
-    navbar: ~
+  - title: The three stages
+    navbar: The three stages
     contents:
-      - frognet-workflow
+      - sampling-designs
+      - validation-effort
+      - calibration
+      - community-matrices
+  - title: Integration and case study
+    navbar: Integration and case study
+    contents:
       - crywolf-integration
+      - frognet-workflow
