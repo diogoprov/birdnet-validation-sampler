@@ -26,6 +26,7 @@ A ggplot object.
 }
 \description{
 One panel per species: precision by confidence bin, with the target
-precision as a dashed line and bins with low support shown faded.
+precision as a dashed line and bins with low support shown faded. With
+more than one site, each site is a line of its own colour.
 Needs the 'ggplot2' package.
 }

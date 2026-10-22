@@ -1,0 +1,208 @@
+---
+title: "Get started with sheepdog"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Get started with sheepdog}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+sheepdog checks whether the detections of a 'BirdNET' custom classifier are
+real. Its first stage, covered here, builds a set of clips for manual review
+from the BirdNET selection tables and summarises the verdicts of the
+reviewers. Calibration (stage 2) and community matrices (stage 3) are covered
+in other articles (see [Where next](#where-next)).
+
+```{r}
+library(sheepdog)
+```
+
+## Example data
+
+The package ships a small simulated data set: BirdNET selection tables
+(Raven format) of four sites (`ARA`, `XAR`, `BAI`, `NHE`) recorded over six
+months (October 2021 to March 2022), with predictions for five anuran
+species. False-positive rates vary among species and sites, and the
+confidence scores of false positives overlap those of true detections. The
+generator is `data-raw/make_example_data.R` in the source repository. The
+`Begin Path` column points to recordings on a fictitious network drive
+(`N:\pam\audio\...`); the audio files themselves are not distributed.
+
+```{r}
+ex <- system.file("extdata", "example", package = "sheepdog")
+list.files(file.path(ex, "birdnet"), recursive = TRUE)
+```
+
+## Reading the selection tables
+
+`read_selection_tables()` finds every selection table under a folder, reads
+them and stacks them. The site is taken from the name of the folder that
+holds each table, and the column names are standardised (e.g.
+`Begin Time (s)` becomes `begin_time`).
+
+```{r}
+det <- read_selection_tables(file.path(ex, "birdnet"))
+det |>
+  dplyr::select(site, species_code, confidence, begin_path, file_offset) |>
+  head()
+dplyr::count(det, site)
+dplyr::count(det, species_code)
+```
+
+## Selecting the clips to review
+
+`select_clips()` applies the sampling design to the predictions and returns
+the clip manifest, one row per clip to cut. It reads and writes no audio. The
+default `"top"` design keeps the `n_top` predictions with the highest
+confidence per site x species x night x hour; `max_per_species` then caps
+the number of clips per site x species, drawing across the hours of the
+night (`balance_by_hour = TRUE`). Because the hour window below crosses
+midnight, recordings made after midnight are assigned to the night before.
+
+```{r}
+man <- select_clips(det,
+                    sampling_mode   = "top",
+                    n_top           = 2,
+                    hour_start      = 18, hour_end = 2,
+                    max_per_species = 40)
+dplyr::count(man, site, species_folder)
+```
+
+The `"top"` design serves classifier retraining and the score-to-probability
+calibration of stage 2. It should not be used to estimate false-positive
+rates, because top-score clips hold fewer false positives than a random
+sample; the random designs are described in `vignette("sampling-designs")`.
+
+The manifest links each clip to its source recording. Its columns are
+defined in `vignette("crywolf-integration")`.
+
+```{r}
+dplyr::glimpse(man)
+```
+
+The columns used below are `species_folder` (the folder of each species in
+the review), `night`, `confidence`, `clip_file` (the name of the clip,
+unique within the run), and `source_audio` with `clip_start` and
+`clip_end` (where the clip is cut from).
+
+## Cutting the clips
+
+`cut_clips()` cuts each clip of the manifest into
+`<output_dir>/clips/<species_folder>/`, and `extract_validation_clips()`
+runs reading, selection and cutting in one call, writing
+`clip_manifest.csv` and one zip file per species. Both need the source
+recordings and the 'av' package, so they are not run here. With real data,
+check the selection first with `simulate = TRUE`, and remap the paths of the
+recordings with `remap_from` and `remap_to` when the drive is mounted
+elsewhere:
+
+```{r, eval = FALSE}
+extract_validation_clips("N:/pam/birdnet", "N:/pam/validation",
+                         max_per_species = 40,
+                         remap_from = "N:/", remap_to = "/Volumes/pam/",
+                         simulate = TRUE)
+```
+
+## The manual review (simulated)
+
+In real use, reviewers listen to the clips in the Review tab of the BirdNET
+GUI (<https://birdnet-team.github.io/BirdNET-Analyzer/stable/usage/gui.html>),
+which moves each clip into a `Positive` or `Negative` subfolder of its
+species folder. sheepdog reads the verdict from that folder structure.
+
+To make this vignette runnable, the review is replaced by a stand-in: each
+clip is declared positive with probability equal to its confidence score,
+and an empty `.wav` file with the name of the clip is created in the
+corresponding subfolder of a temporary directory. These verdicts are
+illustrative only; they are not the simulated truth of the example data,
+and they assume a perfect calibration that real classifiers do not have.
+
+```{r}
+review_dir <- file.path(tempdir(), "sheepdog-review", "clips")
+
+set.seed(1)
+verdict <- ifelse(stats::runif(nrow(man)) < man$confidence,
+                  "Positive", "Negative")
+paths <- file.path(review_dir, man$species_folder, verdict, man$clip_file)
+invisible(lapply(unique(dirname(paths)), dir.create,
+                 recursive = TRUE, showWarnings = FALSE))
+invisible(file.create(paths))
+
+list.dirs(review_dir, full.names = FALSE)
+```
+
+## Summarising the review
+
+`classify_review()` joins the verdict found in the review folder to the
+manifest. Clips left in the species folder are flagged `"not_reviewed"`, and
+clips that are not found at all are flagged `"clip_missing"`.
+
+```{r}
+val <- classify_review(man, review_dir)
+dplyr::count(val, species_folder, verdict)
+```
+
+`precision_by_bin()` gives the share of positive verdicts by site, species
+and confidence bin. Bins with fewer than `min_n` reviewed clips are flagged
+in `low_support`.
+
+```{r}
+prec <- precision_by_bin(val, min_n = 15)
+head(prec, 10)
+```
+
+`suggest_thresholds()` returns, for each site and species, the lowest
+confidence at which the precision among the clips at or above it reaches
+`target_precision`, with at least `min_n` clips. `NA` means that no cut
+reached the target with the clips reviewed. With only 40 clips per site x
+species, many cells lack the support to reach the target;
+`vignette("validation-effort")` discusses how many clips are needed.
+
+```{r}
+suggest_thresholds(val, target_precision = 0.90, min_n = 15)
+```
+
+`nightly_presence()` summarises the verdicts by site, species and night: a
+night is `"confirmed"` when at least one clip is positive.
+
+```{r}
+pres <- nightly_presence(val)
+head(pres)
+dplyr::count(pres, species_folder, presence)
+```
+
+`plot_precision()` draws the precision curve of each species, with the
+target precision as a dashed line and bins with low support faded. It needs
+'ggplot2'. With several sites, each site is drawn as a line of its own
+colour within the species panels.
+
+```{r, eval = requireNamespace("ggplot2", quietly = TRUE), fig.width = 8, fig.height = 6, out.width = "100%"}
+plot_precision(prec, target_precision = 0.90, min_n = 15)
+```
+
+`retraining_clips()` lists the positive clips for retraining the classifier.
+With real data, `post_validation()` runs all of the above in one call and
+writes each table to a CSV file, together with the figure.
+
+## Where next
+
+- `vignette("sampling-designs")`: choosing between the `"top"`,
+  `"random_detections"` and `"random_recordings"` designs, the inclusion
+  probabilities they record, and limits on the review effort.
+- `vignette("validation-effort")`: how many clips to validate, from the
+  curve of `calibration_effort()` and the support of each site x species
+  cell in `precision_by_bin()` and `suggest_thresholds()`.
+- `vignette("calibration")`: calibrating confidence scores (stage 2): the
+  candidate models, their cross-validated comparison, calibration curves,
+  scoring of every detection and nightly detection histories (`p_min`, k).
+- `vignette("community-matrices")`: from calibrated detections to
+  community analyses (stage 3): `community_matrices()`, the `k_min` rule,
+  the effort filter and ordinations with 'vegan'.
+- `vignette("crywolf-integration")`: the clip manifest and validation
+  tables as input to occupancy models with false positives.
+- `vignette("frognet-workflow")`: the complete workflow as used in the
+  FrogNet project.

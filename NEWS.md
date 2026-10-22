@@ -1,5 +1,18 @@
 # sheepdog (development version)
 
+- New articles, run on a simulated example data set:
+  `vignette("sheepdog")` (Get started), `vignette("sampling-designs")`,
+  `vignette("validation-effort")`, `vignette("calibration")` and
+  `vignette("community-matrices")`.
+- The example data set (4 sites x 5 species x 6 months; selection tables,
+  the list of recordings, reviewed clips and a calibrated nightly history)
+  ships in `system.file("extdata", "example", package = "sheepdog")`;
+  `data-raw/make_example_data.R` generates it.
+- `plot_precision()` draws one line per site when the table has several
+  sites; before, the lines of different sites were joined in the same panel
+  (also in the `precision_by_bin.png` of `post_validation()`).
+- 'vegan' is a suggested package, used only in
+  `vignette("community-matrices")`.
 - The vignette `crywolf-contract` is now `crywolf-integration`
   ("Integration with crywolf").
 
