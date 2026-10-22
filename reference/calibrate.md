@@ -112,6 +112,13 @@ A list with `comparison`, `fit`, `effort` (or `NULL`), `scored` and
 
 ## Details
 
+The best model is the one with the highest mean AUC. When its refit is
+singular,
+[`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)
+warns; read `calibration_model.txt` and the comparison before using the
+probabilities, since a simpler model within the cross-validation spread
+may be preferable.
+
 Converting BirdNET confidence scores into probabilities is recommended
 by the BirdNET authors (Wood & Kahl 2024,
 [doi:10.1007/s10336-024-02144-5](https://doi.org/10.1007/s10336-024-02144-5)

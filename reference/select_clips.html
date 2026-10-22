@@ -122,7 +122,10 @@ night x hour.</p></dd>
 
 <dt id="arg-recording-fraction">recording_fraction<a class="anchor" aria-label="anchor" href="#arg-recording-fraction"></a></dt>
 <dd><p><code>"random_recordings"</code>: fraction of the
-recordings (or minutes) drawn at each site.</p></dd>
+recordings (or minutes) drawn at each site, rounded, with at least one
+per site. The default (1 %) suits large projects: with fewer than 150
+recordings per site it draws a single recording; raise it or use
+<code>n_recordings_per_site</code> in small projects.</p></dd>
 
 
 <dt id="arg-n-recordings-per-site">n_recordings_per_site<a class="anchor" aria-label="anchor" href="#arg-n-recordings-per-site"></a></dt>
@@ -186,7 +189,10 @@ first date of each site.</p></dd>
 <dd><p>Total clips per site, split evenly among species by
 water filling: species with fewer clips than the quota enter whole and
 the surplus goes to the others. In <code>"random_detections"</code> it counts
-occasions. Ignored in <code>"random_recordings"</code>. <code>NULL</code> sets no target.</p></dd>
+occasions. Ignored in <code>"random_recordings"</code>. <code>NULL</code> sets no target.
+Because the target is split evenly, rare species have higher
+inclusion probabilities than common ones: estimates pooled across
+species must weight the clips by <code>1 / inclusion_prob</code>.</p></dd>
 
 
 <dt id="arg-balance-by-hour">balance_by_hour<a class="anchor" aria-label="anchor" href="#arg-balance-by-hour"></a></dt>

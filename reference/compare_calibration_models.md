@@ -39,5 +39,6 @@ compare_calibration_models(
 
 ## Value
 
-A tibble with `model`, `formula`, `auc_mean` and `auc_sd`, ordered from
-the highest mean AUC.
+A tibble with `model`, `formula`, `auc_mean`, `auc_sd` and `n_failed`
+(folds whose fit failed, left out of the mean), ordered from the highest
+mean AUC. Failed folds also raise a warning.

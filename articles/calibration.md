@@ -187,6 +187,10 @@ the choice:
 ``` r
 
 fits <- lapply(models, function(f) fit_calibration(val, f))
+#> Warning: Singular fit (boundary) of the calibration model tp ~ logit_conf +
+#> (logit_conf | species) + (1 | site:species): a variance component is estimated
+#> at zero or a correlation at +-1. Check lme4::VarCorr(fit) and consider a
+#> simpler model.
 vapply(fits[-1], lme4::isSingular, logical(1))
 #> m1_species_intercept     m2_species_slope         m3_plus_site 
 #>                FALSE                FALSE                FALSE 
@@ -214,20 +218,21 @@ lme4::VarCorr(fit_full)
 The site x species intercepts of m4 have a standard deviation of 0.92 on
 the logit scale, a large effect: at a given score, the odds of a true
 detection differ several-fold among sites for the same species. The fit
-is nevertheless singular: the correlation between the species intercepts
-and slopes is estimated at 1, on the boundary of its range. With 5
-species, a correlation between two random effects is poorly identified.
-A singular fit means that the random-effect structure is more complex
-than the data can support. The predictions can still be used, but this
-variance component should not be interpreted. The singularity lies in
-the species term, not in the site x species term that gives m4 its
-advantage: m2 and m3 share the same species term and are not singular
-(in m3 the correlation is 0.93), and m3 comes close to m4 in the
-comparison. A non-singular model within one standard deviation of the
-best (m2 or m3 here) is a defensible alternative to m4. Fitting m4
-without the correlation (with
-`(1 | species) + (0 + logit_conf | species)`) would be a further option,
-but it is not one of the built-in candidates.
+is nevertheless singular, which is why
+[`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)
+warned above: the correlation between the species intercepts and slopes
+is estimated at 1, on the boundary of its range. With 5 species, a
+correlation between two random effects is poorly identified. A singular
+fit means that the random-effect structure is more complex than the data
+can support. The predictions can still be used, but this variance
+component should not be interpreted. The singularity lies in the species
+term, not in the site x species term that gives m4 its advantage: m2 and
+m3 share the same species term and are not singular (in m3 the
+correlation is 0.93), and m3 comes close to m4 in the comparison. A
+non-singular model within one standard deviation of the best (m2 or m3
+here) is a defensible alternative to m4. Fitting m4 without the
+correlation (with `(1 | species) + (0 + logit_conf | species)`) would be
+a further option, but it is not one of the built-in candidates.
 
 ## Calibration curves
 
@@ -510,13 +515,14 @@ hierarchical models keep the threshold on P(TP) consistent across them.
 Before using calibrated probabilities, check that:
 
 1.  **The GLMM converged.**
-    [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md)
-    and
     [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)
-    suppress the messages of
-    [`lme4::glmer()`](https://rdrr.io/pkg/lme4/man/glmer.html), and a
-    fold whose fit fails is dropped from the mean AUC. Inspect the
-    refitted model directly:
+    warns when the refitted model is singular, as it did for m4 above,
+    and convergence warnings of
+    [`lme4::glmer()`](https://rdrr.io/pkg/lme4/man/glmer.html) are
+    passed on.
+    [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md)
+    drops a fold whose fit fails from the mean AUC, warns about it and
+    counts it in `n_failed`. Inspect the refitted model directly:
 
     ``` r
 
@@ -557,10 +563,15 @@ scored one in noise or in species composition.
 runs the whole stage in one call. It reads the clips, compares the
 candidate models, refits the best one by mean AUC, plots the calibration
 curves (if ggplot2 is installed), scores every detection, builds the
-detection history and writes all the outputs to `output_dir`. Because it
-takes the first row of the comparison table without checking for
-singular fits, read the comparison, `calibration_model.txt` and the
-curves it writes before using its output.
+detection history and writes all the outputs to `output_dir`. It refits
+the model with the highest mean AUC; when that refit is singular, as m4
+is here, it warns (through
+[`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md))
+but keeps the model. Read the comparison, `calibration_model.txt` and
+the curves it writes before using its output, and refit a simpler model
+with
+[`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)
+if the comparison supports it.
 
 ``` r
 
@@ -570,6 +581,10 @@ res <- calibrate(validation_files  = val_files,
                  output_dir        = out_dir,
                  p_min = 0.95, min_detections_night = 1, k_folds = 5) |>
   suppressMessages()
+#> Warning: Singular fit (boundary) of the calibration model tp ~ logit_conf +
+#> (logit_conf | species) + (1 | site:species): a variance component is estimated
+#> at zero or a correlation at +-1. Check lme4::VarCorr(fit) and consider a
+#> simpler model.
 res$comparison$model[1]  # the model calibrate() refitted
 #> [1] "m4_species_x_site"
 list.files(out_dir)

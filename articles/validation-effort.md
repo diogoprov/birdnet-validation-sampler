@@ -113,6 +113,11 @@ is itself estimated from `n_reps` values and is unstable with few
 repetitions. Training sizes must stay below the size of the smallest
 cell minus five, since at most `n - 5` clips of a cell are used for
 training whatever the value of `n_train`.
+[`calibration_effort()`](https://provetelab.org/sheepdog/reference/calibration_effort.md)
+warns when a requested size exceeds that limit, and reports the training
+size actually used (`n_train_mean`), the size of the test set
+(`n_test_mean`) and the repetitions dropped (`n_failed`) next to the
+AUC.
 
 ``` r
 
@@ -128,16 +133,16 @@ eff_m0 <- calibration_effort(val, models$m0_global,
                              n_train = n_train, n_reps = n_reps)
 #> Effort curve (15 repetitions per n)...
 eff_m0
-#> # A tibble: 7 × 3
-#>   n_per_cell auc_mean  auc_sd
-#>        <dbl>    <dbl>   <dbl>
-#> 1          5    0.803 0.00291
-#> 2         10    0.803 0.00361
-#> 3         20    0.803 0.00692
-#> 4         30    0.802 0.00684
-#> 5         45    0.808 0.0103 
-#> 6         60    0.808 0.0148 
-#> 7         70    0.795 0.0236
+#> # A tibble: 7 × 6
+#>   n_per_cell auc_mean  auc_sd n_train_mean n_test_mean n_failed
+#>        <dbl>    <dbl>   <dbl>        <dbl>       <dbl>    <int>
+#> 1          5    0.803 0.00291            5        1500        0
+#> 2         10    0.803 0.00361           10        1400        0
+#> 3         20    0.803 0.00692           20        1200        0
+#> 4         30    0.802 0.00684           30        1000        0
+#> 5         45    0.808 0.0103            45         700        0
+#> 6         60    0.808 0.0148            60         400        0
+#> 7         70    0.795 0.0236            70         200        0
 ```
 
 ``` r
@@ -146,16 +151,16 @@ eff_m4 <- calibration_effort(val, models$m4_species_x_site,
                              n_train = n_train, n_reps = n_reps)
 #> Effort curve (15 repetitions per n)...
 eff_m4
-#> # A tibble: 7 × 3
-#>   n_per_cell auc_mean  auc_sd
-#>        <dbl>    <dbl>   <dbl>
-#> 1          5    0.855 0.0104 
-#> 2         10    0.870 0.00503
-#> 3         20    0.875 0.00625
-#> 4         30    0.881 0.00608
-#> 5         45    0.887 0.00905
-#> 6         60    0.883 0.0115 
-#> 7         70    0.887 0.0153
+#> # A tibble: 7 × 6
+#>   n_per_cell auc_mean  auc_sd n_train_mean n_test_mean n_failed
+#>        <dbl>    <dbl>   <dbl>        <dbl>       <dbl>    <int>
+#> 1          5    0.855 0.0104             5        1500        0
+#> 2         10    0.870 0.00503           10        1400        0
+#> 3         20    0.875 0.00625           20        1200        0
+#> 4         30    0.881 0.00608           30        1000        0
+#> 5         45    0.887 0.00905           45         700        0
+#> 6         60    0.883 0.0115            60         400        0
+#> 7         70    0.887 0.0153            70         200        0
 ```
 
 The draws depend only on `seed`, `n_train`, `n_reps` and the data, not

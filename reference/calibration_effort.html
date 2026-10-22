@@ -83,7 +83,12 @@ fit fails, are dropped.</p>
 
 <dt id="arg-formula">formula<a class="anchor" aria-label="anchor" href="#arg-formula"></a></dt>
 <dd><p>Model formula, usually the best one of
-<code><a href="compare_calibration_models.html">compare_calibration_models()</a></code>.</p></dd>
+<code><a href="compare_calibration_models.html">compare_calibration_models()</a></code>.</p>
+<p>A model with random effects whose fit is singular (a variance estimated
+at zero or a correlation at +-1) raises a warning: the fixed effects and
+the predictions can still be used, but the variance components on the
+boundary should not be interpreted, and a simpler model may predict as
+well. Check them with <code><a href="https://rdrr.io/pkg/nlme/man/VarCorr.html" class="external-link">lme4::VarCorr()</a></code>.</p></dd>
 
 
 <dt id="arg-n-train">n_train<a class="anchor" aria-label="anchor" href="#arg-n-train"></a></dt>
@@ -101,7 +106,17 @@ left as it was.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A tibble with <code>n_per_cell</code>, <code>auc_mean</code> and <code>auc_sd</code>.</p>
+    <p>A tibble with <code>n_per_cell</code> (the requested training size),
+<code>auc_mean</code>, <code>auc_sd</code>, <code>n_train_mean</code> (mean clips per cell actually
+used for training), <code>n_test_mean</code> (mean size of the test set) and
+<code>n_failed</code> (repetitions dropped).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Cells with fewer than <code>n_train + 5</code> clips contribute all but five of
+their clips, so the training size actually used can be below
+<code>n_train</code>; it is reported in <code>n_train_mean</code>, with a warning. The test
+set shrinks as <code>n_train</code> grows (<code>n_test_mean</code>), which widens <code>auc_sd</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

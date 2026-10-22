@@ -71,7 +71,12 @@ site levels of <code>validations</code> are stored with the model, so that
 
 <dt id="arg-formula">formula<a class="anchor" aria-label="anchor" href="#arg-formula"></a></dt>
 <dd><p>Model formula, usually the best one of
-<code><a href="compare_calibration_models.html">compare_calibration_models()</a></code>.</p></dd>
+<code><a href="compare_calibration_models.html">compare_calibration_models()</a></code>.</p>
+<p>A model with random effects whose fit is singular (a variance estimated
+at zero or a correlation at +-1) raises a warning: the fixed effects and
+the predictions can still be used, but the variance components on the
+boundary should not be interpreted, and a simpler model may predict as
+well. Check them with <code><a href="https://rdrr.io/pkg/nlme/man/VarCorr.html" class="external-link">lme4::VarCorr()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

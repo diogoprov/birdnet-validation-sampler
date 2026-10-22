@@ -185,7 +185,11 @@ and <code>history</code>, invisibly.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Converting BirdNET confidence scores into probabilities is recommended
+    <p>The best model is the one with the highest mean AUC. When its refit is
+singular, <code><a href="fit_calibration.html">fit_calibration()</a></code> warns; read <code>calibration_model.txt</code> and
+the comparison before using the probabilities, since a simpler model
+within the cross-validation spread may be preferable.</p>
+<p>Converting BirdNET confidence scores into probabilities is recommended
 by the BirdNET authors (Wood &amp; Kahl 2024, <a href="https://doi.org/10.1007/s10336-024-02144-5" class="external-link">doi:10.1007/s10336-024-02144-5</a>
 );
 calibration by logistic regression on logit(score) is applied, for

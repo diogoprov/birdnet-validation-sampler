@@ -70,7 +70,10 @@ select_clips(
 - recording_fraction:
 
   `"random_recordings"`: fraction of the recordings (or minutes) drawn
-  at each site.
+  at each site, rounded, with at least one per site. The default (1 %)
+  suits large projects: with fewer than 150 recordings per site it draws
+  a single recording; raise it or use `n_recordings_per_site` in small
+  projects.
 
 - n_recordings_per_site:
 
@@ -134,7 +137,10 @@ select_clips(
   Total clips per site, split evenly among species by water filling:
   species with fewer clips than the quota enter whole and the surplus
   goes to the others. In `"random_detections"` it counts occasions.
-  Ignored in `"random_recordings"`. `NULL` sets no target.
+  Ignored in `"random_recordings"`. `NULL` sets no target. Because the
+  target is split evenly, rare species have higher inclusion
+  probabilities than common ones: estimates pooled across species must
+  weight the clips by `1 / inclusion_prob`.
 
 - balance_by_hour:
 

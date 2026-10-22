@@ -95,8 +95,9 @@ generator is left as it was.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A tibble with <code>model</code>, <code>formula</code>, <code>auc_mean</code> and <code>auc_sd</code>,
-ordered from the highest mean AUC.</p>
+    <p>A tibble with <code>model</code>, <code>formula</code>, <code>auc_mean</code>, <code>auc_sd</code> and
+<code>n_failed</code> (folds whose fit failed, left out of the mean), ordered from
+the highest mean AUC. Failed folds also raise a warning.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

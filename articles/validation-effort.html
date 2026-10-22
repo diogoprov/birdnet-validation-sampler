@@ -178,7 +178,12 @@ use keep the default of 50 repetitions (or more): the standard deviation
 is itself estimated from <code>n_reps</code> values and is unstable with
 few repetitions. Training sizes must stay below the size of the smallest
 cell minus five, since at most <code>n - 5</code> clips of a cell are
-used for training whatever the value of <code>n_train</code>.</p>
+used for training whatever the value of <code>n_train</code>.
+<code><a href="../reference/calibration_effort.html">calibration_effort()</a></code> warns when a requested size exceeds
+that limit, and reports the training size actually used
+(<code>n_train_mean</code>), the size of the test set
+(<code>n_test_mean</code>) and the repetitions dropped
+(<code>n_failed</code>) next to the AUC.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n_train</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">10</span>, <span class="fl">20</span>, <span class="fl">30</span>, <span class="fl">45</span>, <span class="fl">60</span>, <span class="fl">70</span><span class="op">)</span></span>
 <span><span class="va">n_reps</span>  <span class="op">&lt;-</span> <span class="fl">15</span></span></code></pre></div>
@@ -191,31 +196,31 @@ used for training whatever the value of <code>n_train</code>.</p>
 <span>                             n_train <span class="op">=</span> <span class="va">n_train</span>, n_reps <span class="op">=</span> <span class="va">n_reps</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Effort curve (15 repetitions per n)...</span></span>
 <span><span class="va">eff_m0</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 7 × 3</span></span></span>
-<span><span class="co">#&gt;   n_per_cell auc_mean  auc_sd</span></span>
-<span><span class="co">#&gt;        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          5    0.803 0.002<span style="text-decoration: underline;">91</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>         10    0.803 0.003<span style="text-decoration: underline;">61</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>         20    0.803 0.006<span style="text-decoration: underline;">92</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>         30    0.802 0.006<span style="text-decoration: underline;">84</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>         45    0.808 0.010<span style="text-decoration: underline;">3</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>         60    0.808 0.014<span style="text-decoration: underline;">8</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span>         70    0.795 0.023<span style="text-decoration: underline;">6</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 7 × 6</span></span></span>
+<span><span class="co">#&gt;   n_per_cell auc_mean  auc_sd n_train_mean n_test_mean n_failed</span></span>
+<span><span class="co">#&gt;        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          5    0.803 0.002<span style="text-decoration: underline;">91</span>            5        <span style="text-decoration: underline;">1</span>500        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>         10    0.803 0.003<span style="text-decoration: underline;">61</span>           10        <span style="text-decoration: underline;">1</span>400        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>         20    0.803 0.006<span style="text-decoration: underline;">92</span>           20        <span style="text-decoration: underline;">1</span>200        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>         30    0.802 0.006<span style="text-decoration: underline;">84</span>           30        <span style="text-decoration: underline;">1</span>000        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>         45    0.808 0.010<span style="text-decoration: underline;">3</span>            45         700        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>         60    0.808 0.014<span style="text-decoration: underline;">8</span>            60         400        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span>         70    0.795 0.023<span style="text-decoration: underline;">6</span>            70         200        0</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">eff_m4</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calibration_effort.html">calibration_effort</a></span><span class="op">(</span><span class="va">val</span>, <span class="va">models</span><span class="op">$</span><span class="va">m4_species_x_site</span>,</span>
 <span>                             n_train <span class="op">=</span> <span class="va">n_train</span>, n_reps <span class="op">=</span> <span class="va">n_reps</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Effort curve (15 repetitions per n)...</span></span>
 <span><span class="va">eff_m4</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 7 × 3</span></span></span>
-<span><span class="co">#&gt;   n_per_cell auc_mean  auc_sd</span></span>
-<span><span class="co">#&gt;        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          5    0.855 0.010<span style="text-decoration: underline;">4</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>         10    0.870 0.005<span style="text-decoration: underline;">03</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>         20    0.875 0.006<span style="text-decoration: underline;">25</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>         30    0.881 0.006<span style="text-decoration: underline;">08</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>         45    0.887 0.009<span style="text-decoration: underline;">05</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>         60    0.883 0.011<span style="text-decoration: underline;">5</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span>         70    0.887 0.015<span style="text-decoration: underline;">3</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 7 × 6</span></span></span>
+<span><span class="co">#&gt;   n_per_cell auc_mean  auc_sd n_train_mean n_test_mean n_failed</span></span>
+<span><span class="co">#&gt;        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          5    0.855 0.010<span style="text-decoration: underline;">4</span>             5        <span style="text-decoration: underline;">1</span>500        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>         10    0.870 0.005<span style="text-decoration: underline;">03</span>           10        <span style="text-decoration: underline;">1</span>400        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>         20    0.875 0.006<span style="text-decoration: underline;">25</span>           20        <span style="text-decoration: underline;">1</span>200        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>         30    0.881 0.006<span style="text-decoration: underline;">08</span>           30        <span style="text-decoration: underline;">1</span>000        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>         45    0.887 0.009<span style="text-decoration: underline;">05</span>           45         700        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>         60    0.883 0.011<span style="text-decoration: underline;">5</span>            60         400        0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span>         70    0.887 0.015<span style="text-decoration: underline;">3</span>            70         200        0</span></span></code></pre></div>
 <p>The draws depend only on <code>seed</code>, <code>n_train</code>,
 <code>n_reps</code> and the data, not on the formula, so with the same
 arguments both curves are computed on the same training and test sets
