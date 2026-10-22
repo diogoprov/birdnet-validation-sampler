@@ -43,7 +43,10 @@ random effects whose fit is singular (a variance estimated at zero or a
 correlation at +-1) raises a warning: the fixed effects and the
 predictions can still be used, but the variance components on the
 boundary should not be interpreted, and a simpler model may predict as
-well. Check them with \code{lme4::VarCorr()}.
+well. Check them with \code{lme4::VarCorr()}. The other messages of
+\code{lme4::glmer()} are passed on, prefixed by \verb{lme4:}, and every message of
+the fit is kept in the attribute \code{sheepdog_messages} of the model
+(convergence warnings of 'lme4' are warnings and are passed on as such).
 
 With \code{engine = "brms"}, the model is fitted in a Bayesian framework
 with 'brms' (Bernoulli family, logit link). The prior must be given
