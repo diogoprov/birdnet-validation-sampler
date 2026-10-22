@@ -5,7 +5,8 @@
 - New article "Reviewing clips in the BirdNET GUI" (site only): the review
   in the Review tab of the BirdNET-Analyzer GUI, from the folder of clips
   to the `Positive` and `Negative` folders read by `classify_review()`,
-  with screenshots in English and Portuguese, the regression panel of the
+  with screenshots in English and Portuguese (where the result folders are
+  `positivo` and `negativo`), the regression panel of the
   GUI compared with the calibration of stage 2, and the review with
   several reviewers.
 

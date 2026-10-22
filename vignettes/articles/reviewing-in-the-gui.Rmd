@@ -105,8 +105,12 @@ by Larissa Sugai, according to the GUI documentation). The buttons become
 
 ![Reviewing a clip in Portuguese.](gui-figures/08-reviewing-clip-pt.webp)
 
-The default patterns of `classify_review()` (`"positiv"`, `"negativ"`)
-match both the English and the Portuguese spellings of the folder names.
+With the interface in Portuguese, the GUI names the result folders
+`positivo` and `negativo` instead of `Positive` and `Negative`. The default
+patterns of `classify_review()` (`"positiv"`, `"negativ"`, case
+insensitive) match both, so the review can be read back in either
+language, and clips reviewed partly in each language end up in the right
+verdict.
 The regression panel of a species with more false positives looks
 different: here the curve reaches 0.85 only at a score of 0.81, and 0.90
 at 0.93, and the higher probabilities are not reached within the range of
