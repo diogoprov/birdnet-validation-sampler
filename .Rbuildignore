@@ -13,3 +13,4 @@
 ^docs$
 ^pkgdown$
 ^dev$
+^vignettes/bayesian-calibration\.Rmd\.orig$

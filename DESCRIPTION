@@ -32,11 +32,14 @@ Imports:
 Suggests:
     ape,
     av,
+    brms,
     crywolf,
     ggplot2,
     gllvm,
     knitr,
     lme4,
+    posterior,
+    priorsense,
     rmarkdown,
     testthat (>= 3.0.0),
     vegan

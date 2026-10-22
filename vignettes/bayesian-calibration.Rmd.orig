@@ -1,0 +1,324 @@
+---
+title: "Bayesian calibration with brms"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Bayesian calibration with brms}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<!-- This file is precomputed: the Stan models take about a minute to
+compile, so it is knitted locally from bayesian-calibration.Rmd.orig with
+data-raw/knit_bayesian_vignette.R. Edit the .orig file, not the .Rmd. -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                      fig.path = "bayes-figures/", dpi = 96)
+```
+
+The calibration of `vignette("calibration")` fits the candidate models by
+maximum likelihood with 'lme4'. sheepdog can also fit the selected model in
+a Bayesian framework with 'brms'. This gives three things the maximum
+likelihood fit does not:
+
+* the uncertainty of the calibrated probability of every detection, and a
+  rule that uses it ("is P(TP) >= `p_min` with high posterior
+  probability?") instead of a point estimate;
+* priors that regularise the variance components, which avoids the
+  singular fits that 'lme4' gives when a correlation or a variance is
+  estimated at the boundary;
+* the propagation of the calibration uncertainty to the detection
+  histories and the community matrices.
+
+The cost is computing time and the need to state, and check, a prior. The
+workflow below follows the steps of a Bayesian workflow: prior predictive
+check, fit, convergence diagnostics, posterior predictive check and
+sensitivity to the prior (Gelman et al. 2026; McElreath 2020).
+
+```{r}
+library(sheepdog)
+suppressPackageStartupMessages(library(dplyr))
+ex <- system.file("extdata", "example", package = "sheepdog")
+val_files <- list.files(file.path(ex, "validation"), full.names = TRUE)
+val <- suppressMessages(read_validations(val_files))
+```
+
+## The model
+
+We use the model retained by the log-loss rule in `vignette("calibration")`:
+species slopes and intercepts without their correlation, and site x
+species intercepts.
+
+```{r}
+f <- calibration_models(uncorrelated = TRUE)$m5_species_x_site_uncorrelated
+f
+```
+
+## The prior
+
+`fit_calibration(engine = "brms")` requires the prior to be given
+explicitly: 'brms' would otherwise use flat priors on the slopes.
+`calibration_prior()` builds a weakly informative example centred on the
+hypothesis that the BirdNET score is already calibrated, P(TP) = score.
+The data then show how far the classifier departs from it.
+
+```{r}
+prior <- calibration_prior(f, val)
+prior
+```
+
+* The slope of `logit_conf` is centred on 1 (a calibrated score), with a
+  standard deviation of 1, and truncated at 0: a higher score never lowers
+  P(TP).
+* 'brms' centres the predictors, so the intercept is the logit of P(TP) at
+  the mean logit score of the reviewed clips
+  (`r round(mean(val$logit_conf), 3)`); centring its prior on that value
+  makes slope 1 and intercept equal to the mean correspond to P(TP) =
+  score.
+* The standard deviations of the species and site x species effects get
+  `exponential(1)`, most of whose mass lies on moderate differences on the
+  logit scale.
+
+### Prior predictive check
+
+Before fitting, sample the model from the prior alone and look at the
+calibration curves it implies on the probability scale.
+`plot_calibration_draws()` draws the population-level curve of 100 draws:
+
+```{r prior-check, fig.width = 6, fig.height = 4.5}
+prior_fit <- prior_predictive_calibration(
+  f, val, prior, chains = 2, iter = 1000, refresh = 0, silent = 2,
+  backend = "cmdstanr", seed = 2026)
+plot_calibration_draws(prior_fit)
+```
+
+The prior allows curves well above and well below the diagonal (a
+calibrated score), all increasing; it rules out nothing a reviewer would
+consider plausible, and it does not force the curves to cross `p_min` at
+any particular score.
+
+## Fitting
+
+```{r fit}
+fit <- fit_calibration(val, f, engine = "brms", prior = prior,
+                       chains = 4, cores = 4, iter = 2000,
+                       control = list(adapt_delta = 0.95),
+                       refresh = 0, silent = 2, backend = "cmdstanr",
+                       seed = 2026)
+```
+
+`fit_calibration()` runs `calibration_diagnostics()` after the fit and
+warns when the largest R-hat exceeds 1.01, the bulk or tail effective
+sample sizes fall below 400, or there are divergent transitions:
+
+```{r}
+calibration_diagnostics(fit)
+```
+
+A higher `adapt_delta` (here 0.95) is the first remedy for divergent
+transitions; persistent divergences point to a model that the data cannot
+identify.
+
+```{r}
+summary(fit)$fixed
+```
+
+### Posterior predictive check
+
+The observed proportion of true positives by species should fall within
+the distribution of the proportions replicated from the posterior:
+
+```{r ppc, fig.width = 7, fig.height = 5, message = FALSE}
+brms::pp_check(fit, type = "stat_grouped", group = "species",
+               stat = "mean", ndraws = 500)
+```
+
+### Sensitivity to the prior
+
+`calibration_sensitivity()` runs the power-scaling analysis of
+'priorsense' (Kallioinen et al. 2024): it measures how much each
+population-level parameter and each standard deviation changes when the
+prior or the likelihood is up- or down-weighted.
+
+```{r}
+sens <- calibration_sensitivity(fit)
+sens
+```
+
+```{r, include = FALSE}
+sens_df <- as.data.frame(sens)
+flagged <- sens_df$variable[sens_df$diagnosis != "-"]
+flag_b  <- grep("^b_", flagged, value = TRUE)
+flag_sd <- grep("^sd_", flagged, value = TRUE)
+```
+
+A parameter sensitive to the prior but not to the likelihood
+("strong prior / weak likelihood") is mostly determined by the prior; one
+sensitive to both ("prior-likelihood conflict") is pulled in different
+directions by the prior and the data. Here the flagged standard deviations
+are `r if (length(flag_sd)) paste(flag_sd, collapse = ", ") else "none"`,
+and the flagged population-level parameters are
+`r if (length(flag_b)) paste(flag_b, collapse = ", ") else "none"`.
+The standard deviations of the species effects, and the population slope
+(the mean of the species slopes), are estimated from only
+`r nlevels(val$species)` species, so their prior matters. Two things
+follow. Report the prior together with the results. And check that the
+conclusions (the calibrated probabilities near `p_min`, the detection
+histories) do not change under a wider prior, for instance `normal(1, 2)`
+on the slope: with 'priorsense' this is what the power-scaling
+approximates without refitting. With more species, the likelihood takes
+over and the flags disappear.
+
+### Posterior calibration curves
+
+```{r posterior-curves, fig.width = 6, fig.height = 4.5}
+plot_calibration_draws(fit)
+```
+
+```{r, include = FALSE}
+slope <- brms::fixef(fit)["logit_conf", ]
+```
+
+The population-level curves are steeper than the diagonal (posterior
+mean slope `r round(slope["Estimate"], 2)`, 95 % interval
+`r round(slope["Q2.5"], 2)` to `r round(slope["Q97.5"], 2)`): in the
+example, low scores overestimate P(TP) and high scores underestimate it.
+The curves by
+species and site, with the observed precision by score bin, are drawn by
+`plot_calibration()` as for the 'lme4' fit:
+
+```{r curves, fig.width = 9, fig.height = 7}
+plot_calibration(fit, val)
+```
+
+## Scoring the detections
+
+`score_detections()` computes the posterior of P(TP) once on a grid of
+scores (step 0.01) for each site x species, and assigns it to the
+detections by their rounded score; the cost does not depend on the number
+of detections. Each detection gets the posterior mean (`p_tp`), a lower
+quantile (`p_tp_lower`, 5 % by default) and the posterior probability that
+P(TP) >= `p_min` (`pr_reliable`):
+
+```{r}
+sites <- c("ARA", "BAI", "NHE", "XAR")
+tables <- setNames(file.path(ex, "birdnet", sites,
+                             "BirdNET_SelectionTable.txt"), sites)
+scored <- suppressMessages(score_detections(tables, fit, p_min = 0.95))
+scored |>
+  select(site, species, confidence, p_tp, p_tp_lower, pr_reliable) |>
+  arrange(desc(confidence)) |>
+  head()
+```
+
+## Two rules for a reliable detection
+
+`detection_history()` can count a detection as reliable when its posterior
+mean reaches `p_min` (`rule = "mean"`, as with 'lme4') or when the
+posterior probability that P(TP) >= `p_min` reaches `prob_min`
+(`rule = "probability"`):
+
+```{r}
+h_mean <- detection_history(scored, p_min = 0.95)
+h_prob <- detection_history(scored, p_min = 0.95, rule = "probability",
+                            prob_min = 0.9)
+tibble(rule = c("mean", "probability"),
+       nights_k1 = c(sum(h_mean$detection_k1), sum(h_prob$detection_k1)),
+       nights_k2 = c(sum(h_mean$detection_k2), sum(h_prob$detection_k2)))
+```
+
+The probability rule is more conservative where the calibration is
+uncertain, typically in cells with few reviewed clips, because it asks
+that the calibrated probability exceed `p_min` with high posterior
+probability rather than on average.
+
+```{r}
+inner_join(count(h_mean, species, wt = detection_k1, name = "mean"),
+           count(h_prob, species, wt = detection_k1, name = "probability"),
+           by = "species")
+```
+
+## Propagating the uncertainty to the community matrices
+
+Both rules still produce a single history. `history_draws()` rebuilds the
+history for each of `n_draws` posterior draws: in a draw, a detection is
+reliable when its probability in that draw is >= `p_min`. The cost is
+again independent of the number of detections.
+
+```{r}
+hd <- history_draws(fit, scored, p_min = 0.95, n_draws = 200)
+hd
+```
+
+`community_matrices_draws()` builds the community matrices of
+`community_matrices()` for each draw and summarises each site x month x
+species frequency by its posterior mean and a 90 % interval:
+
+```{r}
+core <- c("boa_ran", "ela_bic", "lep_pod", "phy_cuv")
+md <- community_matrices_draws(hd, core, k_min = 2, min_nights_month = 5)
+md$summary |>
+  mutate(width = frequency_upper - frequency_lower) |>
+  arrange(desc(width)) |>
+  head()
+```
+
+```{r, include = FALSE}
+w <- md$summary$frequency_upper - md$summary$frequency_lower
+n_uncertain <- sum(w > 0)
+```
+
+`r n_uncertain` of the `r nrow(md$summary)` site x month x species cells
+have a frequency that changes among draws; the others are fixed because
+their detections are far above or below `p_min` in every draw.
+
+```{r matrix-uncertainty, fig.width = 8, fig.height = 5}
+library(ggplot2)
+ggplot(md$summary, aes(month, frequency_mean, colour = site, group = site)) +
+  geom_pointrange(aes(ymin = frequency_lower, ymax = frequency_upper),
+                  position = position_dodge(width = 0.5), size = 0.3) +
+  facet_wrap(~ species) +
+  labs(x = NULL, y = "Frequency of nights with detection (k = 2)",
+       subtitle = "Posterior mean and 90 % interval over 200 draws") +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+`md$draws` keeps the frequency of every draw, so that a downstream
+analysis (an ordination, a GLLVM; see `vignette("community-matrices")`)
+can be repeated on each draw and its results summarised over draws.
+
+## The calibrate() wrapper
+
+`calibrate()` takes the same options. The comparison of the candidate
+models still uses maximum likelihood, which is fast; the selected model is
+then refitted with 'brms'. Passing `prior = calibration_prior` (the
+function) builds the example prior for whichever model is selected:
+
+```{r, eval = FALSE}
+res <- calibrate(val_files, tables, output_dir = "calibration",
+                 select = "one_se_logloss", uncorrelated = TRUE,
+                 engine = "brms", prior = calibration_prior,
+                 brms_args = list(chains = 4, cores = 4,
+                                  control = list(adapt_delta = 0.95),
+                                  backend = "cmdstanr"),
+                 rule = "probability", prob_min = 0.9)
+```
+
+`calibrate()` then also writes `calibration_diagnostics.csv`.
+
+## References
+
+Gelman, A., Vehtari, A., McElreath, R., Simpson, D., Margossian, C. C.,
+Yao, Y., Kennedy, L., Gabry, J., Bürkner, P.-C., Modrák, M., & Leos
+Barajas, V. (2026). *Bayesian Workflow*. Chapman & Hall.
+<https://avehtari.github.io/Bayesian-Workflow/>
+
+Kallioinen, N., Paananen, T., Bürkner, P.-C., & Vehtari, A. (2024).
+Detecting and diagnosing prior and likelihood sensitivity with
+power-scaling. *Statistics and Computing*, 34, 57.
+<https://doi.org/10.1007/s11222-023-10366-5>
+
+McElreath, R. (2020). *Statistical Rethinking: A Bayesian Course with
+Examples in R and Stan* (2nd ed.). Chapman and Hall/CRC.
+<https://doi.org/10.1201/9780429029608>
