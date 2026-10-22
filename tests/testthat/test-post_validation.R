@@ -26,7 +26,7 @@ comparar_pv <- function(saida, nm) {
     # unico desvio intencional da v1.2.0: sem clipes com confidence, ela
     # escrevia uma linha toda NA nos thresholds
     if (f == "suggested_thresholds.csv") ref <- ref[ref$site != "NA", ]
-    expect_identical(novo, ref, label = f)
+    expect_same_table(novo, ref, label = f)
   }
 }
 

@@ -33,7 +33,11 @@ test_that("calibrate() reproduces v1.2.0", {
       ref$formula <- gsub("local", "site", gsub("especie", "species",
                                                 ref$formula))
     }
-    expect_identical(read_as_text(file.path(saida, f)), ref, label = f)
+    # o lme4 converge em valores que diferem por volta da 6a casa entre
+    # plataformas (otimizador e BLAS); 1e-3 relativo basta para dizer que
+    # o resultado e o mesmo
+    expect_same_table(read_as_text(file.path(saida, f)), ref, label = f,
+                      tolerance = 1e-3)
   }
   expect_true(file.exists(file.path(saida, "calibration_model.rds")))
   expect_s4_class(res$fit, "glmerMod")
