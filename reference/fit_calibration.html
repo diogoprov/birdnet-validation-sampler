@@ -111,10 +111,7 @@ random effects whose fit is singular (a variance estimated at zero or a
 correlation at +-1) raises a warning: the fixed effects and the
 predictions can still be used, but the variance components on the
 boundary should not be interpreted, and a simpler model may predict as
-well. Check them with <code><a href="https://rdrr.io/pkg/nlme/man/VarCorr.html" class="external-link">lme4::VarCorr()</a></code>. The other messages of
-<code><a href="https://rdrr.io/pkg/lme4/man/glmer.html" class="external-link">lme4::glmer()</a></code> are passed on, prefixed by <code>lme4:</code>, and every message of
-the fit is kept in the attribute <code>sheepdog_messages</code> of the model
-(convergence warnings of 'lme4' are warnings and are passed on as such).</p>
+well. Check them with <code><a href="https://rdrr.io/pkg/nlme/man/VarCorr.html" class="external-link">lme4::VarCorr()</a></code>.</p>
 <p>With <code>engine = "brms"</code>, the model is fitted in a Bayesian framework
 with 'brms' (Bernoulli family, logit link). The prior must be given
 explicitly; <code><a href="calibration_prior.html">calibration_prior()</a></code> builds an example centred on an

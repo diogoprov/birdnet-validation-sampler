@@ -63,12 +63,7 @@ correlation at +-1) raises a warning: the fixed effects and the
 predictions can still be used, but the variance components on the
 boundary should not be interpreted, and a simpler model may predict as
 well. Check them with
-[`lme4::VarCorr()`](https://rdrr.io/pkg/nlme/man/VarCorr.html). The
-other messages of
-[`lme4::glmer()`](https://rdrr.io/pkg/lme4/man/glmer.html) are passed
-on, prefixed by `lme4:`, and every message of the fit is kept in the
-attribute `sheepdog_messages` of the model (convergence warnings of
-'lme4' are warnings and are passed on as such).
+[`lme4::VarCorr()`](https://rdrr.io/pkg/nlme/man/VarCorr.html).
 
 With `engine = "brms"`, the model is fitted in a Bayesian framework with
 'brms' (Bernoulli family, logit link). The prior must be given
