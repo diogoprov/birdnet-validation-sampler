@@ -1,3 +1,21 @@
+# sheepdog (development version)
+
+## Calibration
+
+- `compare_calibration_models()` also scores the predicted probabilities on
+  the held-out folds: log-loss and Brier score (proper scoring rules),
+  calibration intercept and slope, the share of singular fold fits
+  (`prop_singular`) and the position of each model (`complexity`).
+- New `select_calibration_model()`, with the rules `"best_auc"` (the rule
+  of 2.x) and `"one_se_logloss"` (the simplest model within one standard
+  error of the lowest log-loss, leaving out singular fits).
+  `calibrate()` takes the rule in `select`; the default stays
+  `"best_auc"` until 3.0.0, when it becomes `"one_se_logloss"`.
+- `calibration_models(uncorrelated = TRUE)` adds
+  `m5_species_x_site_uncorrelated`, the m4 structure without the
+  correlation between the species intercepts and slopes, which avoids the
+  singular fits of m4; `calibrate()` takes it with `uncorrelated = TRUE`.
+
 # sheepdog 2.1.0
 
 ## Bug fixes
