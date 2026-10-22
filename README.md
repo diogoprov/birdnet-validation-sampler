@@ -86,11 +86,21 @@ build_community_matrices("calibration/nightly_detection_history.csv",
                          core_species = c("boa_ran", "den_nan", "phy_alb"))
 ```
 
-Each stage is also available as separate functions: `select_clips()`
-(a pure function that returns the clip manifest without touching audio),
-`cut_clips()`, `classify_review()`, `compare_calibration_models()`,
-`score_detections()`, `community_matrices()` and others. See
-`vignette("frognet-workflow")` for the complete workflow.
+Each stage is also available as separate functions:
+
+| Stage | Functions |
+|---|---|
+| 1. Selecting and cutting clips | `read_selection_tables()`, `select_clips()` (a pure function that returns the clip manifest without touching audio), `cut_clips()`, `pack_clips()` |
+| 1. Several reviewers | `assign_reviewers()`, `split_by_reviewer()`, `reviewer_agreement()` (Cohen's or Fleiss' kappa), `consensus_verdicts()` |
+| 1. After the review | `classify_review()`, `precision_by_bin()`, `suggest_thresholds()`, `nightly_presence()`, `retraining_clips()`, `read_validation_tables()` |
+| 1. Retraining | `build_training_set()` (training folders for BirdNET-Analyzer), `exclude_training_clips()` |
+| 2. Calibration | `read_validations()`, `calibration_models()`, `compare_calibration_models()`, `select_calibration_model()`, `fit_calibration()`, `calibration_effort()`, `score_detections()`, `detection_history()`, `summarise_history()` |
+| 2. Bayesian calibration | `calibration_prior()`, `prior_predictive_calibration()`, `calibration_diagnostics()`, `calibration_sensitivity()`, `plot_calibration_draws()`, `history_draws()` |
+| 3. Community matrices | `cell_status()`, `suggest_core_species()`, `community_matrices()`, `community_matrices_draws()` |
+
+The [articles](https://provetelab.org/sheepdog/articles/) cover each stage
+with runnable examples; `vignette("frognet-workflow")` shows the complete
+workflow.
 
 The selection tables must have the standard BirdNET/Raven columns
 `Begin Time (s)`, `End Time (s)`, `Species Code`, `Confidence`, `Begin Path`
@@ -139,7 +149,18 @@ tp ~ logit(conf) + (logit(conf) | species) + (1 | site:species)
 
 because the same score corresponds to very different probabilities of a true
 detection across species and sites. The candidate models are compared by
-stratified k-fold cross-validation (AUC).
+stratified k-fold cross-validation, which scores both discrimination (AUC)
+and the predicted probabilities (log-loss, Brier score, calibration
+intercept and slope); `select_calibration_model()` picks a model by the
+highest AUC or by the simplest model within one standard error of the lowest
+log-loss, leaving out singular fits.
+
+The selected model can also be fitted in a Bayesian framework with 'brms'
+(`engine = "brms"`), with an explicit prior, convergence diagnostics,
+posterior predictive and prior sensitivity checks. Each detection then gets
+the posterior probability that it is reliable, and the uncertainty of the
+calibration can be propagated to the detection histories and the community
+matrices (`vignette("bayesian-calibration")`).
 
 ## Integration with crywolf
 
@@ -172,7 +193,7 @@ If sheepdog is useful in your work, please cite it (GitHub's "Cite this
 repository" button uses `CITATION.cff`):
 
 > Provete, D. B. (2026). *sheepdog: sample, validate and calibrate BirdNET
-> detections for passive acoustic monitoring* (v2.1.0). Zenodo.
+> detections for passive acoustic monitoring* (v2.2.0). Zenodo.
 > https://doi.org/10.5281/zenodo.22696210
 
 The hex sticker uses a dog silhouette by Mozillian from
