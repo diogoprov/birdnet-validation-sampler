@@ -50,7 +50,10 @@ hour. \code{"random_detections"}: occasions drawn per site x species x
 night x hour.}
 
 \item{recording_fraction}{\code{"random_recordings"}: fraction of the
-recordings (or minutes) drawn at each site.}
+recordings (or minutes) drawn at each site, rounded, with at least one
+per site. The default (1 \%) suits large projects: with fewer than 150
+recordings per site it draws a single recording; raise it or use
+\code{n_recordings_per_site} in small projects.}
 
 \item{n_recordings_per_site}{\code{"random_recordings"}: fixed number of
 recordings (or minutes) per site, used instead of \code{recording_fraction}.}
@@ -92,7 +95,10 @@ first date of each site.}
 \item{target_total}{Total clips per site, split evenly among species by
 water filling: species with fewer clips than the quota enter whole and
 the surplus goes to the others. In \code{"random_detections"} it counts
-occasions. Ignored in \code{"random_recordings"}. \code{NULL} sets no target.}
+occasions. Ignored in \code{"random_recordings"}. \code{NULL} sets no target.
+Because the target is split evenly, rare species have higher
+inclusion probabilities than common ones: estimates pooled across
+species must weight the clips by \code{1 / inclusion_prob}.}
 
 \item{balance_by_hour}{Within each species, draw round-robin across the
 hours of the day (covers the diel cycle) when applying \code{target_total}

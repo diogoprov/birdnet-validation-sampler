@@ -22,8 +22,9 @@ compare_calibration_models(
 generator is left as it was.}
 }
 \value{
-A tibble with \code{model}, \code{formula}, \code{auc_mean} and \code{auc_sd},
-ordered from the highest mean AUC.
+A tibble with \code{model}, \code{formula}, \code{auc_mean}, \code{auc_sd} and
+\code{n_failed} (folds whose fit failed, left out of the mean), ordered from
+the highest mean AUC. Failed folds also raise a warning.
 }
 \description{
 Fits each candidate model with k-fold cross-validation and reports the

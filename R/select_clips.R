@@ -39,7 +39,10 @@
 #'   hour. `"random_detections"`: occasions drawn per site x species x
 #'   night x hour.
 #' @param recording_fraction `"random_recordings"`: fraction of the
-#'   recordings (or minutes) drawn at each site.
+#'   recordings (or minutes) drawn at each site, rounded, with at least one
+#'   per site. The default (1 %) suits large projects: with fewer than 150
+#'   recordings per site it draws a single recording; raise it or use
+#'   `n_recordings_per_site` in small projects.
 #' @param n_recordings_per_site `"random_recordings"`: fixed number of
 #'   recordings (or minutes) per site, used instead of `recording_fraction`.
 #' @param recordings `"random_recordings"`: the list of all recordings, as a
@@ -71,6 +74,9 @@
 #'   water filling: species with fewer clips than the quota enter whole and
 #'   the surplus goes to the others. In `"random_detections"` it counts
 #'   occasions. Ignored in `"random_recordings"`. `NULL` sets no target.
+#'   Because the target is split evenly, rare species have higher
+#'   inclusion probabilities than common ones: estimates pooled across
+#'   species must weight the clips by `1 / inclusion_prob`.
 #' @param balance_by_hour Within each species, draw round-robin across the
 #'   hours of the day (covers the diel cycle) when applying `target_total`
 #'   or `max_per_species`.

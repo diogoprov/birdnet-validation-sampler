@@ -84,8 +84,9 @@ calibration_models <- function() {
 #' @param seed Seed of the fold assignment. The global random number
 #'   generator is left as it was.
 #'
-#' @return A tibble with `model`, `formula`, `auc_mean` and `auc_sd`,
-#'   ordered from the highest mean AUC.
+#' @return A tibble with `model`, `formula`, `auc_mean`, `auc_sd` and
+#'   `n_failed` (folds whose fit failed, left out of the mean), ordered from
+#'   the highest mean AUC. Failed folds also raise a warning.
 #' @export
 compare_calibration_models <- function(validations,
                                        models = calibration_models(),
@@ -110,9 +111,15 @@ compare_calibration_models <- function(validations,
       if (is.null(fit)) return(NA_real_)
       auc(teste$tp, predict_tp(fit, teste))
     })
+    n_falhas <- sum(is.na(aucs))
+    if (n_falhas > 0) {
+      warning(nm, ": the fit failed in ", n_falhas, " of ", k_folds,
+              " folds, left out of the mean AUC.", call. = FALSE)
+    }
     tibble(model = nm, formula = deparse1(models[[nm]]),
            auc_mean = mean(aucs, na.rm = TRUE),
-           auc_sd = stats::sd(aucs, na.rm = TRUE))
+           auc_sd = stats::sd(aucs, na.rm = TRUE),
+           n_failed = n_falhas)
   }) |>
     list_rbind() |>
     arrange(desc(auc_mean))
@@ -128,12 +135,24 @@ compare_calibration_models <- function(validations,
 #' @param formula Model formula, usually the best one of
 #'   [compare_calibration_models()].
 #'
+#' A model with random effects whose fit is singular (a variance estimated
+#' at zero or a correlation at +-1) raises a warning: the fixed effects and
+#' the predictions can still be used, but the variance components on the
+#' boundary should not be interpreted, and a simpler model may predict as
+#' well. Check them with `lme4::VarCorr()`.
+#'
 #' @return A `glm` (no random effects) or `glmerMod` model, with the
 #'   attribute `sheepdog_levels` (the species and site levels), used by
 #'   [score_detections()] and [plot_calibration()].
 #' @export
 fit_calibration <- function(validations, formula) {
   fit <- fit_model(formula, validations)
+  if (inherits(fit, "merMod") && lme4::isSingular(fit)) {
+    warning("Singular fit (boundary) of the calibration model ",
+            deparse1(formula), ": a variance component is estimated at ",
+            "zero or a correlation at +-1. Check lme4::VarCorr(fit) and ",
+            "consider a simpler model.", call. = FALSE)
+  }
   attr(fit, "sheepdog_levels") <- list(species = levels(validations$species),
                                        site    = levels(validations$site))
   fit
@@ -195,22 +214,38 @@ auc <- function(tp, p) {
 #' remaining clips. Repetitions with fewer than 50 test clips, or whose
 #' fit fails, are dropped.
 #'
+#' Cells with fewer than `n_train + 5` clips contribute all but five of
+#' their clips, so the training size actually used can be below
+#' `n_train`; it is reported in `n_train_mean`, with a warning. The test
+#' set shrinks as `n_train` grows (`n_test_mean`), which widens `auc_sd`.
+#'
 #' @inheritParams fit_calibration
 #' @param n_train Training sizes per site x species.
 #' @param n_reps Repetitions per training size.
 #' @param seed Seed of the draws. The global random number generator is
 #'   left as it was.
 #'
-#' @return A tibble with `n_per_cell`, `auc_mean` and `auc_sd`.
+#' @return A tibble with `n_per_cell` (the requested training size),
+#'   `auc_mean`, `auc_sd`, `n_train_mean` (mean clips per cell actually
+#'   used for training), `n_test_mean` (mean size of the test set) and
+#'   `n_failed` (repetitions dropped).
 #' @export
 calibration_effort <- function(validations, formula,
                                n_train = c(5, 10, 15, 20, 25, 30),
                                n_reps = 50, seed = 2026) {
   need_lme4(list(formula))
+  menor <- min(count(validations, site, species)$n)
+  acima <- n_train[n_train > menor - 5]
+  if (length(acima) > 0) {
+    warning("n_train = ", paste(acima, collapse = ", "), " exceeds the ",
+            "smallest site x species cell (", menor, " clips) minus the 5 ",
+            "kept for testing; see n_train_mean for the size actually used.",
+            call. = FALSE)
+  }
   message("Effort curve (", n_reps, " repetitions per n)...")
   withr::with_seed(seed, {
     map(n_train, function(n_treino) {
-      aucs <- map_dbl(seq_len(n_reps), function(r) {
+      reps <- map(seq_len(n_reps), function(r) {
         amostra <- validations |>
           group_by(site, species) |>
           mutate(.treino = seq_len(n()) %in%
@@ -218,14 +253,21 @@ calibration_effort <- function(validations, formula,
           ungroup()
         treino <- filter(amostra, .treino)
         teste  <- filter(amostra, !.treino)
-        if (nrow(teste) < 50) return(NA_real_)
+        n_cel  <- nrow(treino) / n_distinct(treino$site, treino$species)
+        falha  <- c(auc = NA_real_, n_train = n_cel, n_test = nrow(teste))
+        if (nrow(teste) < 50) return(falha)
         fit <- tryCatch(fit_model(formula, treino), error = function(e) NULL)
-        if (is.null(fit)) return(NA_real_)
-        auc(teste$tp, predict_tp(fit, teste))
-      })
+        if (is.null(fit)) return(falha)
+        c(auc = auc(teste$tp, predict_tp(fit, teste)), n_train = n_cel,
+          n_test = nrow(teste))
+      }) |>
+        do.call(what = rbind)
       tibble(n_per_cell = n_treino,
-             auc_mean = mean(aucs, na.rm = TRUE),
-             auc_sd = stats::sd(aucs, na.rm = TRUE))
+             auc_mean = mean(reps[, "auc"], na.rm = TRUE),
+             auc_sd = stats::sd(reps[, "auc"], na.rm = TRUE),
+             n_train_mean = mean(reps[, "n_train"]),
+             n_test_mean = mean(reps[, "n_test"]),
+             n_failed = sum(is.na(reps[, "auc"])))
     }) |>
       list_rbind()
   })
@@ -416,6 +458,11 @@ plot_calibration <- function(fit, validations, min_confidence = 0.1,
 #'   ([score_detections()]);
 #' * `nightly_detection_history.csv` ([detection_history()]);
 #' * `detection_summary.csv` ([summarise_history()]).
+#'
+#' The best model is the one with the highest mean AUC. When its refit is
+#' singular, [fit_calibration()] warns; read `calibration_model.txt` and
+#' the comparison before using the probabilities, since a simpler model
+#' within the cross-validation spread may be preferable.
 #'
 #' Converting BirdNET confidence scores into probabilities is recommended
 #' by the BirdNET authors (Wood & Kahl 2024, \doi{10.1007/s10336-024-02144-5});
