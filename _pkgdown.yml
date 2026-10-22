@@ -63,8 +63,9 @@ articles:
       - validation-effort
       - calibration
       - community-matrices
-  - title: Integration and case study
-    navbar: Integration and case study
+  - title: Beyond the three stages
+    navbar: Beyond the three stages
     contents:
+      - retraining
       - crywolf-integration
       - frognet-workflow

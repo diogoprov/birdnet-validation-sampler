@@ -2,8 +2,9 @@
 
 - New articles, run on a simulated example data set:
   `vignette("sheepdog")` (Get started), `vignette("sampling-designs")`,
-  `vignette("validation-effort")`, `vignette("calibration")` and
-  `vignette("community-matrices")`.
+  `vignette("validation-effort")`, `vignette("calibration")`,
+  `vignette("community-matrices")` and `vignette("retraining")`
+  (training folders for BirdNET-Analyzer from the reviewed clips).
 - The example data set (4 sites x 5 species x 6 months; selection tables,
   the list of recordings, reviewed clips and a calibrated nightly history)
   ships in `system.file("extdata", "example", package = "sheepdog")`;

@@ -202,6 +202,8 @@ writes each table to a CSV file, together with the figure.
 - `vignette("community-matrices")`: from calibrated detections to
   community analyses (stage 3): `community_matrices()`, the `k_min` rule,
   the effort filter and ordinations with 'vegan'.
+- `vignette("retraining")`: turning the reviewed clips into training
+  folders for BirdNET-Analyzer, with an independent test set.
 - `vignette("crywolf-integration")`: the clip manifest and validation
   tables as input to occupancy models with false positives.
 - `vignette("frognet-workflow")`: the complete workflow as used in the
