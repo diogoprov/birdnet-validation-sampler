@@ -1,3 +1,19 @@
+# sheepdog (development version)
+
+## Review and retraining
+
+- New `read_validation_tables()`: stacks the `validation_by_clip.csv`
+  tables of several sites or rounds with every column and verdict (unlike
+  `read_validations()`, which keeps only what the calibration needs).
+- New `build_training_set()`: copies the reviewed clips into the training
+  layout of BirdNET-Analyzer (positives in `<species_code>/`, negatives in
+  `-<species_code>/`), with the sites in `test_sites` in a separate `test`
+  folder for `--test_data`; writes `training_set.csv` and warns about
+  classes with fewer positive files than `min_files`.
+- New `exclude_training_clips()`: drops from a manifest the clips that
+  overlap a clip used in training (same species and recording).
+- `vignette("retraining")` uses the new functions.
+
 # sheepdog 2.1.0
 
 ## Bug fixes

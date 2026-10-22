@@ -33,6 +33,9 @@ reference:
       - nightly_presence
       - retraining_clips
       - plot_precision
+      - read_validation_tables
+      - build_training_set
+      - exclude_training_clips
   - title: Stage 2 - Calibration
     desc: Calibrate confidence scores into probabilities of true detection and build nightly detection histories.
     contents:
