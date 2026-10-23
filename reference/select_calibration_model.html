@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
     <li><a class="dropdown-item" href="../articles/retraining.html">Retraining the classifier with validated clips</a></li>
+    <li><a class="dropdown-item" href="../articles/migration-3.0.0.html">Migrating from sheepdog 2.x to 3.0.0</a></li>
     <li><a class="dropdown-item" href="../articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
     <li><a class="dropdown-item" href="../articles/frognet-workflow.html">The FrogNet workflow</a></li>
   </ul></li>
@@ -57,7 +58,7 @@
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">select_calibration_model</span><span class="op">(</span></span>
 <span>  <span class="va">comparison</span>,</span>
-<span>  rule <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"best_auc"</span>, <span class="st">"one_se_logloss"</span><span class="op">)</span>,</span>
+<span>  rule <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"one_se_logloss"</span>, <span class="st">"best_auc"</span><span class="op">)</span>,</span>
 <span>  k_folds <span class="op">=</span> <span class="fl">5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -94,8 +95,7 @@ simplest (lowest <code>complexity</code>); models singular in most folds are lef
 out, unless all are, which raises a warning. The log-loss rewards
 correct probabilities, not only their ranking, and the one-standard-
 error rule prefers the simpler model when the data cannot tell the
-candidates apart. This rule will be the default of <code><a href="calibrate.html">calibrate()</a></code> in
-3.0.0.</p></li>
+candidates apart. This is the default of <code><a href="calibrate.html">calibrate()</a></code> since 3.0.0.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

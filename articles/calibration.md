@@ -198,8 +198,10 @@ mean AUC, the rule
 [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
 uses by default in 2.x. `"one_se_logloss"` leaves out the models that
 are singular in most folds and, among the rest, keeps the simplest one
-whose mean log-loss is within one standard error of the lowest; it will
-be the default from 3.0.0.
+whose mean log-loss is within one standard error of the lowest. This is
+the default in 3.0.0. See
+[`vignette("migration-3.0.0")`](https://provetelab.org/sheepdog/articles/migration-3.0.0.md)
+for the migration guide.
 
 ``` r
 
@@ -273,7 +275,7 @@ coef(fit_global)
 #>  -0.5310926   1.5993695
 lme4::fixef(fit_full)
 #> (Intercept)  logit_conf 
-#>  -0.2816419   2.7948430
+#>  -0.2816421   2.7948431
 lme4::VarCorr(fit_full)
 #>  Groups       Name        Std.Dev. Corr  
 #>  site:species (Intercept) 1.19448        
@@ -668,14 +670,13 @@ runs the whole stage in one call. It reads the clips, compares the
 candidate models, refits the one chosen by the rule in `select`, plots
 the calibration curves (if ggplot2 is installed), scores every
 detection, builds the detection history and writes all the outputs to
-`output_dir`. With the default `select = "best_auc"` it refits the model
-with the highest mean AUC; when that refit is singular, as m4 is here,
-it warns (through
-[`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md))
-but keeps the model. With `select = "one_se_logloss"` and
-`uncorrelated = TRUE` it applies the rule of the previous sections. Read
-the comparison, `calibration_model.txt` and the curves it writes before
-using its output.
+`output_dir`. The default `select = "one_se_logloss"` applies the
+log-loss and one-standard-error rule described above. Set
+`select = "best_auc"` to retain the 2.x selection by highest mean AUC;
+that rule can retain a singular model and warns on a singular final fit.
+Use `uncorrelated = TRUE` to include the uncorrelated m4 variant in the
+candidates. Read the comparison, `calibration_model.txt` and the curves
+before using the output.
 
 ``` r
 

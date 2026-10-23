@@ -1,0 +1,114 @@
+# Migrating from sheepdog 2.x to 3.0.0
+
+## What changes
+
+In 2.x,
+[`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
+selected the candidate with the highest mean AUC. The transition warning
+was prepared in an intermediate 2.9.0 development commit, without a
+separate release. In 3.0.0 the default becomes
+`select = "one_se_logloss"`, and
+[`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md)
+uses the same default rule.
+
+AUC measures discrimination: whether true detections rank above false
+ones. Log-loss scores the predicted probabilities, which are compared
+with `p_min` when building detection histories. The new rule:
+
+1.  Excludes candidates singular in more than half of the
+    cross-validation folds. If all candidates are singular in most
+    folds, it warns and considers all of them.
+2.  Finds the lowest mean log-loss among the remaining candidates.
+3.  Keeps candidates within one standard error of that minimum. The
+    standard error is the best candidate’s `logloss_sd / sqrt(k_folds)`.
+4.  Selects the simplest of those candidates, using their order in
+    [`calibration_models()`](https://provetelab.org/sheepdog/reference/calibration_models.md)
+    as complexity.
+
+The exclusion uses cross-validation fits. The selected model is then
+refitted on all reviewed clips; that final fit can still be singular and
+will warn. Inspect the fit, diagnostics and calibration curves before
+using the resulting probabilities.
+
+## Preserve the 2.x selection
+
+Make the selection rule explicit in existing scripts:
+
+``` r
+
+res <- calibrate(
+  validation_files = validation_files,
+  prediction_tables = prediction_tables,
+  output_dir = "calibration-legacy",
+  select = "best_auc"
+)
+```
+
+For a manually assembled workflow, use
+`select_calibration_model(cv, rule = "best_auc")`. Preserve the inputs,
+seed, fold count, candidate models and fitting environment when
+comparing with an older analysis. The option preserves the selection
+rule; it does not guarantee identical numerical fits across dependency
+versions.
+
+## Use the new selection
+
+``` r
+
+res <- calibrate(
+  validation_files = validation_files,
+  prediction_tables = prediction_tables,
+  output_dir = "calibration-3",
+  select = "one_se_logloss",
+  k_folds = 5,
+  seed = 2026
+)
+```
+
+The explicit `select` is optional in 3.0.0 and also works in 2.x
+versions that support the rule. Here is a small comparison illustrating
+the change:
+
+``` r
+
+cv <- data.frame(
+  model = c("m0_global", "m1_species_intercept", "m2_species_slope"),
+  auc_mean = c(0.80, 0.90, 0.92),
+  logloss_mean = c(0.50, 0.402, 0.40),
+  logloss_sd = c(0.02, 0.02, 0.02),
+  prop_singular = c(0, 0, 1),
+  complexity = 1:3
+)
+select_calibration_model(cv, "best_auc")
+#> [1] "m2_species_slope"
+select_calibration_model(cv, "one_se_logloss", k_folds = 5)
+#> [1] "m1_species_intercept"
+```
+
+The AUC rule selects m2; the new rule excludes its singular fold fits
+and selects m1. Even without singularity, m1 would be within one
+standard error of m2 and would be preferred as the simpler model.
+
+`model_comparison.csv` still reports all metrics and is ordered by AUC.
+Its first row need not be the selected model. In a manual workflow, call
+`select_calibration_model(cv, k_folds = k_folds)` with the same fold
+count used in
+[`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md),
+rather than taking `cv$model[1]`. The selected model and rule are also
+printed by
+[`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md).
+
+## Review the downstream results
+
+A different selected model can change calibrated probabilities and which
+detections exceed `p_min`. Compare the old and new calibration curves,
+nightly detection histories and community matrices, using separate
+output folders. The new default does not change `p_min` or the
+repetition rule; any differences can arise from the selected calibration
+model.
+
+Reading v1.2.0 validation tables remains supported. Existing manifest
+formats and the optional Bayesian engine remain available. With
+`engine = "brms"`, selection still uses the maximum-likelihood
+cross-validation comparison, followed by a Bayesian refit of the
+selected formula with an explicit prior.

@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,6 +53,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
     <li><a class="dropdown-item" href="articles/retraining.html">Retraining the classifier with validated clips</a></li>
+    <li><a class="dropdown-item" href="articles/migration-3.0.0.html">Migrating from sheepdog 2.x to 3.0.0</a></li>
     <li><a class="dropdown-item" href="articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
     <li><a class="dropdown-item" href="articles/frognet-workflow.html">The FrogNet workflow</a></li>
   </ul>
@@ -105,6 +106,11 @@
 <p>Cutting audio needs <a href="https://cran.r-project.org/package=av" class="external-link">av</a> (it bundles ffmpeg), the hierarchical calibration needs <a href="https://cran.r-project.org/package=lme4" class="external-link">lme4</a>, and the figures need <a href="https://cran.r-project.org/package=ggplot2" class="external-link">ggplot2</a>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"av"</span>, <span class="st">"lme4"</span>, <span class="st">"ggplot2"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="migrating-from-2x">Migrating from 2.x<a class="anchor" aria-label="anchor" href="#migrating-from-2x"></a>
+</h2>
+<p>In 3.0.0, calibration defaults to <code>select = "one_se_logloss"</code>. Use <code>select = "best_auc"</code> to preserve the 2.x model selection. See the <a href="https://provetelab.org/sheepdog/articles/migration-3.0.0.html">migration guide</a> for details and comparison of downstream results.</p>
 </div>
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>

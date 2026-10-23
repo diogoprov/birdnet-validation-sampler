@@ -42,7 +42,7 @@ calibrate(
   min_detections_night = 1,
   dawn_hour = 12,
   k_folds = 5,
-  select = c("best_auc", "one_se_logloss"),
+  select = c("one_se_logloss", "best_auc"),
   uncorrelated = FALSE,
   effort_curve = FALSE,
   effort_n = c(5, 10, 15, 20, 25, 30),
@@ -171,10 +171,10 @@ A list with `comparison`, `fit`, `effort` (or `NULL`), `scored` and
 
 The model is chosen by
 [`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md)
-with the rule `select`: the highest mean AUC by default, or the simplest
-model within one standard error of the lowest log-loss, leaving out
-singular fits (`"one_se_logloss"`, the default from 3.0.0). When the
-refit is singular,
+with the rule `select`: by default, the simplest model within one
+standard error of the lowest log-loss, leaving out models singular in
+most folds (`"one_se_logloss"`). Use `select = "best_auc"` to reproduce
+the 2.x selection by highest mean AUC. When the refit is singular,
 [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md)
 warns; read `calibration_model.txt` and the comparison before using the
 probabilities.

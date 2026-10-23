@@ -8,7 +8,7 @@ Picks a model from the table of
 ``` r
 select_calibration_model(
   comparison,
-  rule = c("best_auc", "one_se_logloss"),
+  rule = c("one_se_logloss", "best_auc"),
   k_folds = 5
 )
 ```
@@ -44,6 +44,6 @@ The name of the selected model.
   out, unless all are, which raises a warning. The log-loss rewards
   correct probabilities, not only their ranking, and the one-standard-
   error rule prefers the simpler model when the data cannot tell the
-  candidates apart. This rule will be the default of
+  candidates apart. This is the default of
   [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
-  in 3.0.0.
+  since 3.0.0.

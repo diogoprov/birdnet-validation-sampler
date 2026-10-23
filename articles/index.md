@@ -19,6 +19,8 @@
 
 - [Retraining the classifier with validated
   clips](https://provetelab.org/sheepdog/articles/retraining.md):
+- [Migrating from sheepdog 2.x to
+  3.0.0](https://provetelab.org/sheepdog/articles/migration-3.0.0.md):
 - [Integration with crywolf: clip manifest and validation
   tables](https://provetelab.org/sheepdog/articles/crywolf-integration.md):
 - [The FrogNet

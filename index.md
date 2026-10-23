@@ -67,6 +67,14 @@ bundles ffmpeg), the hierarchical calibration needs
 install.packages(c("av", "lme4", "ggplot2"))
 ```
 
+## Migrating from 2.x
+
+In 3.0.0, calibration defaults to `select = "one_se_logloss"`. Use
+`select = "best_auc"` to preserve the 2.x model selection. See the
+[migration
+guide](https://provetelab.org/sheepdog/articles/migration-3.0.0.html)
+for details and comparison of downstream results.
+
 ## Usage
 
 ``` r

@@ -1,6 +1,26 @@
 # Changelog
 
-## sheepdog (development version)
+## sheepdog 3.0.0
+
+### Breaking changes
+
+- [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
+  and
+  [`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md)
+  now default to `"one_se_logloss"`: choose the simplest candidate
+  within one standard error of the lowest cross-validated log-loss,
+  excluding candidates singular in most folds unless all are singular
+  (with a warning). Supply `select = "best_auc"` (or `rule = "best_auc"`
+  in the selector) to retain the 2.x selection. The comparison table
+  still reports all metrics and is ordered by AUC; its first row is not
+  necessarily the selected model. See the migration guide for a
+  reproducible example.
+
+### Documentation and infrastructure
+
+- Added the 2.x to 3.0.0 migration guide.
+- CI measures test coverage with `covr` and uploads an HTML report and
+  Cobertura XML as workflow artifacts, without a third-party token.
 
 ### Documentation
 

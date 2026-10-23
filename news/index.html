@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
     <li><a class="dropdown-item" href="../articles/retraining.html">Retraining the classifier with validated clips</a></li>
+    <li><a class="dropdown-item" href="../articles/migration-3.0.0.html">Migrating from sheepdog 2.x to 3.0.0</a></li>
     <li><a class="dropdown-item" href="../articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
     <li><a class="dropdown-item" href="../articles/frognet-workflow.html">The FrogNet workflow</a></li>
   </ul></li>
@@ -49,18 +50,28 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="sheepdog-development-version">sheepdog (development version)<a class="anchor" aria-label="anchor" href="#sheepdog-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="3.0.0" id="sheepdog-300">sheepdog 3.0.0<a class="anchor" aria-label="anchor" href="#sheepdog-300"></a></h2>
 <div class="section level3">
-<h3 id="documentation-development-version">Documentation<a class="anchor" aria-label="anchor" href="#documentation-development-version"></a></h3>
+<h3 id="breaking-changes-3-0-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-3-0-0"></a></h3>
+<ul><li>
+<code><a href="../reference/calibrate.html">calibrate()</a></code> and <code><a href="../reference/select_calibration_model.html">select_calibration_model()</a></code> now default to <code>"one_se_logloss"</code>: choose the simplest candidate within one standard error of the lowest cross-validated log-loss, excluding candidates singular in most folds unless all are singular (with a warning). Supply <code>select = "best_auc"</code> (or <code>rule = "best_auc"</code> in the selector) to retain the 2.x selection. The comparison table still reports all metrics and is ordered by AUC; its first row is not necessarily the selected model. See the migration guide for a reproducible example.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-and-infrastructure-3-0-0">Documentation and infrastructure<a class="anchor" aria-label="anchor" href="#documentation-and-infrastructure-3-0-0"></a></h3>
+<ul><li>Added the 2.x to 3.0.0 migration guide.</li>
+<li>CI measures test coverage with <code>covr</code> and uploads an HTML report and Cobertura XML as workflow artifacts, without a third-party token.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-3-0-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-3-0-0"></a></h3>
 <ul><li>New article “Reviewing clips in the BirdNET GUI” (site only): the review in the Review tab of the BirdNET-Analyzer GUI, from the folder of clips to the <code>Positive</code> and <code>Negative</code> folders read by <code><a href="../reference/classify_review.html">classify_review()</a></code>, with screenshots in English and Portuguese (where the result folders are <code>positivo</code> and <code>negativo</code>), the regression panel of the GUI compared with the calibration of stage 2, and the review with several reviewers.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="sampling-development-version">Sampling<a class="anchor" aria-label="anchor" href="#sampling-development-version"></a></h3>
+<h3 id="sampling-3-0-0">Sampling<a class="anchor" aria-label="anchor" href="#sampling-3-0-0"></a></h3>
 <ul><li>
 <code>select_clips(strata = )</code> gains the presets <code>"hour"</code> (pooling the nights), <code>"week"</code> (ISO week of the night) and <code>"month"</code>, and accepts a character vector of column names for strata defined by the user, e.g. <code>c("month", "moon")</code> with a column added to the detections before the call. <code>site</code> and <code>species_code</code> are always added to the strata, columns that depend on the score (<code>confidence</code>, <code>rank</code>) are refused, and every stratum column must be constant within an occasion.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="calibration-development-version">Calibration<a class="anchor" aria-label="anchor" href="#calibration-development-version"></a></h3>
+<h3 id="calibration-3-0-0">Calibration<a class="anchor" aria-label="anchor" href="#calibration-3-0-0"></a></h3>
 <ul><li>
 <code><a href="../reference/fit_calibration.html">fit_calibration()</a></code> (and <code><a href="../reference/calibrate.html">calibrate()</a></code>) passes on the messages of <code><a href="https://rdrr.io/pkg/lme4/man/glmer.html" class="external-link">lme4::glmer()</a></code>, prefixed by <code>lme4:</code>, instead of hiding them; the message on singular fits is not repeated, since it already becomes a warning. Every message of the fit is kept in the attribute <code>sheepdog_messages</code> of the model, and <code><a href="../reference/calibrate.html">calibrate()</a></code> appends them to <code>calibration_model.txt</code>. The fits of the cross-validation folds and of the effort curve stay quiet.</li>
 </ul></div>
