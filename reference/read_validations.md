@@ -10,7 +10,7 @@ and are left out.
 ## Usage
 
 ``` r
-read_validations(files, site_map = NULL)
+read_validations(files, site_map = NULL, keep = NULL)
 ```
 
 ## Arguments
@@ -25,9 +25,16 @@ read_validations(files, site_map = NULL)
   Optional named character vector to fix diverging site names, as
   `c(old = "new")`, e.g. `c(BEP2 = "BEP")`.
 
+- keep:
+
+  Optional character vector of input columns to retain, e.g.
+  `c("source_audio", "night")` for grouped cross-validation. Missing
+  columns raise an error rather than silently falling back to clip
+  folds.
+
 ## Value
 
 A tibble with `site` and `species` (factors; `species` is the species
 folder code), `confidence`, `logit_conf` (logit of the confidence,
 bounded at 1e-4 and 1 - 1e-4) and `tp` (1 = true positive, 0 = false
-positive).
+positive), plus the columns requested in `keep`.

@@ -5,6 +5,8 @@ clips, optionally draws the effort curve, scores every detection of the
 complete selection tables and builds the nightly detection history.
 Writes to output_dir:
 model_comparison.csv (compare_calibration_models());
+calibration_folds.csv, when fold_group is supplied: validation
+row number, site, species, grouping columns and assigned fold;
 calibration_model.rds and calibration_model.txt (the refitted
 best model and its summary);
 calibration_curves.png (plot_calibration()), when 'ggplot2' is
@@ -22,6 +24,8 @@ clips, optionally draws the effort curve, scores every detection of the
 complete selection tables and builds the nightly detection history.
 Writes to output_dir:
 model_comparison.csv (compare_calibration_models());
+calibration_folds.csv, when fold_group is supplied: validation
+row number, site, species, grouping columns and assigned fold;
 calibration_model.rds and calibration_model.txt (the refitted
 best model and its summary);
 calibration_curves.png (plot_calibration()), when 'ggplot2' is
@@ -41,7 +45,7 @@ detection_summary.csv (summarise_history()).
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +84,7 @@ detection_summary.csv (summarise_history()).
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Calibrate confidence scores and build detection histories</h1>
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v3.0.0/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
       <div class="d-none name"><code>calibrate.Rd</code></div>
     </div>
 
@@ -90,6 +94,8 @@ candidate models by cross-validation, refits the best one to all the
 clips, optionally draws the effort curve, scores every detection of the
 complete selection tables and builds the nightly detection history.
 Writes to <code>output_dir</code>:</p><ul><li><p><code>model_comparison.csv</code> (<code><a href="compare_calibration_models.html">compare_calibration_models()</a></code>);</p></li>
+<li><p><code>calibration_folds.csv</code>, when <code>fold_group</code> is supplied: validation
+row number, site, species, grouping columns and assigned fold;</p></li>
 <li><p><code>calibration_model.rds</code> and <code>calibration_model.txt</code> (the refitted
 best model and its summary);</p></li>
 <li><p><code>calibration_curves.png</code> (<code><a href="plot_calibration.html">plot_calibration()</a></code>), when 'ggplot2' is
@@ -124,7 +130,8 @@ installed;</p></li>
 <span>  brms_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  rule <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>, <span class="st">"probability"</span><span class="op">)</span>,</span>
 <span>  prob_min <span class="op">=</span> <span class="fl">0.9</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">2026</span></span>
+<span>  seed <span class="op">=</span> <span class="fl">2026</span>,</span>
+<span>  fold_group <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -234,6 +241,13 @@ use the same <code>p_min</code> in both.</p></dd>
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Seed of the fold assignment. The global random number
 generator is left as it was.</p></dd>
+
+
+<dt id="arg-fold-group">fold_group<a class="anchor" aria-label="anchor" href="#arg-fold-group"></a></dt>
+<dd><p>Optional character vector of grouping columns. Do not
+include <code>species</code>, verdicts or confidence scores: these would split
+recordings or nights by species or by outcome. Group IDs must be
+nonmissing and nonempty. <code>NULL</code> keeps the original clip folds.</p></dd>
 
 </dl></div>
     <div class="section level2">

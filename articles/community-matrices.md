@@ -124,7 +124,7 @@ status |>
 #> 1 boa_ran reliable        reliable        reliable   reliable  
 #> 2 den_nan reliable        reliable        reliable   unreliable
 #> 3 ela_bic reliable        reliable        reliable   reliable  
-#> 4 lep_fus probably_absent probably_absent reliable   unreliable
+#> 4 lep_fus probably_absent probably_absent reliable   reliable  
 #> 5 lep_pod reliable        reliable        reliable   reliable  
 #> 6 phy_cuv reliable        reliable        reliable   reliable  
 #> 7 pse_pla unreliable      unreliable      unreliable unreliable
@@ -138,14 +138,14 @@ keeps the species with no unreliable cell:
 
 core <- suggest_core_species(status)
 core
-#> [1] "boa_ran" "ela_bic" "lep_pod" "phy_cuv"
+#> [1] "boa_ran" "ela_bic" "lep_fus" "lep_pod" "phy_cuv"
 ```
 
-Species with at least one unreliable cell (den_nan, lep_fus, pse_pla,
-sci_nas) stay out. Cells classified as probably absent (lep_fus ARA,
-lep_fus BAI) do not exclude a species: a zero there is a plausible
-absence, not a failure of the classifier. The choice remains the
-analyst’s; the table is the evidence for it.
+Species with at least one unreliable cell (den_nan, pse_pla, sci_nas)
+stay out. Cells classified as probably absent (lep_fus ARA, lep_fus BAI)
+do not exclude a species: a zero there is a plausible absence, not a
+failure of the classifier. The choice remains the analyst’s; the table
+is the evidence for it.
 
 [`summarise_history()`](https://provetelab.org/sheepdog/reference/summarise_history.md)
 gives a complementary view: the number of nights with a reliable
@@ -219,34 +219,34 @@ frequency matrix divides it by the recorded nights:
 ``` r
 
 mats$counts
-#> # A tibble: 23 × 7
-#>    site  month   n_nights_recorded boa_ran ela_bic lep_pod phy_cuv
-#>    <chr> <chr>               <int>   <int>   <int>   <int>   <int>
-#>  1 ARA   2021-10                 5       5       0       5       0
-#>  2 ARA   2021-11                 5       5       5       0       5
-#>  3 ARA   2021-12                 5       5       5       0       5
-#>  4 ARA   2022-01                 5       5       5       4       5
-#>  5 ARA   2022-02                 5       5       5       5       5
-#>  6 ARA   2022-03                 5       5       0       4       0
-#>  7 BAI   2021-10                 5       0       0       0       0
-#>  8 BAI   2021-11                 5       0       5       5       5
-#>  9 BAI   2021-12                 5       4       5       0       5
-#> 10 BAI   2022-01                 5       5       5       0       5
+#> # A tibble: 23 × 8
+#>    site  month   n_nights_recorded boa_ran ela_bic lep_fus lep_pod phy_cuv
+#>    <chr> <chr>               <int>   <int>   <int>   <int>   <int>   <int>
+#>  1 ARA   2021-10                 5       5       0       0       5       0
+#>  2 ARA   2021-11                 5       5       5       0       0       5
+#>  3 ARA   2021-12                 5       5       5       0       0       5
+#>  4 ARA   2022-01                 5       5       5       0       4       5
+#>  5 ARA   2022-02                 5       5       5       0       5       5
+#>  6 ARA   2022-03                 5       5       0       0       4       0
+#>  7 BAI   2021-10                 5       0       0       0       0       0
+#>  8 BAI   2021-11                 5       0       5       0       5       5
+#>  9 BAI   2021-12                 5       4       5       0       0       5
+#> 10 BAI   2022-01                 5       5       5       0       0       5
 #> # ℹ 13 more rows
 mats$frequency
-#> # A tibble: 23 × 7
-#>    site  month   n_nights_recorded boa_ran ela_bic lep_pod phy_cuv
-#>    <chr> <chr>               <int>   <dbl>   <dbl>   <dbl>   <dbl>
-#>  1 ARA   2021-10                 5     1         0     1         0
-#>  2 ARA   2021-11                 5     1         1     0         1
-#>  3 ARA   2021-12                 5     1         1     0         1
-#>  4 ARA   2022-01                 5     1         1     0.8       1
-#>  5 ARA   2022-02                 5     1         1     1         1
-#>  6 ARA   2022-03                 5     1         0     0.8       0
-#>  7 BAI   2021-10                 5     0         0     0         0
-#>  8 BAI   2021-11                 5     0         1     1         1
-#>  9 BAI   2021-12                 5     0.8       1     0         1
-#> 10 BAI   2022-01                 5     1         1     0         1
+#> # A tibble: 23 × 8
+#>    site  month   n_nights_recorded boa_ran ela_bic lep_fus lep_pod phy_cuv
+#>    <chr> <chr>               <int>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>
+#>  1 ARA   2021-10                 5     1         0       0     1         0
+#>  2 ARA   2021-11                 5     1         1       0     0         1
+#>  3 ARA   2021-12                 5     1         1       0     0         1
+#>  4 ARA   2022-01                 5     1         1       0     0.8       1
+#>  5 ARA   2022-02                 5     1         1       0     1         1
+#>  6 ARA   2022-03                 5     1         0       0     0.8       0
+#>  7 BAI   2021-10                 5     0         0       0     0         0
+#>  8 BAI   2021-11                 5     0         1       0     1         1
+#>  9 BAI   2021-12                 5     0.8       1       0     0         1
+#> 10 BAI   2022-01                 5     1         1       0     0         1
 #> # ℹ 13 more rows
 ```
 
@@ -265,16 +265,16 @@ sens <- lapply(1:3, function(k) {
 }) |>
   dplyr::bind_rows()
 sens
-#> # A tibble: 3 × 5
-#>   k_min boa_ran ela_bic lep_pod phy_cuv
-#>   <int>   <dbl>   <dbl>   <dbl>   <dbl>
-#> 1     1   0.565   0.739   0.652   0.704
-#> 2     2   0.548   0.739   0.617   0.696
-#> 3     3   0.478   0.713   0.591   0.670
+#> # A tibble: 3 × 6
+#>   k_min boa_ran ela_bic lep_fus lep_pod phy_cuv
+#>   <int>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>
+#> 1     1   0.565   0.739  0.0261   0.652   0.704
+#> 2     2   0.548   0.739  0        0.617   0.696
+#> 3     3   0.478   0.713  0        0.591   0.670
 ```
 
 From `k_min = 1` to `3`, the mean frequency of ela_bic falls by 4%,
-whereas that of boa_ran falls by 15%. The rule therefore acts unevenly
+whereas that of lep_fus falls by 100%. The rule therefore acts unevenly
 among species, and its effect on later analyses should be reported.
 `k_min = 2` is the default.
 
@@ -291,9 +291,9 @@ files:
 out <- file.path(tempdir(), "community_matrices")
 mats <- build_community_matrices(history_file, out, core_species = core,
                                  k_min = 2, min_nights_month = 5)
-#> Matrix: 23 rows (site x month) x 4 species | rule k >= 2
+#> Matrix: 23 rows (site x month) x 5 species | rule k >= 2
 #> Effort: 23 site x month cells included; 1 dropped for having < 5 recorded nights (see effort_site_month.csv)
-#> Files in: /tmp/RtmpD3ThMi/community_matrices
+#> Files in: /tmp/Rtmp00PGvk/community_matrices
 list.files(out)
 #> [1] "count_matrix_site_month_k2.csv"     "effort_site_month.csv"             
 #> [3] "frequency_matrix_site_month_k2.csv"
@@ -322,7 +322,7 @@ freq <- as.matrix(samples[, core]) / samples$n_nights_recorded
 rownames(freq) <- paste(samples$site, samples$month)
 ```
 
-1 sample(s) removed; 22 samples x 4 species remain. The example has only
+1 sample(s) removed; 22 samples x 5 species remain. The example has only
 4 sites and six months, so the analyses below illustrate the workflow;
 they do not support general conclusions.
 
@@ -419,7 +419,7 @@ Nt <- mats_ord$trials
 `Ntrials` must be a matrix with the dimensions of the response when
 effort varies among samples;
 [`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md)
-returns it as `trials`. With 4 species, the default starting values of
+returns it as `trials`. With 5 species, the default starting values of
 `gllvm()` fail for two latent variables, so the model starts from zero
 (`starting.val = "zero"`).
 
@@ -427,6 +427,7 @@ returns it as `trials`. With 4 species, the default starting values of
 
 fit_lv <- gllvm::gllvm(y = Y, family = "binomial", Ntrials = Nt,
                        num.lv = 2, starting.val = "zero", seed = 2026)
+#> Warning in gllvm::gllvm(y = Y, family = "binomial", Ntrials = Nt, num.lv = 2, : There are responses full of zeros.
 fit_lv
 #> Call: 
 #> gllvm::gllvm(y = Y, family = "binomial", num.lv = 2, Ntrials = Nt, 
@@ -437,10 +438,10 @@ fit_lv
 #> [1] "VA"
 #> 
 #> log-likelihood:  -146.1153 
-#> Residual degrees of freedom:  77 
-#> AIC:  314.2305 
-#> AICc:  317.7042 
-#> BIC:  341.4812
+#> Residual degrees of freedom:  96 
+#> AIC:  320.2305 
+#> AICc:  324.6516 
+#> BIC:  358.0373
 ```
 
 ``` r
@@ -474,14 +475,15 @@ samples:
 ``` r
 
 round(gllvm::getResidualCor(fit_lv), 2)
-#>         boa_ran ela_bic lep_pod phy_cuv
-#> boa_ran    1.00    0.56   -0.66    0.37
-#> ela_bic    0.56    1.00   -0.78    0.81
-#> lep_pod   -0.66   -0.78    1.00   -0.67
-#> phy_cuv    0.37    0.81   -0.67    1.00
+#>         boa_ran ela_bic lep_fus lep_pod phy_cuv
+#> boa_ran    1.00    0.56       0   -0.66    0.37
+#> ela_bic    0.56    1.00       0   -0.78    0.81
+#> lep_fus    0.00    0.00       1    0.00    0.00
+#> lep_pod   -0.66   -0.78       0    1.00   -0.67
+#> phy_cuv    0.37    0.81       0   -0.67    1.00
 ```
 
-With 22 samples, 4 species and two latent variables, the loadings and
+With 22 samples, 5 species and two latent variables, the loadings and
 residual correlations are weakly identified, and solutions can change
 with the starting values; they are shown here as an illustration.
 
@@ -512,20 +514,26 @@ fit_season <- gllvm::gllvm(y = Y, X = X, formula = ~ season,
                            family = "binomial", Ntrials = Nt, num.lv = 1,
                            row.eff = ~ (1 | site), studyDesign = design,
                            starting.val = "zero", seed = 2026)
+#> Warning in gllvm::gllvm(y = Y, X = X, formula = ~season, family = "binomial", : There are responses full of zeros.
+#> Warning in se.gllvm(out): 1 parameter(s) have negative variance estimates (b
+#> x1). The model likely has not converged - consider re-fitting.
 fit_null   <- gllvm::gllvm(y = Y, family = "binomial", Ntrials = Nt,
                            num.lv = 1, row.eff = ~ (1 | site),
                            studyDesign = design,
                            starting.val = "zero", seed = 2026)
+#> Warning in gllvm::gllvm(y = Y, family = "binomial", Ntrials = Nt, num.lv = 1, : There are responses full of zeros.
+#> Warning in se.gllvm(out): 1 parameter(s) have negative variance estimates
+#> (log_sigma x1). The model likely has not converged - consider re-fitting.
 lrt <- anova(fit_null, fit_season)
 #> Model  1 :  y ~ NULL 
 #> Model  2 :  ~ season
 ```
 
-The likelihood-ratio statistic is D = 83.1 on 4 degrees of freedom (one
+The likelihood-ratio statistic is D = 19.9 on 5 degrees of freedom (one
 season coefficient per species; P \< 0.0001). The estimated standard
-deviation of the site intercept is 1.2e-05, so in this example the
-shared site effect is negligible once the species-specific terms are in
-the model.
+deviation of the site intercept is 0.42, so in this example the shared
+site effect is negligible once the species-specific terms are in the
+model.
 
 The species-specific season coefficients (rainy relative to dry, on the
 logit scale) and their 95% Wald intervals:
@@ -540,21 +548,22 @@ season_coef <- data.frame(species = core,
 season_coef |>
   dplyr::mutate(dplyr::across(estimate:upper, \(x) signif(x, 3))) |>
   tibble::as_tibble()
-#> # A tibble: 4 × 4
-#>   species estimate     lower     upper
-#>   <chr>      <dbl>     <dbl>     <dbl>
-#> 1 boa_ran     2.22 -4.9 e- 2  4.5 e+ 0
-#> 2 ela_bic    13.2  -1.22e+10  1.22e+10
-#> 3 lep_pod    -3.41 -5.94e+ 0 -8.72e- 1
-#> 4 phy_cuv     2.62  1.74e+ 0  3.5 e+ 0
+#> # A tibble: 5 × 4
+#>   species estimate  lower  upper
+#>   <chr>      <dbl>  <dbl>  <dbl>
+#> 1 boa_ran     1.01  0.392  1.62 
+#> 2 ela_bic    49.5  49.5   49.5  
+#> 3 lep_fus    -4.57 -4.57  -4.57 
+#> 4 lep_pod    -2.39 -4.18  -0.601
+#> 5 phy_cuv     5     1.97   8.03
 ```
 
-The negative coefficient of lep_pod matches its preference for the dry
-season in the simulation. The estimate of ela_bic is large and its
-interval is degenerate: the species was detected in every rainy-season
-sample, so the data are close to complete separation and the coefficient
-is not identified. Such intervals should not be read as estimates of
-precision.
+The negative coefficient of lep_fus, lep_pod matches its preference for
+the dry season in the simulation. The estimate of ela_bic is large and
+its interval is degenerate: the species was detected in every
+rainy-season sample, so the data are close to complete separation and
+the coefficient is not identified. Such intervals should not be read as
+estimates of precision.
 
 ### Caveats
 

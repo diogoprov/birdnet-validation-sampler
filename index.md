@@ -67,6 +67,18 @@ bundles ffmpeg), the hierarchical calibration needs
 install.packages(c("av", "lme4", "ggplot2"))
 ```
 
+## Grouped calibration folds
+
+Use `calibrate(..., fold_group = "source_audio")` to keep recordings
+intact, or `fold_group = "night"` to keep nights intact across species
+at each site. The input validation tables must contain those metadata;
+each site needs at least `k_folds` groups. The default remains clip
+folds. For a manual workflow, retain the metadata with
+`read_validations(..., keep = c("source_audio", "night"))` and inspect
+the assignment with
+[`calibration_folds()`](https://provetelab.org/sheepdog/reference/calibration_folds.md).
+See the calibration article for examples and limitations.
+
 ## Migrating from 2.x
 
 In 3.0.0, calibration defaults to `select = "one_se_logloss"`. Use
@@ -114,7 +126,7 @@ Each stage is also available as separate functions:
 | 1\. Several reviewers | [`assign_reviewers()`](https://provetelab.org/sheepdog/reference/assign_reviewers.md), [`split_by_reviewer()`](https://provetelab.org/sheepdog/reference/split_by_reviewer.md), [`reviewer_agreement()`](https://provetelab.org/sheepdog/reference/reviewer_agreement.md) (Cohen’s or Fleiss’ kappa), [`consensus_verdicts()`](https://provetelab.org/sheepdog/reference/consensus_verdicts.md) |
 | 1\. After the review | [`classify_review()`](https://provetelab.org/sheepdog/reference/classify_review.md), [`precision_by_bin()`](https://provetelab.org/sheepdog/reference/precision_by_bin.md), [`suggest_thresholds()`](https://provetelab.org/sheepdog/reference/suggest_thresholds.md), [`nightly_presence()`](https://provetelab.org/sheepdog/reference/nightly_presence.md), [`retraining_clips()`](https://provetelab.org/sheepdog/reference/retraining_clips.md), [`read_validation_tables()`](https://provetelab.org/sheepdog/reference/read_validation_tables.md) |
 | 1\. Retraining | [`build_training_set()`](https://provetelab.org/sheepdog/reference/build_training_set.md) (training folders for BirdNET-Analyzer), [`exclude_training_clips()`](https://provetelab.org/sheepdog/reference/exclude_training_clips.md) |
-| 2\. Calibration | [`read_validations()`](https://provetelab.org/sheepdog/reference/read_validations.md), [`calibration_models()`](https://provetelab.org/sheepdog/reference/calibration_models.md), [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md), [`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md), [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md), [`calibration_effort()`](https://provetelab.org/sheepdog/reference/calibration_effort.md), [`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md), [`detection_history()`](https://provetelab.org/sheepdog/reference/detection_history.md), [`summarise_history()`](https://provetelab.org/sheepdog/reference/summarise_history.md) |
+| 2\. Calibration | [`read_validations()`](https://provetelab.org/sheepdog/reference/read_validations.md), [`calibration_models()`](https://provetelab.org/sheepdog/reference/calibration_models.md), [`calibration_folds()`](https://provetelab.org/sheepdog/reference/calibration_folds.md), [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md), [`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md), [`fit_calibration()`](https://provetelab.org/sheepdog/reference/fit_calibration.md), [`calibration_effort()`](https://provetelab.org/sheepdog/reference/calibration_effort.md), [`score_detections()`](https://provetelab.org/sheepdog/reference/score_detections.md), [`detection_history()`](https://provetelab.org/sheepdog/reference/detection_history.md), [`summarise_history()`](https://provetelab.org/sheepdog/reference/summarise_history.md) |
 | 2\. Bayesian calibration | [`calibration_prior()`](https://provetelab.org/sheepdog/reference/calibration_prior.md), [`prior_predictive_calibration()`](https://provetelab.org/sheepdog/reference/prior_predictive_calibration.md), [`calibration_diagnostics()`](https://provetelab.org/sheepdog/reference/calibration_diagnostics.md), [`calibration_sensitivity()`](https://provetelab.org/sheepdog/reference/calibration_sensitivity.md), [`plot_calibration_draws()`](https://provetelab.org/sheepdog/reference/plot_calibration_draws.md), [`history_draws()`](https://provetelab.org/sheepdog/reference/history_draws.md) |
 | 3\. Community matrices | [`cell_status()`](https://provetelab.org/sheepdog/reference/cell_status.md), [`suggest_core_species()`](https://provetelab.org/sheepdog/reference/suggest_core_species.md), [`community_matrices()`](https://provetelab.org/sheepdog/reference/community_matrices.md), [`community_matrices_draws()`](https://provetelab.org/sheepdog/reference/community_matrices_draws.md) |
 

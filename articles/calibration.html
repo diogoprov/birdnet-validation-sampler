@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,7 +77,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>Calibrating confidence scores</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v3.0.0/vignettes/calibration.Rmd" class="external-link"><code>vignettes/calibration.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/vignettes/calibration.Rmd" class="external-link"><code>vignettes/calibration.Rmd</code></a></small>
       <div class="d-none name"><code>calibration.Rmd</code></div>
     </div>
 
@@ -208,10 +208,11 @@ site x species combination. This is the most flexible model.</li>
 </h2>
 <p><code><a href="../reference/compare_calibration_models.html">compare_calibration_models()</a></code> fits every candidate with
 k-fold cross-validation and computes the area under the ROC curve (AUC)
-on the held-out folds. Folds are stratified within site x species, so
-every level appears in both the training and the test sets. The fold
-assignment uses a fixed <code>seed</code>. Five folds run in a few
-seconds on these data.</p>
+on the held-out folds. By default, clips are assigned within site x
+species. The fold assignment uses a fixed <code>seed</code>. Five folds
+run in a few seconds on these data. Clips from the same recording may
+then appear on both sides; use grouped folds when evaluating new
+recordings or nights.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compare_calibration_models.html">compare_calibration_models</a></span><span class="op">(</span><span class="va">val</span>, <span class="va">models</span>, k_folds <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Cross-validation (5 folds) of 5 models...</span></span>
@@ -701,6 +702,41 @@ nights of peak activity), or if the reviewed period differs from the
 scored one in noise or in species composition.</p>
 </div>
 <div class="section level2">
+<h2 id="keeping-recordings-and-nights-intact">Keeping recordings and nights intact<a class="anchor" aria-label="anchor" href="#keeping-recordings-and-nights-intact"></a>
+</h2>
+<p><code>fold_group = "source_audio"</code> keeps recordings together,
+and <code>fold_group = "night"</code> keeps nights together. The group
+key always includes site and spans all species: detections of the same
+recording or night cannot leak across training and test sets through
+different species. Group counts are balanced within site; clip counts
+may differ. Each site needs at least <code>k_folds</code> distinct
+groups. This evaluates new recordings or nights at known sites, not
+transfer to new sites. Rare species may be absent from a particular
+train or test partition.</p>
+<p>Retain the metadata explicitly when assembling the stages by
+hand:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">val_grouped</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_validations.html">read_validations</a></span><span class="op">(</span><span class="va">val_files</span>, keep <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"source_audio"</span>, <span class="st">"night"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">folds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calibration_folds.html">calibration_folds</a></span><span class="op">(</span><span class="va">val_grouped</span>, k_folds <span class="op">=</span> <span class="fl">5</span>, seed <span class="op">=</span> <span class="fl">2026</span>,</span>
+<span>                           fold_group <span class="op">=</span> <span class="st">"night"</span><span class="op">)</span></span>
+<span><span class="va">cv_grouped</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compare_calibration_models.html">compare_calibration_models</a></span><span class="op">(</span></span>
+<span>  <span class="va">val_grouped</span>, <span class="va">models</span>, k_folds <span class="op">=</span> <span class="fl">5</span>, seed <span class="op">=</span> <span class="fl">2026</span>, fold_group <span class="op">=</span> <span class="st">"night"</span><span class="op">)</span></span>
+<span><span class="va">selected</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_calibration_model.html">select_calibration_model</a></span><span class="op">(</span><span class="va">cv_grouped</span>, k_folds <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<p>For custom tables, a vector of column names can define a compound
+group, e.g. <code>fold_group = c("recorder", "night")</code>. IDs must
+be nonempty and nonmissing. Supply real recording/night metadata;
+grouping by clip file, species or verdict would not preserve the
+acoustic unit.</p>
+<p><code>calibrate(fold_group = "night", ...)</code> retains the
+requested input columns automatically and saves the assignments in
+<code>calibration_folds.csv</code> for inspection. Older validation
+tables without those columns still work with the default clip folds.
+Asking for absent metadata raises an error. A test fold containing only
+one verdict has undefined AUC; log-loss and Brier remain available, and
+it is not counted as a failed fit. AUC-based selection requires at least
+one finite AUC.</p>
+</div>
+<div class="section level2">
 <h2 id="the-calibrate-wrapper">The calibrate() wrapper<a class="anchor" aria-label="anchor" href="#the-calibrate-wrapper"></a>
 </h2>
 <p><code><a href="../reference/calibrate.html">calibrate()</a></code> runs the whole stage in one call. It reads
@@ -716,7 +752,7 @@ final fit. Use <code>uncorrelated = TRUE</code> to include the
 uncorrelated m4 variant in the candidates. Read the comparison,
 <code>calibration_model.txt</code> and the curves before using the
 output.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">out_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"calibration"</span><span class="op">)</span></span>
 <span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calibrate.html">calibrate</a></span><span class="op">(</span>validation_files  <span class="op">=</span> <span class="va">val_files</span>,</span>
 <span>                 prediction_tables <span class="op">=</span> <span class="va">tables</span>,</span>

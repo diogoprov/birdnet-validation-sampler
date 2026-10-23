@@ -67,6 +67,8 @@ build nightly detection histories.
   : Read the validation tables for calibration
 - [`calibration_models()`](https://provetelab.org/sheepdog/reference/calibration_models.md)
   : Candidate calibration models
+- [`calibration_folds()`](https://provetelab.org/sheepdog/reference/calibration_folds.md)
+  : Assign cross-validation folds for calibration
 - [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md)
   : Compare calibration models by cross-validation
 - [`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md)

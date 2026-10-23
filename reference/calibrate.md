@@ -9,6 +9,9 @@ Writes to `output_dir`:
 - `model_comparison.csv`
   ([`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md));
 
+- `calibration_folds.csv`, when `fold_group` is supplied: validation row
+  number, site, species, grouping columns and assigned fold;
+
 - `calibration_model.rds` and `calibration_model.txt` (the refitted best
   model and its summary);
 
@@ -52,7 +55,8 @@ calibrate(
   brms_args = list(),
   rule = c("mean", "probability"),
   prob_min = 0.9,
-  seed = 2026
+  seed = 2026,
+  fold_group = NULL
 )
 ```
 
@@ -161,6 +165,13 @@ calibrate(
 
   Seed of the fold assignment. The global random number generator is
   left as it was.
+
+- fold_group:
+
+  Optional character vector of grouping columns. Do not include
+  `species`, verdicts or confidence scores: these would split recordings
+  or nights by species or by outcome. Group IDs must be nonmissing and
+  nonempty. `NULL` keeps the original clip folds.
 
 ## Value
 

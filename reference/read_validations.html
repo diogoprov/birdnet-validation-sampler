@@ -15,7 +15,7 @@ verdict and a confidence score. Tables written by v1.2.0
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ verdict and a confidence score. Tables written by v1.2.0
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Read the validation tables for calibration</h1>
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v3.0.0/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/R/calibrate.R" class="external-link"><code>R/calibrate.R</code></a></small>
       <div class="d-none name"><code>read_validations.Rd</code></div>
     </div>
 
@@ -68,7 +68,7 @@ verdict and a confidence score. Tables written by v1.2.0
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">read_validations</span><span class="op">(</span><span class="va">files</span>, site_map <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">read_validations</span><span class="op">(</span><span class="va">files</span>, site_map <span class="op">=</span> <span class="cn">NULL</span>, keep <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -84,13 +84,19 @@ are skipped with a warning.</p></dd>
 <dd><p>Optional named character vector to fix diverging site
 names, as <code>c(old = "new")</code>, e.g. <code>c(BEP2 = "BEP")</code>.</p></dd>
 
+
+<dt id="arg-keep">keep<a class="anchor" aria-label="anchor" href="#arg-keep"></a></dt>
+<dd><p>Optional character vector of input columns to retain, e.g.
+<code>c("source_audio", "night")</code> for grouped cross-validation. Missing
+columns raise an error rather than silently falling back to clip folds.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with <code>site</code> and <code>species</code> (factors; <code>species</code> is the
 species folder code), <code>confidence</code>, <code>logit_conf</code> (logit of the
 confidence, bounded at 1e-4 and 1 - 1e-4) and <code>tp</code> (1 = true
-positive, 0 = false positive).</p>
+positive, 0 = false positive), plus the columns requested in <code>keep</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

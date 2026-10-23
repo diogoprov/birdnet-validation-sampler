@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,6 +108,11 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"av"</span>, <span class="st">"lme4"</span>, <span class="st">"ggplot2"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="grouped-calibration-folds">Grouped calibration folds<a class="anchor" aria-label="anchor" href="#grouped-calibration-folds"></a>
+</h2>
+<p>Use <code>calibrate(..., fold_group = "source_audio")</code> to keep recordings intact, or <code>fold_group = "night"</code> to keep nights intact across species at each site. The input validation tables must contain those metadata; each site needs at least <code>k_folds</code> groups. The default remains clip folds. For a manual workflow, retain the metadata with <code>read_validations(..., keep = c("source_audio", "night"))</code> and inspect the assignment with <code><a href="reference/calibration_folds.html">calibration_folds()</a></code>. See the calibration article for examples and limitations.</p>
+</div>
+<div class="section level2">
 <h2 id="migrating-from-2x">Migrating from 2.x<a class="anchor" aria-label="anchor" href="#migrating-from-2x"></a>
 </h2>
 <p>In 3.0.0, calibration defaults to <code>select = "one_se_logloss"</code>. Use <code>select = "best_auc"</code> to preserve the 2.x model selection. See the <a href="https://provetelab.org/sheepdog/articles/migration-3.0.0.html">migration guide</a> for details and comparison of downstream results.</p>
@@ -179,7 +184,7 @@
 <tr>
 <td>2. Calibration</td>
 <td>
-<code><a href="reference/read_validations.html">read_validations()</a></code>, <code><a href="reference/calibration_models.html">calibration_models()</a></code>, <code><a href="reference/compare_calibration_models.html">compare_calibration_models()</a></code>, <code><a href="reference/select_calibration_model.html">select_calibration_model()</a></code>, <code><a href="reference/fit_calibration.html">fit_calibration()</a></code>, <code><a href="reference/calibration_effort.html">calibration_effort()</a></code>, <code><a href="reference/score_detections.html">score_detections()</a></code>, <code><a href="reference/detection_history.html">detection_history()</a></code>, <code><a href="reference/summarise_history.html">summarise_history()</a></code>
+<code><a href="reference/read_validations.html">read_validations()</a></code>, <code><a href="reference/calibration_models.html">calibration_models()</a></code>, <code><a href="reference/calibration_folds.html">calibration_folds()</a></code>, <code><a href="reference/compare_calibration_models.html">compare_calibration_models()</a></code>, <code><a href="reference/select_calibration_model.html">select_calibration_model()</a></code>, <code><a href="reference/fit_calibration.html">fit_calibration()</a></code>, <code><a href="reference/calibration_effort.html">calibration_effort()</a></code>, <code><a href="reference/score_detections.html">score_detections()</a></code>, <code><a href="reference/detection_history.html">detection_history()</a></code>, <code><a href="reference/summarise_history.html">summarise_history()</a></code>
 </td>
 </tr>
 <tr>

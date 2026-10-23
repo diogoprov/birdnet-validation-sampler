@@ -1,5 +1,27 @@
 # Changelog
 
+## sheepdog 3.1.0
+
+- [`cell_status()`](https://provetelab.org/sheepdog/reference/cell_status.md)
+  includes both observed score endpoints in its grid and never
+  extrapolates below the reviewed minimum. Crossings between 0.99 and
+  the reviewed maximum are no longer missed.
+- New
+  [`calibration_folds()`](https://provetelab.org/sheepdog/reference/calibration_folds.md)
+  exposes reproducible fold assignments.
+  [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md)
+  and
+  [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
+  accept `fold_group`, e.g. `"source_audio"` or `"night"`, to keep
+  groups intact across species within a site. The default clip
+  assignment is unchanged.
+- `read_validations(keep = )` optionally retains grouping metadata;
+  [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
+  requests it automatically and saves grouped assignments in
+  `calibration_folds.csv`. Missing IDs and insufficient groups raise
+  clear errors. Single-verdict test folds retain probability scores and
+  have missing AUC without counting as failed fits.
+
 ## sheepdog 3.0.0
 
 ### Breaking changes

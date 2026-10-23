@@ -11,7 +11,7 @@ species from a calibration that does not work:"><meta property="og:image" conten
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,7 @@ species from a calibration that does not work:"><meta property="og:image" conten
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Status of each site x species cell for the community matrices</h1>
-      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/v3.0.0/R/cell_status.R" class="external-link"><code>R/cell_status.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/R/cell_status.R" class="external-link"><code>R/cell_status.R</code></a></small>
       <div class="d-none name"><code>cell_status.Rd</code></div>
     </div>
 
@@ -91,9 +91,10 @@ in <code><a href="detection_history.html">detection_history()</a></code>.</p></d
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with one row per site x species: <code>site</code>, <code>species</code>,
 <code>n_reviewed</code>, <code>n_tp</code>, <code>max_confidence</code> (highest reviewed score),
-<code>threshold</code> (lowest score, in steps of 0.01 within the reviewed range,
-at which the calibrated probability reaches <code>p_min</code>; <code>NA</code> if never),
-<code>status</code> and <code>reason</code>.</p>
+<code>threshold</code> (lowest grid score at which the calibrated probability
+reaches <code>p_min</code>; <code>NA</code> if never), <code>status</code> and <code>reason</code>. The grid
+contains both observed endpoints and steps of 0.01 within the
+reviewed range.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

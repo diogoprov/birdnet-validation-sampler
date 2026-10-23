@@ -36,9 +36,10 @@ cell_status(fit, validations, p_min = 0.95, min_n = 15)
 
 A tibble with one row per site x species: `site`, `species`,
 `n_reviewed`, `n_tp`, `max_confidence` (highest reviewed score),
-`threshold` (lowest score, in steps of 0.01 within the reviewed range,
-at which the calibrated probability reaches `p_min`; `NA` if never),
-`status` and `reason`.
+`threshold` (lowest grid score at which the calibrated probability
+reaches `p_min`; `NA` if never), `status` and `reason`. The grid
+contains both observed endpoints and steps of 0.01 within the reviewed
+range.
 
 ## Details
 

@@ -2,8 +2,10 @@
 
 Fits each candidate model with k-fold cross-validation and scores the
 predicted probabilities on the held-out folds. Folds are stratified
-within site x species, so every level appears in both the training and
-the test sets. Models with random effects need the 'lme4' package.
+within site x species by default. With `fold_group`, recordings or
+nights are kept intact across species; see
+[`calibration_folds()`](https://provetelab.org/sheepdog/reference/calibration_folds.md).
+Models with random effects need the 'lme4' package.
 
 ## Usage
 
@@ -12,7 +14,8 @@ compare_calibration_models(
   validations,
   models = calibration_models(),
   k_folds = 5,
-  seed = 2026
+  seed = 2026,
+  fold_group = NULL
 )
 ```
 
@@ -36,6 +39,13 @@ compare_calibration_models(
   Seed of the fold assignment. The global random number generator is
   left as it was.
 
+- fold_group:
+
+  Optional character vector of grouping columns. Do not include
+  `species`, verdicts or confidence scores: these would split recordings
+  or nights by species or by outcome. Group IDs must be nonmissing and
+  nonempty. `NULL` keeps the original clip folds.
+
 ## Value
 
 A tibble with `model`, `formula`, `auc_mean`, `auc_sd`, `n_failed`
@@ -43,7 +53,9 @@ A tibble with `model`, `formula`, `auc_mean`, `auc_sd`, `n_failed`
 `logloss_sd`, `brier_mean`, `brier_sd`, `cal_intercept` and `cal_slope`
 (means over the folds), `prop_singular` (share of the fold fits that
 were singular) and `complexity` (position of the model in `models`),
-ordered from the highest mean AUC. Failed folds also raise a warning.
+ordered from the highest mean AUC. Failed folds also raise a warning. A
+test fold with only one verdict has missing AUC but contributes log-loss
+and Brier; it is not a failed fit.
 
 ## Details
 
