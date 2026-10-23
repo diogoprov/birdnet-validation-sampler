@@ -26,3 +26,16 @@
   tables](https://provetelab.org/sheepdog/articles/crywolf-integration.md):
 - [The FrogNet
   workflow](https://provetelab.org/sheepdog/articles/frognet-workflow.md):
+
+### 🇧🇷 Em português
+
+Traduções de artigos selecionados. A versão em inglês é a referência.
+
+- [Primeiros passos com o
+  sheepdog](https://provetelab.org/sheepdog/articles/pt/sheepdog.md):
+- [Revisão dos clipes na GUI do
+  BirdNET](https://provetelab.org/sheepdog/articles/pt/reviewing-in-the-gui.md):
+- [Escolha do desenho
+  amostral](https://provetelab.org/sheepdog/articles/pt/sampling-designs.md):
+- [O fluxo de trabalho do
+  FrogNet](https://provetelab.org/sheepdog/articles/pt/frognet-workflow.md):
