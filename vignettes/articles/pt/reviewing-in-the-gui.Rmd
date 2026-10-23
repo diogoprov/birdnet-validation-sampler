@@ -25,7 +25,7 @@ espécie dentro de `clips/`, cada uma com os clipes a revisar. O nome de
 cada clipe começa com seu score de confiança e sua posição no ranking,
 seguidos do nome da gravação de origem e do início e fim do clipe:
 
-![Os clipes de uma espécie, prontos para a revisão.](../gui-figures/01-clips-folder.png)
+![Os clipes de uma espécie, prontos para a revisão.](gui-figures/01-clips-folder.png)
 
 A GUI identifica as espécies pelos nomes dessas subpastas.
 
@@ -37,7 +37,7 @@ de entrada) aponta a GUI para a pasta `clips`. A lista *Species*
 indicam os clipes ainda a revisar (*Todo*) e os já classificados como
 *Positive* (*Positivo*) ou *Negative* (*Negativo*):
 
-![A aba Review (Revisão) com a lista de espécies.](../gui-figures/02-species-list.png)
+![A aba Review (Revisão) com a lista de espécies.](gui-figures/02-species-list.png)
 
 ## Revisão de um clipe
 
@@ -48,7 +48,7 @@ clipe, com seu score, aparece acima da forma de onda. *Positive*
 seguinte; *Undo* (*Desfazer*) desfaz a última decisão e *Skip* (*Pular*)
 avança sem classificar:
 
-![Revisão de um clipe. O score deste clipe (0,992) é o primeiro campo de seu nome.](../gui-figures/03-reviewing-clip.webp)
+![Revisão de um clipe. O score deste clipe (0,992) é o primeiro campo de seu nome.](gui-figures/03-reviewing-clip.webp)
 
 Revise o clipe ouvindo-o, e não apenas pelo seu score: o score é
 justamente o que a revisão pretende verificar. Nos desenhos aleatórios de
@@ -63,7 +63,7 @@ Depois que alguns clipes foram classificados, o painel *Regression*
 score para a espécie selecionada, com os scores nos quais a probabilidade
 predita de uma detecção verdadeira atinge 0,85, 0,90, 0,95 e 0,99:
 
-![A aba Review (Revisão) após a revisão de uma espécie: 72 clipes positivos e 7 negativos, e a curva ajustada.](../gui-figures/04-regression.png)
+![A aba Review (Revisão) após a revisão de uma espécie: 72 clipes positivos e 7 negativos, e a curva ajustada.](gui-figures/04-regression.png)
 
 Essa curva é uma verificação rápida durante a revisão. Ela é ajustada a
 uma espécie por vez, agrupando todos os locais, com os clipes revisados
@@ -79,7 +79,7 @@ análises.
 A GUI move cada clipe classificado para uma subpasta `Positive` ou
 `Negative` da pasta da espécie:
 
-![A pasta da espécie após a revisão.](../gui-figures/05-positive-negative.png)
+![A pasta da espécie após a revisão.](gui-figures/05-positive-negative.png)
 
 Essa é a estrutura que `classify_review()` e `post_validation()` leem. O
 veredito de cada clipe vem do nome da subpasta em que ele se encontra,
@@ -104,11 +104,11 @@ tradução é de Larissa Sugai, segundo a documentação da GUI). Os botões
 passam a ser *Positivo*, *Negativo*, *Desfazer* e *Pular*, e o painel de
 regressão, *Regressão*:
 
-![A aba Review (Revisão) em português.](../gui-figures/06-portuguese-interface.webp)
+![A aba Review (Revisão) em português.](gui-figures/06-portuguese-interface.webp)
 
-![A lista de espécies em português.](../gui-figures/07-species-list-pt.png)
+![A lista de espécies em português.](gui-figures/07-species-list-pt.png)
 
-![Revisão de um clipe em português.](../gui-figures/08-reviewing-clip-pt.webp)
+![Revisão de um clipe em português.](gui-figures/08-reviewing-clip-pt.webp)
 
 Com a interface em português, a GUI nomeia as pastas de resultado
 `positivo` e `negativo` em vez de `Positive` e `Negative`. Os padrões
@@ -121,7 +121,7 @@ aspecto: aqui a curva atinge 0,85 apenas no score 0,81, e 0,90 em 0,93, e
 as probabilidades mais altas não são atingidas dentro da amplitude de
 scores:
 
-![O painel de regressão de uma espécie com mais falsos positivos.](../gui-figures/09-regression-pt.png)
+![O painel de regressão de uma espécie com mais falsos positivos.](gui-figures/09-regression-pt.png)
 
 Espécies como esta são as que `cell_status()` sinaliza como não
 confiáveis em `p_min = 0.95` (ver `vignette("community-matrices")`).
