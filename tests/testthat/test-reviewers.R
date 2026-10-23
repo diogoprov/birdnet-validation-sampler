@@ -70,3 +70,22 @@ test_that("split_by_reviewer() copies clips to each reviewer", {
   n_bia <- length(list.files(file.path(d, "rev", "bia", "a")))
   expect_identical(n_ana + n_bia, 12L)
 })
+
+test_that("reviewer agreement handles absent overlap and undefined kappa", {
+  one <- tibble::tibble(species_folder = "sp", clip_file = c("1", "2"),
+                        verdict = "positive", reviewer = "ana")
+  expect_warning(empty <- reviewer_agreement(one), "No clip")
+  expect_equal(nrow(empty), 0L)
+  # Perfect agreement with no variation has undefined chance correction.
+  both <- dplyr::bind_rows(one, dplyr::mutate(one, reviewer = "bia"))
+  out <- reviewer_agreement(both)
+  expect_equal(out$agreement, 1)
+  expect_true(is.na(out$kappa))
+  three <- dplyr::bind_rows(both, dplyr::mutate(one, reviewer = "caio"))
+  expect_true(is.na(reviewer_agreement(three)$kappa))
+  expect_error(reviewer_agreement(one[c("species_folder", "clip_file", "verdict")]),
+                "reviewer.*column")
+  expect_error(reviewer_agreement(list(one, one)), "named by reviewer")
+  expect_error(assign_reviewers(one, c("ana", "ana")), "unique")
+  expect_error(assign_reviewers(one, c("ana", "bia"), overlap = 2), "between 0 and 1")
+})

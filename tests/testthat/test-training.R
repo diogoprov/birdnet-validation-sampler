@@ -64,3 +64,47 @@ test_that("exclude_training_clips() drops overlapping clips", {
   expect_false(any(out$species_code == "a" & out$source_audio == "x.wav" &
                      out$clip_start == 0))
 })
+
+test_that("training copies omit unlocalised recordings and keep provenance", {
+  d <- withr::local_tempdir()
+  reviewed <- file.path(d, c("good.wav", "whole.wav"))
+  file.create(reviewed)
+  v <- tibble::tibble(site = "A", species_code = "sp", clip_file = basename(reviewed),
+                      verdict = "positive", reviewed_path = reviewed,
+                      confidence = c(.9, NA_real_))
+  expect_message(out <- build_training_set(
+    v, file.path(d, "train"), min_files = 1), "whole-recording")
+  expect_identical(out$clip_file, "good.wav")
+  expect_true(all(is.na(out$source_audio)))
+  expect_equal(readr::read_csv(file.path(d, "train", "training_set.csv"),
+                               show_col_types = FALSE)$clip_file, "good.wav")
+  expect_error(build_training_set(v[v$confidence %in% NA_real_, ],
+                   file.path(d, "empty")), "No reviewed clip")
+  expect_error(build_training_set(v[c("site", "verdict")], d), "lacks the column")
+})
+
+test_that("missing training clips warn without claiming successful copies", {
+  d <- withr::local_tempdir()
+  v <- tibble::tibble(site = "A", species_code = "sp", clip_file = "missing.wav",
+                      verdict = "positive", reviewed_path = file.path(d, "missing.wav"))
+  expect_warning(out <- suppressMessages(build_training_set(v, file.path(d, "out"),
+                         min_files = 0)), "could not be copied")
+  expect_equal(nrow(out), 0L)
+})
+
+test_that("training exclusion handles missing provenance and touching intervals", {
+  man <- tibble::tibble(species_code = "sp", source_audio = "same.wav",
+                        clip_start = c(0, 3, 6), clip_end = c(3, 6, 9))
+  ts <- tibble::tibble(species_code = "sp", source_audio = "same.wav",
+                       clip_start = 3, clip_end = 6)
+  d <- withr::local_tempfile(fileext = ".csv")
+  readr::write_csv(ts, d)
+  out <- suppressMessages(exclude_training_clips(man, d))
+  expect_equal(out$clip_start, c(0, 6))
+  ts$clip_start <- NA_real_
+  expect_warning(kept <- exclude_training_clips(man, ts), "nothing excluded")
+  expect_identical(kept, man)
+  ts$clip_start <- 20; ts$clip_end <- 23
+  expect_identical(suppressMessages(exclude_training_clips(man, ts)), man)
+  expect_error(read_validation_tables(character()), "No validation table")
+})

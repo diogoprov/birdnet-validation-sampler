@@ -149,7 +149,9 @@ para o DOI do Zenodo acompanhar as vignettes novas.
   `main` atual). *(Feito: 2.1.0.)*
 - [x] **Cobertura de testes** (`covr`) no CI: workflow dedicado, resumo
   percentual e artefatos HTML e Cobertura XML; execução remota pendente.
-- [ ] **CRAN** **[decidir]**: viável depois da 3.0.0. Pontos a resolver: o
+- [x] **Preparação local para CRAN**: candidato 3.2.1 com check completo
+  limpo, comentários e tarball prontos; submissão ainda não realizada.
+- [ ] **Submissão ao CRAN** **[decidir]**: viável depois da 3.0.0. Pontos a resolver: o
   crywolf em Suggests fora do CRAN (aceito com `Additional_repositories`),
   tempo das vignettes (lme4, gllvm) e tamanho de `inst/extdata` (1,7 MB).
 - [ ] **Artigo de software** **[decidir]** (ex.: *Methods in Ecology and

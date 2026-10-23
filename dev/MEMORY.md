@@ -182,7 +182,7 @@ preparada para a release 3.1.0 na etapa de publicação seguinte.
 - CRAN e artigo de software permanecem decisões do Diogo, conforme o
   [roadmap](roadmap-v3.0.0.md).
 
-## Preparação da release 3.2.0
+## Publicação da release 3.2.0
 
 - Diogo autorizou push e release para a seleção automática de uma espécie
   e a vignette `performance`. Metadados preparados para 3.2.0.
@@ -191,4 +191,50 @@ preparada para a release 3.1.0 na etapa de publicação seguinte.
 - Testes do desenvolvimento: 380 verificações, um teste Stan opt-in pulado;
   R CMD check sem erros, avisos ou notas. Benchmarks e artigo renderizados
   na etapa anterior; esta preparação altera metadados e redação de versão.
-- URL prevista: https://github.com/diogoprov/sheepdog/releases/tag/v3.2.0.
+- Release confirmada, pública e latest:
+  https://github.com/diogoprov/sheepdog/releases/tag/v3.2.0.
+  Tag no commit `3c76c69a52a1b1ba195a25cf39f1f977808189f9`.
+- Após a publicação, Diogo pediu revisão de cobertura e preparação para
+  CRAN. Essa etapa está em desenvolvimento (`3.2.0.9000`); não representa
+  submissão já feita ao CRAN.
+
+## Cobertura e preparação para CRAN (candidato 3.2.1)
+
+- A publicação 3.2.0 foi concluída. Corrigido o índice de performance no
+  pkgdown (commit `ffa977c`): o artigo havia sido listado como função.
+  O workflow corrigido passou e a página foi conferida online em
+  https://provetelab.org/sheepdog/articles/performance.html.
+- Cobertura medida com covr, instalado em biblioteca temporária:
+  antes 85,13599%; após novos testes rápidos 88,17204%; com integração
+  Stan opcional 93,04238%. Não confundir cobertura rápida de CI com a
+  obtida ativando Stan. Não houve alteração de código para inflar métricas.
+- Acrescentados testes de intervalos de matrizes posteriores, probabilidade
+  de confiabilidade versus média, exclusão de gravações sem localização,
+  arquivos ausentes, proveniência e limites de sobreposição do treino,
+  ausência de revisão sobreposta e kappa indefinido sem variação.
+- Suíte final rápida: 416 verificações passaram; um teste Stan opt-in
+  pulado. O teste opcional foi ativado e passou separadamente com 23
+  verificações, incluindo ajuste real, scoring, históricos e matrizes.
+- Candidato de submissão preparado como 3.2.1, ainda não enviado ao CRAN.
+  Declarados Additional_repositories para crywolf/cmdstanr; mínimo dplyr
+  corrigido para 1.1.1 (argumento relationship). Adicionado job Linux
+  R-devel ao workflow, cujo resultado futuro ainda precisa ser conferido.
+- Checagem COMPLETA do candidato: zero erros, avisos e notas, incluindo
+  criação/recriação de vignettes e manual PDF/HTML. A nota inicial era do
+  Tidy 2006 do macOS; a verificação final usou Tidy 5.8.0 em pasta temporária.
+- Todos os URLs examinados pelo urlchecker passaram. O DOI de manuscrito
+  10.1002/jav.03737 retornava 404 e não foi confirmado no Crossref; removido
+  como hyperlink da vignette e do README dos caches, mantendo a atribuição
+  ao depósito Zenodo verificado. Não inventar outro DOI.
+- CRAN corrente, arquivo CRAN e Bioconductor para o nome sheepdog
+  retornaram 404 na consulta desta etapa; não havia pacote listado nesses
+  endereços. Isso não equivale a aprovação do nome pelo CRAN.
+- `cran-comments.md` preparado e excluído do tarball. O arquivo fonte
+  verificado tem cerca de 3.8 MB. Não houve submissão nem nova release
+  GitHub 3.2.1 nesta etapa.
+- Artefatos de revisão:
+  `/Users/diogoborgesprovete/Documents/Codex/2026-10-22/como-x20/outputs/cran-readiness/`.
+  Incluem tarball exato checado, log completo, relatórios HTML/XML de
+  cobertura rápida e com Stan, e resumo. Checar os jobs remotos para
+  o candidato exato antes de enviar ao CRAN; a confirmação por email
+  do mantenedor é parte do fluxo de submissão.

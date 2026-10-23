@@ -7,8 +7,7 @@ are opt-in scripts in `dev/benchmarks/` of the source repository.
 The empirical Curiango data originate from Piatti et al.,
 *Methodological choices influence ecological inference in passive
 acoustic monitoring of a Neotropical nightjar*:
-https://doi.org/10.5281/zenodo.21795898 (v2, CC BY 4.0), associated article
-https://doi.org/10.1002/jav.03737. `curiango-source-manifest.json` records
+https://doi.org/10.5281/zenodo.21795898 (v2, CC BY 4.0), accompanying the Curiango manuscript. `curiango-source-manifest.json` records
 pinned filenames, download URLs and MD5 hashes. The original benchmark
 used explicit one-species site-effect candidates; `curiango-native.csv`
 checks the new automatic family against the same comparison. Native
