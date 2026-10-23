@@ -97,3 +97,12 @@ articles:
       - migration-3.0.0
       - crywolf-integration
       - frognet-workflow
+  - title: 🇧🇷 Em português
+    navbar: 🇧🇷 Português
+    desc: >
+      Traduções de artigos selecionados. A versão em inglês é a referência.
+    contents:
+      - articles/pt/sheepdog
+      - articles/pt/reviewing-in-the-gui
+      - articles/pt/sampling-designs
+      - articles/pt/frognet-workflow

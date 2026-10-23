@@ -1,0 +1,227 @@
+---
+title: "Primeiros passos com o sheepdog"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+> **Tradução.** Este artigo é uma tradução da versão em inglês, que é a referência: [Get started with sheepdog](../sheepdog.html). Traduzido da versão 3.2.1 do pacote; se as duas divergirem, vale a versão em inglês.
+
+O sheepdog verifica se as detecções de um classificador personalizado
+(*custom classifier*) do 'BirdNET' são reais. Sua primeira etapa, tratada
+aqui, monta um conjunto de clipes para revisão manual a partir das tabelas de
+seleção (*selection tables*) do BirdNET e resume os vereditos dos revisores.
+A calibração (etapa 2) e as matrizes de comunidade (etapa 3) são tratadas em
+outros artigos (ver [Próximos passos](#where-next)).
+
+```{r}
+library(sheepdog)
+```
+
+## Dados de exemplo
+
+O pacote inclui um pequeno conjunto de dados simulados: tabelas de seleção do
+BirdNET (formato Raven) de vários locais gravados de outubro de 2021 a março
+de 2022, com predições de um classificador personalizado para espécies de
+anuros. As taxas de falsos positivos (*false positives*) variam entre espécies
+e locais, e os scores de confiança dos falsos positivos se sobrepõem aos das
+detecções verdadeiras. O gerador é `data-raw/make_example_data.R` no
+repositório do código-fonte. A coluna `Begin Path` aponta para gravações em um
+drive de rede fictício (`N:\pam\audio\...`); os arquivos de áudio em si não
+são distribuídos.
+
+```{r}
+ex <- system.file("extdata", "example", package = "sheepdog")
+list.files(file.path(ex, "birdnet"), recursive = TRUE)
+```
+
+## Leitura das tabelas de seleção
+
+`read_selection_tables()` encontra todas as tabelas de seleção dentro de uma
+pasta, lê e empilha essas tabelas. O local é obtido do nome da pasta que
+contém cada tabela, e os nomes das colunas são padronizados (por exemplo,
+`Begin Time (s)` passa a `begin_time`).
+
+```{r}
+det <- read_selection_tables(file.path(ex, "birdnet"))
+det |>
+  dplyr::select(site, species_code, confidence, begin_path, file_offset) |>
+  head()
+dplyr::count(det, site)
+dplyr::count(det, species_code)
+```
+
+As tabelas contêm `r nrow(det)` predições de
+`r dplyr::n_distinct(det$species_code)` espécies em
+`r dplyr::n_distinct(det$site)` locais
+(`r paste(sort(unique(det$site)), collapse = ", ")`).
+
+## Seleção dos clipes para revisão
+
+`select_clips()` aplica o desenho amostral às predições e retorna o manifesto
+de clipes (*clip manifest*), com uma linha por clipe a ser cortado. A função
+não lê nem grava áudio. O desenho padrão `"top"` mantém as `n_top` predições
+de maior confiança por local x espécie x noite x hora; `max_per_species`
+limita então o número de clipes por local x espécie, distribuindo a amostra
+entre as horas da noite (`balance_by_hour = TRUE`). Como a janela de horas
+abaixo atravessa a meia-noite, as gravações feitas após a meia-noite são
+atribuídas à noite anterior.
+
+```{r}
+n_max <- 40
+man <- select_clips(det,
+                    sampling_mode   = "top",
+                    n_top           = 2,
+                    hour_start      = 18, hour_end = 2,
+                    max_per_species = n_max)
+dplyr::count(man, site, species_folder) |>
+  tidyr::pivot_wider(names_from = site, values_from = n)
+```
+
+O manifesto tem `r nrow(man)` clipes.
+
+O desenho `"top"` serve ao retreinamento do classificador e à calibração de
+score em probabilidade da etapa 2. Ele não deve ser usado para estimar taxas
+de falsos positivos, porque os clipes de score mais alto contêm menos falsos
+positivos que uma amostra aleatória; os desenhos aleatórios são descritos em
+`vignette("sampling-designs")`.
+
+O manifesto liga cada clipe à sua gravação de origem. Suas colunas são
+definidas em `vignette("crywolf-integration")`.
+
+```{r}
+dplyr::glimpse(man)
+```
+
+As colunas usadas a seguir são `species_folder` (a pasta de cada espécie na
+revisão), `night`, `confidence`, `clip_file` (o nome do clipe, único dentro da
+execução) e `source_audio`, com `clip_start` e `clip_end` (o trecho de onde o
+clipe é cortado).
+
+## Corte dos clipes
+
+`cut_clips()` corta cada clipe do manifesto em
+`<output_dir>/clips/<species_folder>/`, e `extract_validation_clips()`
+executa leitura, seleção e corte em uma única chamada, gravando
+`clip_manifest.csv` e um arquivo zip por espécie. Ambas as funções precisam
+das gravações de origem e do pacote 'av', por isso não são executadas aqui.
+Com dados reais, verifique primeiro a seleção com `simulate = TRUE` e
+remapeie os caminhos das gravações com `remap_from` e `remap_to` quando o
+drive estiver montado em outro lugar:
+
+```{r, eval = FALSE}
+extract_validation_clips("N:/pam/birdnet", "N:/pam/validation",
+                         max_per_species = 40,
+                         remap_from = "N:/", remap_to = "/Volumes/pam/",
+                         simulate = TRUE)
+```
+
+## A revisão manual (simulada)
+
+No uso real, os revisores escutam os clipes na aba Review do BirdNET GUI
+(<https://birdnet-team.github.io/BirdNET-Analyzer/stable/usage/gui.html>), que
+move cada clipe para uma subpasta `Positive` ou `Negative` da pasta da
+respectiva espécie. O sheepdog lê o veredito a partir dessa estrutura de
+pastas.
+
+Para que este artigo possa ser executado, a revisão é substituída por uma
+simulação: cada clipe é declarado positivo com probabilidade igual ao seu
+score de confiança, e um arquivo `.wav` vazio com o nome do clipe é criado na
+subpasta correspondente de um diretório temporário. Esses veredito são
+apenas ilustrativos; eles não correspondem à verdade simulada dos dados de
+exemplo e pressupõem uma calibração perfeita, que classificadores reais não
+têm.
+
+```{r}
+review_dir <- file.path(tempdir(), "sheepdog-review", "clips")
+
+set.seed(1)
+verdict <- ifelse(stats::runif(nrow(man)) < man$confidence,
+                  "Positive", "Negative")
+paths <- file.path(review_dir, man$species_folder, verdict, man$clip_file)
+invisible(lapply(unique(dirname(paths)), dir.create,
+                 recursive = TRUE, showWarnings = FALSE))
+invisible(file.create(paths))
+
+list.dirs(review_dir, full.names = FALSE)
+```
+
+## Resumo da revisão
+
+`classify_review()` junta ao manifesto o veredito encontrado na pasta de
+revisão. Clipes deixados na pasta da espécie são marcados como
+`"not_reviewed"`, e clipes que não são encontrados em lugar algum são
+marcados como `"clip_missing"`.
+
+```{r}
+val <- classify_review(man, review_dir)
+dplyr::count(val, species_folder, verdict)
+```
+
+`precision_by_bin()` fornece a proporção de veredito positivos por local,
+espécie e classe de confiança. Classes com menos de `min_n` clipes revisados
+são marcadas em `low_support`.
+
+```{r}
+prec <- precision_by_bin(val, min_n = 15)
+head(prec, 10)
+```
+
+`suggest_thresholds()` retorna, para cada local e espécie, a menor confiança
+na qual a precisão entre os clipes com confiança igual ou superior a ela
+atinge `target_precision`, com pelo menos `min_n` clipes. `NA` indica que
+nenhum limiar (*threshold*) atingiu a meta com os clipes revisados. Com no
+máximo `r n_max` clipes por local x espécie, muitas células não têm suporte
+suficiente para atingir a meta; `vignette("validation-effort")` discute
+quantos clipes são necessários.
+
+```{r}
+suggest_thresholds(val, target_precision = 0.90, min_n = 15)
+```
+
+`nightly_presence()` resume os vereditos por local, espécie e noite: uma
+noite é `"confirmed"` quando pelo menos um clipe é positivo.
+
+```{r}
+pres <- nightly_presence(val)
+head(pres)
+dplyr::count(pres, species_folder, presence)
+```
+
+`plot_precision()` desenha a curva de precisão de cada espécie, com a precisão
+alvo como linha tracejada e as classes com baixo suporte esmaecidas. A função
+requer o 'ggplot2'. Com vários locais, cada local é desenhado como uma linha
+de cor própria dentro dos painéis das espécies.
+
+```{r, eval = requireNamespace("ggplot2", quietly = TRUE), fig.width = 8, fig.height = 8, out.width = "100%"}
+plot_precision(prec, target_precision = 0.90, min_n = 15)
+```
+
+`retraining_clips()` lista os clipes positivos para o retreinamento do
+classificador. Com dados reais, `post_validation()` executa todos os passos
+acima em uma única chamada e grava cada tabela em um arquivo CSV, junto com a
+figura.
+
+## Próximos passos {#where-next}
+
+- `vignette("sampling-designs")`: como escolher entre os desenhos `"top"`,
+  `"random_detections"` e `"random_recordings"`, as probabilidades de inclusão
+  que eles registram e os limites ao esforço de revisão.
+- `vignette("validation-effort")`: quantos clipes validar, a partir da curva
+  de `calibration_effort()` e do suporte de cada célula local x espécie em
+  `precision_by_bin()` e `suggest_thresholds()`.
+- `vignette("calibration")`: calibração dos scores de confiança (etapa 2): os
+  modelos candidatos, sua comparação por validação cruzada, curvas de
+  calibração, atribuição de score a cada detecção e históricos noturnos de
+  detecção (`p_min`, k).
+- `vignette("community-matrices")`: das detecções calibradas às análises de
+  comunidade (etapa 3): `community_matrices()`, a regra `k_min`, o filtro de
+  esforço e ordenações com o 'vegan'.
+- `vignette("retraining")`: como transformar os clipes revisados em pastas de
+  treinamento para o BirdNET-Analyzer, com um conjunto de teste independente.
+- `vignette("crywolf-integration")`: o manifesto de clipes e as tabelas de
+  validação como entrada para modelos de ocupação (*occupancy models*) com
+  falsos positivos.
+- `vignette("frognet-workflow")`: o fluxo de trabalho completo, tal como usado
+  no projeto FrogNet.
