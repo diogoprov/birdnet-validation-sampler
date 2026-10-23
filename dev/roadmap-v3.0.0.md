@@ -165,7 +165,7 @@ para o DOI do Zenodo acompanhar as vignettes novas.
    Consultar o GitHub para o resultado remoto mais recente.
 4. Benchmark do Curiango executado com os dados do Zenodo e registrado na
    [memória](MEMORY.md); não mostrou vantagem consistente da nova regra.
-5. Correções posteriores implementadas na versão de desenvolvimento:
+5. Correções posteriores implementadas e preparadas para a versão 3.1.0:
    - [x] Incluir os extremos observados na grade de `cell_status()`.
    - [x] Exportar `calibration_folds()` e permitir `fold_group` em
      `compare_calibration_models()` e `calibrate()`.
@@ -173,6 +173,8 @@ para o DOI do Zenodo acompanhar as vignettes novas.
      salvar a atribuição dos folds pelo wrapper.
    - [x] Testar grupos intactos entre espécies, compatibilidade legada e
      folds de uma classe; verificar a correção nos dados do Curiango.
-   - [ ] Publicar as correções em versão posterior à 3.0.0.
+   - Publicação autorizada da 3.1.0:
+     https://github.com/diogoprov/sheepdog/releases/tag/v3.1.0.
+     Verificar os checks e o site após o envio.
 6. Ainda pendentes: candidatos para uma espécie, benchmark multiespécies,
    decisão de submissão ao CRAN e formato do artigo de software.

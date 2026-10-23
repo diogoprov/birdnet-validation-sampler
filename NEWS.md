@@ -1,4 +1,4 @@
-# sheepdog (development version)
+# sheepdog 3.1.0
 
 - `cell_status()` includes both observed score endpoints in its grid and
   never extrapolates below the reviewed minimum. Crossings between 0.99

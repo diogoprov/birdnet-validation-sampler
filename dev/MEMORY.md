@@ -2,6 +2,20 @@
 
 Atualizada em 2026-10-22 (America/Campo_Grande).
 
+## Publicação 3.1.0
+
+- As correções de `cell_status()` e os folds agrupados foram preparados
+  para a versão 3.1.0, após autorização do Diogo para push e release.
+- Release: https://github.com/diogoprov/sheepdog/releases/tag/v3.1.0.
+- DESCRIPTION, NEWS e CITATION.cff foram atualizados para 3.1.0.
+- A cobertura da 3.0.0 foi confirmada como concluída com sucesso; o
+  R-CMD-check remoto ainda aparecia em execução na consulta desta etapa.
+- Para a 3.1.0, a evidência local permanece: 362 verificações passaram,
+  check com zero erros/avisos e uma nota de horário, vignette renderizada,
+  12 células corrigidas e reprodução dos folds manuais do Curiango.
+- Os resultados remotos da nova versão devem ser consultados no GitHub;
+  não confundir o sucesso local com o sucesso de todos os jobs remotos.
+
 ## Estado publicado e decisões preservadas
 
 - Repositório: `diogoprov/sheepdog`; checkout local em
@@ -57,8 +71,8 @@ Atualizada em 2026-10-22 (America/Campo_Grande).
 
 ## Correções posteriores à release, implementadas localmente
 
-A versão de desenvolvimento foi aberta como `3.0.0.9000`; estas mudanças
-não foram publicadas em uma nova release nem enviadas ao remoto nesta etapa.
+A implementação começou em `3.0.0.9000` (commit `20e6d33`) e foi
+preparada para a release 3.1.0 na etapa de publicação seguinte.
 
 1. `cell_status()` agora inclui o menor e o maior score revisados na
    grade e restringe seus pontos ao intervalo observado. Resolve o
@@ -106,8 +120,8 @@ não foram publicadas em uma nova release nem enviadas ao remoto nesta etapa.
 
 ## Próximos passos pendentes
 
-- Revisar e publicar as correções de desenvolvimento em versão posterior;
-  a tag v3.0.0 publicada não contém estas mudanças.
+- Conferir a publicação da 3.1.0 e a atualização do site; a tag v3.0.0
+  não contém as correções posteriores.
 - Conferir os checks remotos e a cobertura antes de uma nova release.
 - Ainda não foram implementados candidatos automáticos para uma espécie.
   A família adaptada do benchmark não foi acrescentada a `calibration_models()`.
