@@ -29,6 +29,8 @@ jobs:
           dependencies: '"hard"'
           extra-packages: any::pkgdown, any::knitr, any::rmarkdown, any::ggplot2, any::lme4, any::vegan, any::ape, any::gllvm, local::.
           needs: website
+      - name: Check that the Portuguese translations are up to date
+        run: Rscript data-raw/check_translations.R
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
