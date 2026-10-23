@@ -56,6 +56,17 @@ ffmpeg), the hierarchical calibration needs
 install.packages(c("av", "lme4", "ggplot2"))
 ```
 
+## Grouped calibration folds
+
+Use `calibrate(..., fold_group = "source_audio")` to keep recordings
+intact, or `fold_group = "night"` to keep nights intact across species at
+each site. The input validation tables must contain those metadata;
+each site needs at least `k_folds` groups. The default remains clip folds.
+For a manual workflow, retain the metadata with
+`read_validations(..., keep = c("source_audio", "night"))` and inspect the
+assignment with `calibration_folds()`. See the calibration article for
+examples and limitations.
+
 ## Migrating from 2.x
 
 In 3.0.0, calibration defaults to `select = "one_se_logloss"`.
@@ -101,7 +112,7 @@ Each stage is also available as separate functions:
 | 1. Several reviewers | `assign_reviewers()`, `split_by_reviewer()`, `reviewer_agreement()` (Cohen's or Fleiss' kappa), `consensus_verdicts()` |
 | 1. After the review | `classify_review()`, `precision_by_bin()`, `suggest_thresholds()`, `nightly_presence()`, `retraining_clips()`, `read_validation_tables()` |
 | 1. Retraining | `build_training_set()` (training folders for BirdNET-Analyzer), `exclude_training_clips()` |
-| 2. Calibration | `read_validations()`, `calibration_models()`, `compare_calibration_models()`, `select_calibration_model()`, `fit_calibration()`, `calibration_effort()`, `score_detections()`, `detection_history()`, `summarise_history()` |
+| 2. Calibration | `read_validations()`, `calibration_models()`, `calibration_folds()`, `compare_calibration_models()`, `select_calibration_model()`, `fit_calibration()`, `calibration_effort()`, `score_detections()`, `detection_history()`, `summarise_history()` |
 | 2. Bayesian calibration | `calibration_prior()`, `prior_predictive_calibration()`, `calibration_diagnostics()`, `calibration_sensitivity()`, `plot_calibration_draws()`, `history_draws()` |
 | 3. Community matrices | `cell_status()`, `suggest_core_species()`, `community_matrices()`, `community_matrices_draws()` |
 

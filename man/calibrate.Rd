@@ -24,7 +24,8 @@ calibrate(
   brms_args = list(),
   rule = c("mean", "probability"),
   prob_min = 0.9,
-  seed = 2026
+  seed = 2026,
+  fold_group = NULL
 )
 }
 \arguments{
@@ -93,6 +94,11 @@ use the same \code{p_min} in both.}
 
 \item{seed}{Seed of the fold assignment. The global random number
 generator is left as it was.}
+
+\item{fold_group}{Optional character vector of grouping columns. Do not
+include \code{species}, verdicts or confidence scores: these would split
+recordings or nights by species or by outcome. Group IDs must be
+nonmissing and nonempty. \code{NULL} keeps the original clip folds.}
 }
 \value{
 A list with \code{comparison}, \code{fit}, \code{effort} (or \code{NULL}), \code{scored}
@@ -106,6 +112,8 @@ complete selection tables and builds the nightly detection history.
 Writes to \code{output_dir}:
 \itemize{
 \item \code{model_comparison.csv} (\code{\link[=compare_calibration_models]{compare_calibration_models()}});
+\item \code{calibration_folds.csv}, when \code{fold_group} is supplied: validation
+row number, site, species, grouping columns and assigned fold;
 \item \code{calibration_model.rds} and \code{calibration_model.txt} (the refitted
 best model and its summary);
 \item \code{calibration_curves.png} (\code{\link[=plot_calibration]{plot_calibration()}}), when 'ggplot2' is

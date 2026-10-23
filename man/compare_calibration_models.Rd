@@ -8,7 +8,8 @@ compare_calibration_models(
   validations,
   models = calibration_models(),
   k_folds = 5,
-  seed = 2026
+  seed = 2026,
+  fold_group = NULL
 )
 }
 \arguments{
@@ -20,6 +21,11 @@ compare_calibration_models(
 
 \item{seed}{Seed of the fold assignment. The global random number
 generator is left as it was.}
+
+\item{fold_group}{Optional character vector of grouping columns. Do not
+include \code{species}, verdicts or confidence scores: these would split
+recordings or nights by species or by outcome. Group IDs must be
+nonmissing and nonempty. \code{NULL} keeps the original clip folds.}
 }
 \value{
 A tibble with \code{model}, \code{formula}, \code{auc_mean}, \code{auc_sd},
@@ -28,13 +34,15 @@ A tibble with \code{model}, \code{formula}, \code{auc_mean}, \code{auc_sd},
 \code{cal_intercept} and \code{cal_slope} (means over the folds), \code{prop_singular}
 (share of the fold fits that were singular) and \code{complexity} (position
 of the model in \code{models}), ordered from the highest mean AUC. Failed
-folds also raise a warning.
+folds also raise a warning. A test fold with only one verdict has
+missing AUC but contributes log-loss and Brier; it is not a failed fit.
 }
 \description{
 Fits each candidate model with k-fold cross-validation and scores the
 predicted probabilities on the held-out folds. Folds are stratified
-within site x species, so every level appears in both the training and
-the test sets. Models with random effects need the 'lme4' package.
+within site x species by default. With \code{fold_group}, recordings or
+nights are kept intact across species; see \code{\link[=calibration_folds]{calibration_folds()}}.
+Models with random effects need the 'lme4' package.
 }
 \details{
 The AUC measures discrimination (whether true detections get higher

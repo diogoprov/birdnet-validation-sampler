@@ -24,7 +24,7 @@ utils::globalVariables(c(
   "n_reviewed", "reviewed_path", "subpasta", "verdict", ".treino",
   "Confidence", "Species Code", "Begin Path", "File Offset (s)",
   "auc_mean", "date", "detection_k1", "detection_k2", "detection_k3",
-  "faixa", "fold", "hour", "logit_conf", "n_reliable", "p_tp", "prec",
+  ".fold_id", "faixa", "fold", "hour", "logit_conf", "n_reliable", "p_tp", "prec",
   "species", "tp", "included", "month", "n_nights_detected",
   "n_nights_recorded", "frequency", "logloss_mean", "prop_singular",
   "complexity", "model", "set", "class_folder", "t_ini", "t_fim", ".linha",

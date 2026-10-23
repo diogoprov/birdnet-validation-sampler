@@ -49,6 +49,7 @@ reference:
       - calibrate
       - read_validations
       - calibration_models
+      - calibration_folds
       - compare_calibration_models
       - select_calibration_model
       - fit_calibration

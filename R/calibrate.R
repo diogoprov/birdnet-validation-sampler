@@ -11,16 +11,30 @@
 #' @param site_map Optional named character vector to fix diverging site
 #'   names, as `c(old = "new")`, e.g. `c(BEP2 = "BEP")`.
 #'
+#' @param keep Optional character vector of input columns to retain, e.g.
+#'   `c("source_audio", "night")` for grouped cross-validation. Missing
+#'   columns raise an error rather than silently falling back to clip folds.
+#'
 #' @return A tibble with `site` and `species` (factors; `species` is the
 #'   species folder code), `confidence`, `logit_conf` (logit of the
 #'   confidence, bounded at 1e-4 and 1 - 1e-4) and `tp` (1 = true
-#'   positive, 0 = false positive).
+#'   positive, 0 = false positive), plus the columns requested in `keep`.
 #' @export
-read_validations <- function(files, site_map = NULL) {
+read_validations <- function(files, site_map = NULL, keep = NULL) {
+  if (!is.null(keep) && (!is.character(keep) || anyNA(keep) ||
+                          any(!nzchar(keep)))) {
+    stop("`keep` must be a character vector of column names.", call. = FALSE)
+  }
   val <- map(files, function(f) {
     if (!file.exists(f)) { warning("Not found: ", f); return(NULL) }
-    read_csv(f, show_col_types = FALSE, progress = FALSE) |>
+    tab <- read_csv(f, show_col_types = FALSE, progress = FALSE) |>
       from_legacy()
+    missing_cols <- setdiff(keep, names(tab))
+    if (length(missing_cols)) {
+      stop("Missing columns requested in `keep` in ", f, ": ",
+           paste(missing_cols, collapse = ", "), call. = FALSE)
+    }
+    tab
   }) |>
     list_rbind() |>
     # gravacoes sorteadas (modo "random_recordings") nao tem confidence
@@ -30,7 +44,9 @@ read_validations <- function(files, site_map = NULL) {
       species    = species_folder,
       confidence = confidence,
       logit_conf = safe_logit(confidence),
-      tp         = as.integer(verdict == "positive")
+      tp         = as.integer(verdict == "positive"),
+      across(all_of(setdiff(keep, c("site", "species", "confidence",
+                                    "logit_conf", "tp"))))
     ) |>
     mutate(across(c(site, species), as.factor))
 
@@ -85,12 +101,102 @@ calibration_models <- function(uncorrelated = FALSE) {
   modelos
 }
 
+#' Assign cross-validation folds for calibration
+#'
+#' With `fold_group = NULL`, assigns clips within each site x species,
+#' reproducing the original fold assignment. For grouped folds, give one
+#' or more column names, e.g. `"source_audio"` for recordings or `"night"`
+#' for nights. Site is always part of the grouping key. All species and
+#' clips sharing that key go into the same fold; groups are shuffled and
+#' distributed among folds within site, balancing group counts rather
+#' than clip counts. Each site must have at least `k_folds` groups.
+#'
+#' Grouped folds evaluate new recordings or nights at known sites, not
+#' transfer to new sites. Unlike clip folds, they cannot guarantee that
+#' each species appears in each training and test set. A test fold with
+#' only one verdict has no AUC but still contributes probability scores.
+#'
+#' @param validations Calibration data including `site`, `species` and
+#'   any columns named in `fold_group`. Use `read_validations(keep = )`
+#'   to retain metadata from validation files.
+#' @param k_folds Integer number of folds, at least two.
+#' @param seed Seed of the assignment; the caller's random state is restored.
+#' @param fold_group Optional character vector of grouping columns. Do not
+#'   include `species`, verdicts or confidence scores: these would split
+#'   recordings or nights by species or by outcome. Group IDs must be
+#'   nonmissing and nonempty. `NULL` keeps the original clip folds.
+#'
+#' @return Integer vector of fold numbers, in the input row order.
+#' @export
+calibration_folds <- function(validations, k_folds = 5, seed = 2026,
+                               fold_group = NULL) {
+  if (!is.numeric(k_folds) || length(k_folds) != 1L ||
+      !is.finite(k_folds) || k_folds < 2 || k_folds != floor(k_folds)) {
+    stop("`k_folds` must be an integer of at least two.", call. = FALSE)
+  }
+  if (!all(c("site", "species") %in% names(validations)) ||
+      nrow(validations) == 0L || anyNA(validations[c("site", "species")])) {
+    stop("`validations` needs nonmissing site and species, and at least one row.",
+         call. = FALSE)
+  }
+  if (is.null(fold_group)) {
+    return(withr::with_seed(seed, {
+      validations |>
+        group_by(site, species) |>
+        mutate(fold = sample(rep_len(seq_len(k_folds), n()))) |>
+        ungroup() |>
+        pull(fold)
+    }))
+  }
+  if (!is.character(fold_group) || length(fold_group) == 0L ||
+      anyNA(fold_group) || any(!nzchar(fold_group))) {
+    stop("`fold_group` must be NULL or a character vector of column names.",
+         call. = FALSE)
+  }
+  if (any(fold_group %in% c("species", "tp", "verdict", "confidence",
+                            "logit_conf"))) {
+    stop("`fold_group` must identify recordings or nights, not species, ",
+         "verdicts or confidence scores.", call. = FALSE)
+  }
+  cols <- unique(c("site", fold_group))
+  if (!all(cols %in% names(validations))) {
+    stop("Missing `fold_group` columns: ",
+         paste(setdiff(cols, names(validations)), collapse = ", "), call. = FALSE)
+  }
+  if (any(vapply(validations[cols], function(x) {
+    anyNA(x) || any(!nzchar(trimws(as.character(x))))
+  }, logical(1)))) {
+    stop("`fold_group` columns and site must have no missing or empty IDs.",
+         call. = FALSE)
+  }
+  # Separate integer keys avoid overwriting metadata supplied by the user.
+  grouped <- group_by(validations, across(all_of(cols)))
+  ids <- group_indices(grouped)
+  keys <- tibble(site = validations$site, .fold_id = ids) |>
+    distinct() |>
+    arrange(.fold_id)
+  sizes <- count(keys, site)
+  if (any(sizes$n < k_folds)) {
+    stop("Grouped folds need at least ", k_folds, " distinct groups per site; ",
+         "too few at: ", paste(sizes$site[sizes$n < k_folds], collapse = ", "),
+         ". Reduce `k_folds` or choose finer groups.", call. = FALSE)
+  }
+  keys <- withr::with_seed(seed, {
+    keys |>
+      group_by(site) |>
+      mutate(fold = sample(rep_len(seq_len(k_folds), n()))) |>
+      ungroup()
+  })
+  keys$fold[match(ids, keys$.fold_id)]
+}
+
 #' Compare calibration models by cross-validation
 #'
 #' Fits each candidate model with k-fold cross-validation and scores the
 #' predicted probabilities on the held-out folds. Folds are stratified
-#' within site x species, so every level appears in both the training and
-#' the test sets. Models with random effects need the 'lme4' package.
+#' within site x species by default. With `fold_group`, recordings or
+#' nights are kept intact across species; see [calibration_folds()].
+#' Models with random effects need the 'lme4' package.
 #'
 #' The AUC measures discrimination (whether true detections get higher
 #' probabilities than false ones). The log-loss and the Brier score are
@@ -105,6 +211,7 @@ calibration_models <- function(uncorrelated = FALSE) {
 #' @param validations Table returned by [read_validations()].
 #' @param models Named list of model formulas.
 #' @param k_folds Number of folds.
+#' @inheritParams calibration_folds
 #' @param seed Seed of the fold assignment. The global random number
 #'   generator is left as it was.
 #'
@@ -114,25 +221,22 @@ calibration_models <- function(uncorrelated = FALSE) {
 #'   `cal_intercept` and `cal_slope` (means over the folds), `prop_singular`
 #'   (share of the fold fits that were singular) and `complexity` (position
 #'   of the model in `models`), ordered from the highest mean AUC. Failed
-#'   folds also raise a warning.
+#'   folds also raise a warning. A test fold with only one verdict has
+#'   missing AUC but contributes log-loss and Brier; it is not a failed fit.
 #' @export
 compare_calibration_models <- function(validations,
                                        models = calibration_models(),
-                                       k_folds = 5, seed = 2026) {
+                                       k_folds = 5, seed = 2026,
+                                       fold_group = NULL) {
   need_lme4(models)
-  # folds estratificados dentro de cada local x especie
-  val <- withr::with_seed(seed, {
-    validations |>
-      group_by(site, species) |>
-      mutate(fold = sample(rep_len(seq_len(k_folds), n()))) |>
-      ungroup()
-  })
+  val <- validations
+  val$fold <- calibration_folds(validations, k_folds, seed, fold_group)
 
   message("Cross-validation (", k_folds, " folds) of ", length(models),
           " models...")
   vazio <- c(auc = NA_real_, logloss = NA_real_, brier = NA_real_,
              cal_intercept = NA_real_, cal_slope = NA_real_,
-             singular = NA_real_)
+             singular = NA_real_, failed = 1)
   map(seq_along(models), function(i) {
     nm <- names(models)[i]
     m <- map(seq_len(k_folds), function(k) {
@@ -142,12 +246,13 @@ compare_calibration_models <- function(validations,
                          error = function(e) NULL)
       if (is.null(fit)) return(vazio)
       p <- predict_tp(fit, teste)
-      c(auc = auc(teste$tp, p), score_probabilities(teste$tp, p),
+      fold_auc <- if (n_distinct(teste$tp) == 2L) auc(teste$tp, p) else NA_real_
+      c(auc = fold_auc, score_probabilities(teste$tp, p),
         singular = as.numeric(inherits(fit, "merMod") &&
-                                 lme4::isSingular(fit)))
+                                 lme4::isSingular(fit)), failed = 0)
     }) |>
       do.call(what = rbind)
-    n_falhas <- sum(is.na(m[, "auc"]))
+    n_falhas <- sum(m[, "failed"] > 0)
     if (n_falhas > 0) {
       warning(nm, ": the fit failed in ", n_falhas, " of ", k_folds,
               " folds, left out of the mean AUC.", call. = FALSE)
@@ -211,9 +316,15 @@ select_calibration_model <- function(comparison,
                                      k_folds = 5) {
   rule <- match.arg(rule)
   if (rule == "best_auc") {
+    if (!any(is.finite(comparison$auc_mean))) {
+      stop("No finite AUC available for model selection.", call. = FALSE)
+    }
     return(comparison$model[which.max(comparison$auc_mean)])
   }
-  cand <- filter(comparison, !is.na(logloss_mean))
+  cand <- filter(comparison, is.finite(logloss_mean))
+  if (nrow(cand) == 0L) {
+    stop("No finite log-loss available for model selection.", call. = FALSE)
+  }
   regulares <- filter(cand, prop_singular <= 0.5)
   if (nrow(regulares) == 0) {
     warning("Every candidate model is singular in most folds; selecting ",
@@ -669,6 +780,8 @@ plot_calibration <- function(fit, validations, min_confidence = 0.1,
 #' complete selection tables and builds the nightly detection history.
 #' Writes to `output_dir`:
 #' * `model_comparison.csv` ([compare_calibration_models()]);
+#' * `calibration_folds.csv`, when `fold_group` is supplied: validation
+#'   row number, site, species, grouping columns and assigned fold;
 #' * `calibration_model.rds` and `calibration_model.txt` (the refitted
 #'   best model and its summary);
 #' * `calibration_curves.png` ([plot_calibration()]), when 'ggplot2' is
@@ -741,7 +854,7 @@ calibrate <- function(validation_files, prediction_tables, output_dir,
                       effort_reps = 50, engine = c("lme4", "brms"),
                       prior = NULL, brms_args = list(),
                       rule = c("mean", "probability"), prob_min = 0.9,
-                      seed = 2026) {
+                      seed = 2026, fold_group = NULL) {
   select <- match.arg(select)
   engine <- match.arg(engine)
   rule   <- match.arg(rule)
@@ -749,12 +862,23 @@ calibrate <- function(validation_files, prediction_tables, output_dir,
     stop("engine = \"brms\" needs an explicit `prior` (e.g. ",
          "prior = calibration_prior).", call. = FALSE)
   }
-  val <- read_validations(validation_files, site_map)
+  val <- if (is.null(fold_group)) {
+    read_validations(validation_files, site_map)
+  } else {
+    read_validations(validation_files, site_map, keep = fold_group)
+  }
   modelos <- calibration_models(uncorrelated)
 
-  cv <- compare_calibration_models(val, modelos, k_folds, seed)
+  cv <- compare_calibration_models(val, modelos, k_folds, seed,
+                                    fold_group = fold_group)
   dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
   write_csv(cv, file.path(output_dir, "model_comparison.csv"))
+  if (!is.null(fold_group)) {
+    assignment <- val |> select(any_of(c("site", "species", fold_group)))
+    assignment$validation_row <- seq_len(nrow(val))
+    assignment$fold <- calibration_folds(val, k_folds, seed, fold_group)
+    write_csv(assignment, file.path(output_dir, "calibration_folds.csv"))
+  }
   melhor <- select_calibration_model(cv, select, k_folds)
   message("Selected model (", select, "): ", melhor)
 

@@ -109,9 +109,10 @@ Models m1 to m4 are binomial GLMMs fitted with `lme4::glmer()`.
 
 `compare_calibration_models()` fits every candidate with k-fold
 cross-validation and computes the area under the ROC curve (AUC) on the
-held-out folds. Folds are stratified within site x species, so every
-level appears in both the training and the test sets. The fold assignment
-uses a fixed `seed`. Five folds run in a few seconds on these data.
+held-out folds. By default, clips are assigned within site x species.
+The fold assignment uses a fixed `seed`. Five folds run in a few seconds
+on these data. Clips from the same recording may then appear on both
+sides; use grouped folds when evaluating new recordings or nights.
 
 ```{r, eval = has_lme4}
 cv <- compare_calibration_models(val, models, k_folds = 5)
@@ -472,6 +473,41 @@ if the clips were chosen by another criterion related to correctness (for
 example, only clips that sounded clear, or only the nights of peak
 activity), or if the reviewed period differs from the scored one in noise
 or in species composition.
+
+## Keeping recordings and nights intact
+
+`fold_group = "source_audio"` keeps recordings together, and
+`fold_group = "night"` keeps nights together. The group key always
+includes site and spans all species: detections of the same recording or
+night cannot leak across training and test sets through different
+species. Group counts are balanced within site; clip counts may differ.
+Each site needs at least `k_folds` distinct groups. This evaluates new
+recordings or nights at known sites, not transfer to new sites. Rare
+species may be absent from a particular train or test partition.
+
+Retain the metadata explicitly when assembling the stages by hand:
+
+```{r, eval = FALSE}
+val_grouped <- read_validations(val_files, keep = c("source_audio", "night"))
+folds <- calibration_folds(val_grouped, k_folds = 5, seed = 2026,
+                           fold_group = "night")
+cv_grouped <- compare_calibration_models(
+  val_grouped, models, k_folds = 5, seed = 2026, fold_group = "night")
+selected <- select_calibration_model(cv_grouped, k_folds = 5)
+```
+
+For custom tables, a vector of column names can define a compound group,
+e.g. `fold_group = c("recorder", "night")`. IDs must be nonempty and
+nonmissing. Supply real recording/night metadata; grouping by clip file,
+species or verdict would not preserve the acoustic unit.
+
+`calibrate(fold_group = "night", ...)` retains the requested input
+columns automatically and saves the assignments in `calibration_folds.csv`
+for inspection. Older validation tables without those columns still work
+with the default clip folds. Asking for absent metadata raises an error.
+A test fold containing only one verdict has undefined AUC; log-loss and
+Brier remain available, and it is not counted as a failed fit. AUC-based
+selection requires at least one finite AUC.
 
 ## The calibrate() wrapper
 

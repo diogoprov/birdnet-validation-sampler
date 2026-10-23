@@ -4,7 +4,7 @@
 \alias{read_validations}
 \title{Read the validation tables for calibration}
 \usage{
-read_validations(files, site_map = NULL)
+read_validations(files, site_map = NULL, keep = NULL)
 }
 \arguments{
 \item{files}{Paths to the \code{validation_by_clip.csv} files. Missing files
@@ -12,12 +12,16 @@ are skipped with a warning.}
 
 \item{site_map}{Optional named character vector to fix diverging site
 names, as \code{c(old = "new")}, e.g. \code{c(BEP2 = "BEP")}.}
+
+\item{keep}{Optional character vector of input columns to retain, e.g.
+\code{c("source_audio", "night")} for grouped cross-validation. Missing
+columns raise an error rather than silently falling back to clip folds.}
 }
 \value{
 A tibble with \code{site} and \code{species} (factors; \code{species} is the
 species folder code), \code{confidence}, \code{logit_conf} (logit of the
 confidence, bounded at 1e-4 and 1 - 1e-4) and \code{tp} (1 = true
-positive, 0 = false positive).
+positive, 0 = false positive), plus the columns requested in \code{keep}.
 }
 \description{
 Stacks the \code{validation_by_clip.csv} tables of several sites (output of

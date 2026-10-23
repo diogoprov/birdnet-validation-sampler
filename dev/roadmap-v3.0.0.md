@@ -1,5 +1,7 @@
 # Roadmap: sheepdog 3.0.0
 
+Registro dos passos executados e do estado atual: [memória do projeto](MEMORY.md).
+
 Estado de partida: `main` em `3a6b5e1` (sheepdog 2.0.0 + PRs #12–#18, ainda
 sem release). Este roadmap junta o que ficou pendente na conversão para
 pacote e o que as vignettes revelaram sobre a API. Itens marcados
@@ -153,15 +155,24 @@ para o DOI do Zenodo acompanhar as vignettes novas.
 - [ ] **Artigo de software** **[decidir]** (ex.: *Methods in Ecology and
   Evolution* Applications ou JOSS), junto com o crywolf ou separado.
 
-## Ordem de implementação atualizada (2026-10-22)
+## Estado após a implementação (2026-10-22)
 
-1. Transição 2.9.0: aviso de mudança do padrão quando `select` é omitido
-   (registrada em commit próprio; ainda sem publicação).
-2. 3.0.0: novo padrão de seleção e guia de migração implementados;
-   preservados os testes de reprodução da v1.2.0 com `best_auc` explícito.
-3. Cobertura de testes no CI configurada; validar a execução no GitHub
-   depois do envio dos commits.
-4. Publicação das versões: os commits locais não criam releases nem DOI.
-   Se houver release de transição, publicar a 2.9.0 antes da 3.0.0.
-5. Decidir submissão ao CRAN e formato do artigo de software. Estes itens
-   continuam pendentes de decisão do Diogo.
+1. Transição 2.9.0 registrada em commit intermediário; sem release própria.
+2. 3.0.0 publicada no GitHub (`v3.0.0`, commit `880bc4b`) e site atualizado.
+   Novo padrão de seleção e guia de migração concluídos; testes de
+   reprodução da v1.2.0 preservados com `best_auc` explícito.
+3. Cobertura configurada no CI, incluindo dependências do relatório HTML.
+   Consultar o GitHub para o resultado remoto mais recente.
+4. Benchmark do Curiango executado com os dados do Zenodo e registrado na
+   [memória](MEMORY.md); não mostrou vantagem consistente da nova regra.
+5. Correções posteriores implementadas na versão de desenvolvimento:
+   - [x] Incluir os extremos observados na grade de `cell_status()`.
+   - [x] Exportar `calibration_folds()` e permitir `fold_group` em
+     `compare_calibration_models()` e `calibrate()`.
+   - [x] Reter metadados sob demanda com `read_validations(keep = )` e
+     salvar a atribuição dos folds pelo wrapper.
+   - [x] Testar grupos intactos entre espécies, compatibilidade legada e
+     folds de uma classe; verificar a correção nos dados do Curiango.
+   - [ ] Publicar as correções em versão posterior à 3.0.0.
+6. Ainda pendentes: candidatos para uma espécie, benchmark multiespécies,
+   decisão de submissão ao CRAN e formato do artigo de software.

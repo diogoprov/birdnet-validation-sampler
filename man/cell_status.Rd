@@ -20,9 +20,10 @@ in \code{\link[=detection_history]{detection_history()}}.}
 \value{
 A tibble with one row per site x species: \code{site}, \code{species},
 \code{n_reviewed}, \code{n_tp}, \code{max_confidence} (highest reviewed score),
-\code{threshold} (lowest score, in steps of 0.01 within the reviewed range,
-at which the calibrated probability reaches \code{p_min}; \code{NA} if never),
-\code{status} and \code{reason}.
+\code{threshold} (lowest grid score at which the calibrated probability
+reaches \code{p_min}; \code{NA} if never), \code{status} and \code{reason}. The grid
+contains both observed endpoints and steps of 0.01 within the
+reviewed range.
 }
 \description{
 Classifies each site x species cell of the calibration by whether its

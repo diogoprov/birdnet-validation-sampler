@@ -26,9 +26,10 @@
 #'
 #' @return A tibble with one row per site x species: `site`, `species`,
 #'   `n_reviewed`, `n_tp`, `max_confidence` (highest reviewed score),
-#'   `threshold` (lowest score, in steps of 0.01 within the reviewed range,
-#'   at which the calibrated probability reaches `p_min`; `NA` if never),
-#'   `status` and `reason`.
+#'   `threshold` (lowest grid score at which the calibrated probability
+#'   reaches `p_min`; `NA` if never), `status` and `reason`. The grid
+#'   contains both observed endpoints and steps of 0.01 within the
+#'   reviewed range.
 #' @export
 cell_status <- function(fit, validations, p_min = 0.95, min_n = 15) {
   niveis <- fit_levels(fit)
@@ -47,11 +48,18 @@ cell_status <- function(fit, validations, p_min = 0.95, min_n = 15) {
   limiar <- pmap_dbl(celulas, function(site, species, n_reviewed,
                                        min_confidence, max_confidence, ...) {
     if (n_reviewed == 0) return(NA_real_)
+    # Include both observed endpoints, without extrapolating below the
+    # reviewed range or missing crossings between 0.99 and the maximum.
+    interior <- seq(floor(min_confidence * 100) / 100,
+                    max_confidence, by = 0.01)
+    scores <- sort(unique(c(min_confidence,
+                            interior[interior >= min_confidence &
+                                       interior <= max_confidence],
+                            max_confidence)))
     grade <- tibble(
       site = factor(site, levels = niveis$site),
       species = factor(species, levels = niveis$species),
-      confidence = seq(floor(min_confidence * 100) / 100,
-                       max_confidence, by = 0.01)) |>
+      confidence = scores) |>
       mutate(logit_conf = safe_logit(confidence))
     p <- predict_tp(fit, grade)
     if (any(p >= p_min)) min(grade$confidence[p >= p_min]) else NA_real_
