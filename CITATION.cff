@@ -6,7 +6,7 @@ authors:
   - family-names: "Provete"
     given-names: "Diogo B."
     affiliation: "Universidade Federal de Mato Grosso do Sul"
-version: "2.2.0"
+version: "3.0.0"
 doi: "10.5281/zenodo.22696210"
 date-released: "2026-10-22"
 url: "https://provetelab.org/sheepdog/"

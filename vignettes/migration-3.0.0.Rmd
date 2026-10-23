@@ -15,7 +15,8 @@ library(sheepdog)
 ## What changes
 
 In 2.x, `calibrate()` selected the candidate with the highest mean AUC.
-Version 2.9.0 warns when `select` is omitted. In 3.0.0 the default becomes
+The transition warning was prepared in an intermediate 2.9.0 development
+commit, without a separate release. In 3.0.0 the default becomes
 `select = "one_se_logloss"`, and `select_calibration_model()` uses the same
 default rule.
 

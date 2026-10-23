@@ -1,4 +1,4 @@
-# sheepdog 3.0.0 (development version)
+# sheepdog 3.0.0
 
 ## Breaking changes
 
@@ -16,14 +16,6 @@
 - Added the 2.x to 3.0.0 migration guide.
 - CI measures test coverage with `covr` and uploads an HTML report and
   Cobertura XML as workflow artifacts, without a third-party token.
-
-# sheepdog 2.9.0 (development version)
-
-## Model selection transition
-
-- `calibrate()` warns when `select` is omitted: the default will change
-  from `"best_auc"` to `"one_se_logloss"` in 3.0.0. Either rule can be
-  supplied explicitly to silence the warning.
 
 ## Documentation
 
