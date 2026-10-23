@@ -45,7 +45,7 @@ detection_summary.csv (summarise_history()).
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,7 @@ detection_summary.csv (summarise_history()).
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
+    <li><a class="dropdown-item" href="../articles/performance.html">Performance</a></li>
     <li><a class="dropdown-item" href="../articles/retraining.html">Retraining the classifier with validated clips</a></li>
     <li><a class="dropdown-item" href="../articles/migration-3.0.0.html">Migrating from sheepdog 2.x to 3.0.0</a></li>
     <li><a class="dropdown-item" href="../articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
@@ -257,7 +258,10 @@ and <code>history</code>, invisibly.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The model is chosen by <code><a href="select_calibration_model.html">select_calibration_model()</a></code> with the rule
+    <p>The candidate family follows the observed species and sites: one
+species uses the site-effect family of <code><a href="calibration_models.html">calibration_models()</a></code>, and
+a single site omits non-estimable site random effects.</p>
+<p>The model is chosen by <code><a href="select_calibration_model.html">select_calibration_model()</a></code> with the rule
 <code>select</code>: by default, the simplest model within one standard error of
 the lowest log-loss, leaving out models singular in most folds
 (<code>"one_se_logloss"</code>). Use <code>select = "best_auc"</code> to reproduce the 2.x

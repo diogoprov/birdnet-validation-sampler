@@ -9,7 +9,7 @@ intercept.
 ## Usage
 
 ``` r
-calibration_models(uncorrelated = FALSE)
+calibration_models(uncorrelated = FALSE, single_species = FALSE)
 ```
 
 ## Arguments
@@ -21,11 +21,20 @@ calibration_models(uncorrelated = FALSE)
   singular fits of m4 when that correlation is estimated at +-1. `FALSE`
   keeps the candidates of 2.0.0.
 
+- single_species:
+
+  Use a family for one species: global logistic regression, a site
+  intercept, and a site intercept and slope. With `uncorrelated = TRUE`,
+  also include independent site intercepts and slopes. `FALSE` preserves
+  the multispecies family.
+
 ## Value
 
 A named list of formulas: `m0_global`, `m1_species_intercept`,
 `m2_species_slope`, `m3_plus_site`, `m4_species_x_site` and, with
-`uncorrelated = TRUE`, `m5_species_x_site_uncorrelated`.
+`uncorrelated = TRUE`, `m5_species_x_site_uncorrelated`. With
+`single_species = TRUE`: `m0_global`, `m1_site_intercept`,
+`m2_site_slope` and optionally `m3_site_slope_uncorrelated`.
 
 ## Details
 

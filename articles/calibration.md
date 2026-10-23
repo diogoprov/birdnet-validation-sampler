@@ -276,7 +276,7 @@ coef(fit_global)
 #>  -0.5310926   1.5993695
 lme4::fixef(fit_full)
 #> (Intercept)  logit_conf 
-#>  -0.2816424   2.7948424
+#>  -0.2816419   2.7948430
 lme4::VarCorr(fit_full)
 #>  Groups       Name        Std.Dev. Corr  
 #>  site:species (Intercept) 1.19448        
@@ -663,6 +663,31 @@ It fails if the clips were chosen by another criterion related to
 correctness (for example, only clips that sounded clear, or only the
 nights of peak activity), or if the reviewed period differs from the
 scored one in noise or in species composition.
+
+## One species, or one site
+
+When `models` is omitted,
+[`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md)
+chooses the family from the observed levels. For one species at several
+sites it compares a global model, a site intercept and a site
+intercept/slope model. The same choice is automatic in
+[`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md).
+One species at one site needs only the global model; multiple species at
+one site use the species-effect candidates without non-estimable site
+random effects. Unused factor levels do not count as observed species or
+sites.
+
+To construct the single-species family explicitly, use
+`calibration_models(single_species = TRUE)`. An explicit list overrides
+automatic choice in the comparison. The original multispecies family and
+its ordering remain available through
+[`calibration_models()`](https://provetelab.org/sheepdog/reference/calibration_models.md).
+
+The [performance
+vignette](https://provetelab.org/sheepdog/articles/performance.md)
+documents the Curiango regression checks and the multispecies
+simulation; it distinguishes predictive performance from changes in
+detection histories.
 
 ## Keeping recordings and nights intact
 

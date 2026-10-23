@@ -17,6 +17,7 @@
 
 ### Beyond the three stages
 
+- [Performance](https://provetelab.org/sheepdog/articles/performance.md):
 - [Retraining the classifier with validated
   clips](https://provetelab.org/sheepdog/articles/retraining.md):
 - [Migrating from sheepdog 2.x to

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,6 +29,7 @@
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
+    <li><a class="dropdown-item" href="../articles/performance.html">Performance</a></li>
     <li><a class="dropdown-item" href="../articles/retraining.html">Retraining the classifier with validated clips</a></li>
     <li><a class="dropdown-item" href="../articles/migration-3.0.0.html">Migrating from sheepdog 2.x to 3.0.0</a></li>
     <li><a class="dropdown-item" href="../articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
@@ -49,6 +50,12 @@
       <small>Source: <a href="https://github.com/diogoprov/sheepdog/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="3.2.0" id="sheepdog-320">sheepdog 3.2.0<a class="anchor" aria-label="anchor" href="#sheepdog-320"></a></h2>
+<ul><li>
+<code>calibration_models(single_species = TRUE)</code> provides global and site- effect candidates for one species, including an optional uncorrelated site-slope model. <code><a href="../reference/calibrate.html">calibrate()</a></code> and <code><a href="../reference/compare_calibration_models.html">compare_calibration_models()</a></code> automatically choose candidates from the observed species and sites; explicit model lists still override automatic selection in the latter. The multispecies candidate family and its ordering are unchanged.</li>
+<li>New performance vignette summarises the Curiango benchmark, regression checks and a reproducible multispecies simulation with held-out nights.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="3.1.0" id="sheepdog-310">sheepdog 3.1.0<a class="anchor" aria-label="anchor" href="#sheepdog-310"></a></h2>
 <ul><li>

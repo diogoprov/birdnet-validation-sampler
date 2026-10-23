@@ -1,5 +1,20 @@
 # Changelog
 
+## sheepdog 3.2.0
+
+- `calibration_models(single_species = TRUE)` provides global and site-
+  effect candidates for one species, including an optional uncorrelated
+  site-slope model.
+  [`calibrate()`](https://provetelab.org/sheepdog/reference/calibrate.md)
+  and
+  [`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md)
+  automatically choose candidates from the observed species and sites;
+  explicit model lists still override automatic selection in the latter.
+  The multispecies candidate family and its ordering are unchanged.
+- New performance vignette summarises the Curiango benchmark, regression
+  checks and a reproducible multispecies simulation with held-out
+  nights.
+
 ## sheepdog 3.1.0
 
 - [`cell_status()`](https://provetelab.org/sheepdog/reference/cell_status.md)

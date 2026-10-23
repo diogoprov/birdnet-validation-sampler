@@ -15,7 +15,7 @@ Models with random effects need the 'lme4' package."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,7 @@ Models with random effects need the 'lme4' package."><meta property="og:image" c
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
+    <li><a class="dropdown-item" href="../articles/performance.html">Performance</a></li>
     <li><a class="dropdown-item" href="../articles/retraining.html">Retraining the classifier with validated clips</a></li>
     <li><a class="dropdown-item" href="../articles/migration-3.0.0.html">Migrating from sheepdog 2.x to 3.0.0</a></li>
     <li><a class="dropdown-item" href="../articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
@@ -70,7 +71,7 @@ Models with random effects need the 'lme4' package.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">compare_calibration_models</span><span class="op">(</span></span>
 <span>  <span class="va">validations</span>,</span>
-<span>  models <span class="op">=</span> <span class="fu"><a href="calibration_models.html">calibration_models</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  models <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  k_folds <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">2026</span>,</span>
 <span>  fold_group <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -86,7 +87,11 @@ Models with random effects need the 'lme4' package.</p>
 
 
 <dt id="arg-models">models<a class="anchor" aria-label="anchor" href="#arg-models"></a></dt>
-<dd><p>Named list of model formulas.</p></dd>
+<dd><p>Named list of model formulas. <code>NULL</code> chooses the family
+from the observed species and sites: site-effect models for one
+species, the original family for multiple species, and no site random
+effects when only one site is observed. Supply an explicit list to
+reproduce a particular candidate set.</p></dd>
 
 
 <dt id="arg-k-folds">k_folds<a class="anchor" aria-label="anchor" href="#arg-k-folds"></a></dt>

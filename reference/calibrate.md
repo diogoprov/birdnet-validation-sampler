@@ -180,6 +180,11 @@ A list with `comparison`, `fit`, `effort` (or `NULL`), `scored` and
 
 ## Details
 
+The candidate family follows the observed species and sites: one species
+uses the site-effect family of
+[`calibration_models()`](https://provetelab.org/sheepdog/reference/calibration_models.md),
+and a single site omits non-estimable site random effects.
+
 The model is chosen by
 [`select_calibration_model()`](https://provetelab.org/sheepdog/reference/select_calibration_model.md)
 with the rule `select`: by default, the simplest model within one

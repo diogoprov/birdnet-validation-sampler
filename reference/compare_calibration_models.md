@@ -12,7 +12,7 @@ Models with random effects need the 'lme4' package.
 ``` r
 compare_calibration_models(
   validations,
-  models = calibration_models(),
+  models = NULL,
   k_folds = 5,
   seed = 2026,
   fold_group = NULL
@@ -28,7 +28,11 @@ compare_calibration_models(
 
 - models:
 
-  Named list of model formulas.
+  Named list of model formulas. `NULL` chooses the family from the
+  observed species and sites: site-effect models for one species, the
+  original family for multiple species, and no site random effects when
+  only one site is observed. Supply an explicit list to reproduce a
+  particular candidate set.
 
 - k_folds:
 

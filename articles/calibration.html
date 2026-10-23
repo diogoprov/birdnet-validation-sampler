@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sheepdog</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,6 +49,7 @@
     <li><a class="dropdown-item" href="../articles/community-matrices.html">From detections to community analyses</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Beyond the three stages</h6></li>
+    <li><a class="dropdown-item" href="../articles/performance.html">Performance</a></li>
     <li><a class="dropdown-item" href="../articles/retraining.html">Retraining the classifier with validated clips</a></li>
     <li><a class="dropdown-item" href="../articles/migration-3.0.0.html">Migrating from sheepdog 2.x to 3.0.0</a></li>
     <li><a class="dropdown-item" href="../articles/crywolf-integration.html">Integration with crywolf: clip manifest and validation tables</a></li>
@@ -333,7 +334,7 @@ choice:</p>
 <span><span class="co">#&gt;  -0.5310926   1.5993695</span></span>
 <span><span class="fu">lme4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/nlme/man/fixed.effects.html" class="external-link">fixef</a></span><span class="op">(</span><span class="va">fit_full</span><span class="op">)</span></span>
 <span><span class="co">#&gt; (Intercept)  logit_conf </span></span>
-<span><span class="co">#&gt;  -0.2816424   2.7948424</span></span>
+<span><span class="co">#&gt;  -0.2816419   2.7948430</span></span>
 <span><span class="fu">lme4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/nlme/man/VarCorr.html" class="external-link">VarCorr</a></span><span class="op">(</span><span class="va">fit_full</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  Groups       Name        Std.Dev. Corr  </span></span>
 <span><span class="co">#&gt;  site:species (Intercept) 1.19448        </span></span>
@@ -700,6 +701,27 @@ holds. It fails if the clips were chosen by another criterion related to
 correctness (for example, only clips that sounded clear, or only the
 nights of peak activity), or if the reviewed period differs from the
 scored one in noise or in species composition.</p>
+</div>
+<div class="section level2">
+<h2 id="one-species-or-one-site">One species, or one site<a class="anchor" aria-label="anchor" href="#one-species-or-one-site"></a>
+</h2>
+<p>When <code>models</code> is omitted,
+<code><a href="../reference/compare_calibration_models.html">compare_calibration_models()</a></code> chooses the family from the
+observed levels. For one species at several sites it compares a global
+model, a site intercept and a site intercept/slope model. The same
+choice is automatic in <code><a href="../reference/calibrate.html">calibrate()</a></code>. One species at one site
+needs only the global model; multiple species at one site use the
+species-effect candidates without non-estimable site random effects.
+Unused factor levels do not count as observed species or sites.</p>
+<p>To construct the single-species family explicitly, use
+<code>calibration_models(single_species = TRUE)</code>. An explicit list
+overrides automatic choice in the comparison. The original multispecies
+family and its ordering remain available through
+<code><a href="../reference/calibration_models.html">calibration_models()</a></code>.</p>
+<p>The <a href="performance.html">performance vignette</a> documents the
+Curiango regression checks and the multispecies simulation; it
+distinguishes predictive performance from changes in detection
+histories.</p>
 </div>
 <div class="section level2">
 <h2 id="keeping-recordings-and-nights-intact">Keeping recordings and nights intact<a class="anchor" aria-label="anchor" href="#keeping-recordings-and-nights-intact"></a>

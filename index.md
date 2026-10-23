@@ -67,6 +67,19 @@ bundles ffmpeg), the hierarchical calibration needs
 install.packages(c("av", "lme4", "ggplot2"))
 ```
 
+## Calibration performance
+
+For one species, calibration automatically compares global and
+site-effect models; with one site, it keeps only estimable candidates.
+Explicit model lists remain available in
+[`compare_calibration_models()`](https://provetelab.org/sheepdog/reference/compare_calibration_models.md).
+
+The [performance
+article](https://provetelab.org/sheepdog/articles/performance.html)
+summarises the Curiango benchmark, regression checks, computing times
+and an explicitly simulated multispecies benchmark. The results do not
+show a consistent advantage of one selection rule across datasets.
+
 ## Grouped calibration folds
 
 Use `calibrate(..., fold_group = "source_audio")` to keep recordings
