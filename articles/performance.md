@@ -18,12 +18,11 @@ downloads data or re-runs hundreds of model fits.
 ## Real data: the Curiango study
 
 The [Zenodo v2 deposit](https://doi.org/10.5281/zenodo.21795898)
-accompanying [Piatti et al.’s Curiango
-study](https://doi.org/10.1002/jav.03737) supplies manually annotated
-three-second windows and classifier scores. We used 2,939 BirdNET and
-8,032 custom-classifier windows with score ≥ 0.10, from seven physical
-sites. Files were checked against Zenodo MD5 checksums; data attribution
-follows the deposit’s CC BY 4.0 licence.
+accompanying Piatti et al.’s Curiango manuscript supplies manually
+annotated three-second windows and classifier scores. We used 2,939
+BirdNET and 8,032 custom-classifier windows with score ≥ 0.10, from
+seven physical sites. Files were checked against Zenodo MD5 checksums;
+data attribution follows the deposit’s CC BY 4.0 licence.
 
 The full survey table has 458,520 rows but only **97,806 distinct
 one-minute recordings and 1,753 site-nights**. The deposit description

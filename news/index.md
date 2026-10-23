@@ -1,5 +1,16 @@
 # Changelog
 
+## sheepdog 3.2.1
+
+- Added fast tests for posterior matrix uncertainty, training
+  provenance, overlap boundaries, missing clips and degenerate reviewer
+  agreement.
+- Corrected the minimum dplyr version for join relationship checks.
+- Fixed the performance article index and replaced an unresolved
+  manuscript DOI link with the validated Zenodo data citation.
+- Declared the repositories needed by the optional crywolf integration
+  in `Additional_repositories` for CRAN checks.
+
 ## sheepdog 3.2.0
 
 - `calibration_models(single_species = TRUE)` provides global and site-
