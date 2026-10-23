@@ -173,8 +173,8 @@ para o DOI do Zenodo acompanhar as vignettes novas.
      salvar a atribuição dos folds pelo wrapper.
    - [x] Testar grupos intactos entre espécies, compatibilidade legada e
      folds de uma classe; verificar a correção nos dados do Curiango.
-   - Publicação autorizada da 3.1.0:
+   - [x] Correções publicadas na release 3.1.0, commit `847a5b3`:
      https://github.com/diogoprov/sheepdog/releases/tag/v3.1.0.
-     Verificar os checks e o site após o envio.
+     Verificar os checks, cobertura, site e distribuição no r-universe.
 6. Ainda pendentes: candidatos para uma espécie, benchmark multiespécies,
    decisão de submissão ao CRAN e formato do artigo de software.

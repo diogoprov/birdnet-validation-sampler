@@ -4,8 +4,10 @@ Atualizada em 2026-10-22 (America/Campo_Grande).
 
 ## Publicação 3.1.0
 
-- As correções de `cell_status()` e os folds agrupados foram preparados
-  para a versão 3.1.0, após autorização do Diogo para push e release.
+- As correções de `cell_status()` e os folds agrupados foram enviadas à
+  main e publicadas na release 3.1.0, após autorização do Diogo.
+- Tag `v3.1.0`, commit `847a5b38825b58ec64d96545ea74bbd9a1a6a799`;
+  release pública, definitiva e marcada como latest (não prerelease).
 - Release: https://github.com/diogoprov/sheepdog/releases/tag/v3.1.0.
 - DESCRIPTION, NEWS e CITATION.cff foram atualizados para 3.1.0.
 - A cobertura da 3.0.0 foi confirmada como concluída com sucesso; o
@@ -120,8 +122,10 @@ preparada para a release 3.1.0 na etapa de publicação seguinte.
 
 ## Próximos passos pendentes
 
-- Conferir a publicação da 3.1.0 e a atualização do site; a tag v3.0.0
+- Conferir checks, cobertura e deploy do site da 3.1.0; a tag v3.0.0
   não contém as correções posteriores.
+- Conferir a distribuição no r-universe e o registro da versão no Zenodo;
+  a release GitHub foi confirmada, mas esses serviços não foram validados.
 - Conferir os checks remotos e a cobertura antes de uma nova release.
 - Ainda não foram implementados candidatos automáticos para uma espécie.
   A família adaptada do benchmark não foi acrescentada a `calibration_models()`.
