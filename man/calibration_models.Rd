@@ -4,18 +4,25 @@
 \alias{calibration_models}
 \title{Candidate calibration models}
 \usage{
-calibration_models(uncorrelated = FALSE)
+calibration_models(uncorrelated = FALSE, single_species = FALSE)
 }
 \arguments{
 \item{uncorrelated}{Add \code{m5_species_x_site_uncorrelated}, the m4
 structure without the correlation between the species intercepts and
 slopes. It avoids the singular fits of m4 when that correlation is
 estimated at +-1. \code{FALSE} keeps the candidates of 2.0.0.}
+
+\item{single_species}{Use a family for one species: global logistic
+regression, a site intercept, and a site intercept and slope. With
+\code{uncorrelated = TRUE}, also include independent site intercepts and
+slopes. \code{FALSE} preserves the multispecies family.}
 }
 \value{
 A named list of formulas: \code{m0_global}, \code{m1_species_intercept},
 \code{m2_species_slope}, \code{m3_plus_site}, \code{m4_species_x_site} and, with
-\code{uncorrelated = TRUE}, \code{m5_species_x_site_uncorrelated}.
+\code{uncorrelated = TRUE}, \code{m5_species_x_site_uncorrelated}. With
+\code{single_species = TRUE}: \code{m0_global}, \code{m1_site_intercept},
+\code{m2_site_slope} and optionally \code{m3_site_slope_uncorrelated}.
 }
 \description{
 The family of logistic calibration models compared by

@@ -1,0 +1,5 @@
+classifier,rule,selected,failed_fits,max_logloss_difference
+BirdNET,best_auc,m1_site_intercept,0,5.551115123125783e-17
+BirdNET,one_se_logloss,m0_global,0,5.551115123125783e-17
+Custom,best_auc,m1_site_intercept,0,5.551115123125783e-17
+Custom,one_se_logloss,m0_global,0,5.551115123125783e-17

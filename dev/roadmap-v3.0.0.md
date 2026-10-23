@@ -176,5 +176,11 @@ para o DOI do Zenodo acompanhar as vignettes novas.
    - [x] Correções publicadas na release 3.1.0, commit `847a5b3`:
      https://github.com/diogoprov/sheepdog/releases/tag/v3.1.0.
      Verificar os checks, cobertura, site e distribuição no r-universe.
-6. Ainda pendentes: candidatos para uma espécie, benchmark multiespécies,
+6. Desenvolvimento após 3.1.0:
+   - [x] Candidatos automáticos para uma espécie e para um único local.
+   - [x] Benchmark multiespécies simulado (60 datasets; 1.500 ajustes CV).
+   - [x] Vignette `performance` com resumo do Curiango, testes de regressão,
+     simulação, tempos e scripts de reprodução, inspirada no crywolf.
+   - [ ] Publicar esse desenvolvimento em nova versão e atualizar o site.
+7. Pendentes: benchmark empírico multiespécies (sem dados disponíveis),
    decisão de submissão ao CRAN e formato do artigo de software.

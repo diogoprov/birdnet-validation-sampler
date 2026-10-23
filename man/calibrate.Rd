@@ -127,6 +127,10 @@ installed;
 }
 }
 \details{
+The candidate family follows the observed species and sites: one
+species uses the site-effect family of \code{\link[=calibration_models]{calibration_models()}}, and
+a single site omits non-estimable site random effects.
+
 The model is chosen by \code{\link[=select_calibration_model]{select_calibration_model()}} with the rule
 \code{select}: by default, the simplest model within one standard error of
 the lowest log-loss, leaving out models singular in most folds

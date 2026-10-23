@@ -1,0 +1,43 @@
+{
+  "doi": "10.5281/zenodo.21795898",
+  "record_id": 21795898,
+  "title": "Methodological choices influence ecological inference in passive acoustic monitoring of a Neotropical nightjar",
+  "files": [
+    {
+      "file": "df_night_clean.txt",
+      "bytes": 80017582,
+      "checksum": "md5:d0abbaa5848cfe7607949a7015a81ebb",
+      "url": "https://zenodo.org/api/records/21795898/files/df_night_clean.txt/content"
+    },
+    {
+      "file": "CM-BirdNet.txt",
+      "bytes": 2483410,
+      "checksum": "md5:04a51f04810c80d3fd5b3d5859b9b0b7",
+      "url": "https://zenodo.org/api/records/21795898/files/CM-BirdNet.txt/content"
+    },
+    {
+      "file": "CM-Custom.txt",
+      "bytes": 2521164,
+      "checksum": "md5:104e4105b2aab197ac96f73b32087de7",
+      "url": "https://zenodo.org/api/records/21795898/files/CM-Custom.txt/content"
+    },
+    {
+      "file": "01_detector_evaluation.qmd",
+      "bytes": 9850,
+      "checksum": "md5:2f62042bc660a9b08142ab9632196faa",
+      "url": "https://zenodo.org/api/records/21795898/files/01_detector_evaluation.qmd/content"
+    },
+    {
+      "file": "02_threshold_processing.qmd",
+      "bytes": 8620,
+      "checksum": "md5:70a48c691f46cb26727bc25d6d208ab0",
+      "url": "https://zenodo.org/api/records/21795898/files/02_threshold_processing.qmd/content"
+    },
+    {
+      "file": "05_false_positive_occupancy_stan.qmd",
+      "bytes": 26395,
+      "checksum": "md5:c8868ee61a4833ee6885df098aa7db65",
+      "url": "https://zenodo.org/api/records/21795898/files/05_false_positive_occupancy_stan.qmd/content"
+    }
+  ]
+}

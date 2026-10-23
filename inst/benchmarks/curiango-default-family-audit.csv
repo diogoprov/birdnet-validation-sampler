@@ -1,0 +1,11 @@
+classifier,model,estimable
+BirdNET,m0_global,TRUE
+BirdNET,m1_species_intercept,FALSE
+BirdNET,m2_species_slope,FALSE
+BirdNET,m3_plus_site,FALSE
+BirdNET,m4_species_x_site,FALSE
+Custom,m0_global,TRUE
+Custom,m1_species_intercept,FALSE
+Custom,m2_species_slope,FALSE
+Custom,m3_plus_site,FALSE
+Custom,m4_species_x_site,FALSE

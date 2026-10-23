@@ -42,3 +42,7 @@ Thumbs.db
 *.tar.gz
 sheepdog.Rcheck/
 docs/
+
+# Downloaded benchmark inputs and full intermediate reports
+dev/benchmarks/data/
+dev/benchmarks/results/

@@ -6,7 +6,7 @@
 \usage{
 compare_calibration_models(
   validations,
-  models = calibration_models(),
+  models = NULL,
   k_folds = 5,
   seed = 2026,
   fold_group = NULL
@@ -15,7 +15,11 @@ compare_calibration_models(
 \arguments{
 \item{validations}{Table returned by \code{\link[=read_validations]{read_validations()}}.}
 
-\item{models}{Named list of model formulas.}
+\item{models}{Named list of model formulas. \code{NULL} chooses the family
+from the observed species and sites: site-effect models for one
+species, the original family for multiple species, and no site random
+effects when only one site is observed. Supply an explicit list to
+reproduce a particular candidate set.}
 
 \item{k_folds}{Number of folds.}
 

@@ -79,11 +79,29 @@ rename_site <- function(x, mapa) {
 #'   slopes. It avoids the singular fits of m4 when that correlation is
 #'   estimated at +-1. `FALSE` keeps the candidates of 2.0.0.
 #'
+#' @param single_species Use a family for one species: global logistic
+#'   regression, a site intercept, and a site intercept and slope. With
+#'   `uncorrelated = TRUE`, also include independent site intercepts and
+#'   slopes. `FALSE` preserves the multispecies family.
+#'
 #' @return A named list of formulas: `m0_global`, `m1_species_intercept`,
 #'   `m2_species_slope`, `m3_plus_site`, `m4_species_x_site` and, with
-#'   `uncorrelated = TRUE`, `m5_species_x_site_uncorrelated`.
+#'   `uncorrelated = TRUE`, `m5_species_x_site_uncorrelated`. With
+#'   `single_species = TRUE`: `m0_global`, `m1_site_intercept`,
+#'   `m2_site_slope` and optionally `m3_site_slope_uncorrelated`.
 #' @export
-calibration_models <- function(uncorrelated = FALSE) {
+calibration_models <- function(uncorrelated = FALSE, single_species = FALSE) {
+  if (single_species) {
+    models <- list(
+      m0_global = tp ~ logit_conf,
+      m1_site_intercept = tp ~ logit_conf + (1 | site),
+      m2_site_slope = tp ~ logit_conf + (logit_conf | site))
+    if (uncorrelated) {
+      models$m3_site_slope_uncorrelated <-
+        tp ~ logit_conf + (1 | site) + (0 + logit_conf | site)
+    }
+    return(models)
+  }
   modelos <- list(
     m0_global            = tp ~ logit_conf,
     m1_species_intercept = tp ~ logit_conf + (1 | species),
@@ -99,6 +117,18 @@ calibration_models <- function(uncorrelated = FALSE) {
       (1 | site:species)
   }
   modelos
+}
+
+# The candidate family follows observed levels, not unused factor levels.
+# Explicit model lists in compare_calibration_models() bypass this helper.
+calibration_candidates <- function(validations, uncorrelated = FALSE) {
+  n_species <- n_distinct(validations$species)
+  n_sites <- n_distinct(validations$site)
+  models <- calibration_models(uncorrelated, single_species = n_species == 1L)
+  if (n_sites == 1L) {
+    models <- if (n_species == 1L) models[1] else models[seq_len(3)]
+  }
+  models
 }
 
 #' Assign cross-validation folds for calibration
@@ -209,7 +239,11 @@ calibration_folds <- function(validations, k_folds = 5, seed = 2026,
 #' 1 means probabilities too extreme (overfitting).
 #'
 #' @param validations Table returned by [read_validations()].
-#' @param models Named list of model formulas.
+#' @param models Named list of model formulas. `NULL` chooses the family
+#'   from the observed species and sites: site-effect models for one
+#'   species, the original family for multiple species, and no site random
+#'   effects when only one site is observed. Supply an explicit list to
+#'   reproduce a particular candidate set.
 #' @param k_folds Number of folds.
 #' @inheritParams calibration_folds
 #' @param seed Seed of the fold assignment. The global random number
@@ -225,9 +259,10 @@ calibration_folds <- function(validations, k_folds = 5, seed = 2026,
 #'   missing AUC but contributes log-loss and Brier; it is not a failed fit.
 #' @export
 compare_calibration_models <- function(validations,
-                                       models = calibration_models(),
+                                       models = NULL,
                                        k_folds = 5, seed = 2026,
                                        fold_group = NULL) {
+  if (is.null(models)) models <- calibration_candidates(validations)
   need_lme4(models)
   val <- validations
   val$fold <- calibration_folds(validations, k_folds, seed, fold_group)
@@ -793,6 +828,10 @@ plot_calibration <- function(fit, validations, min_confidence = 0.1,
 #' * `nightly_detection_history.csv` ([detection_history()]);
 #' * `detection_summary.csv` ([summarise_history()]).
 #'
+#' The candidate family follows the observed species and sites: one
+#' species uses the site-effect family of [calibration_models()], and
+#' a single site omits non-estimable site random effects.
+#'
 #' The model is chosen by [select_calibration_model()] with the rule
 #' `select`: by default, the simplest model within one standard error of
 #' the lowest log-loss, leaving out models singular in most folds
@@ -867,7 +906,7 @@ calibrate <- function(validation_files, prediction_tables, output_dir,
   } else {
     read_validations(validation_files, site_map, keep = fold_group)
   }
-  modelos <- calibration_models(uncorrelated)
+  modelos <- calibration_candidates(val, uncorrelated)
 
   cv <- compare_calibration_models(val, modelos, k_folds, seed,
                                     fold_group = fold_group)

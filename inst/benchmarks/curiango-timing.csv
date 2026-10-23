@@ -1,0 +1,7 @@
+classifier,replicate,seconds,windows,candidates,folds
+BirdNET,1,1.517,2939,3,5
+BirdNET,2,1.105,2939,3,5
+BirdNET,3,1.1209999999999996,2939,3,5
+Custom,1,2.3339999999999996,8032,3,5
+Custom,2,2.229000000000001,8032,3,5
+Custom,3,2.0999999999999996,8032,3,5

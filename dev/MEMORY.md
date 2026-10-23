@@ -120,6 +120,54 @@ preparada para a release 3.1.0 na etapa de publicação seguinte.
   grupos insuficientes, metadados opcionais, folds de uma classe e a
   passagem das opções pelo wrapper com arquivo de auditoria.
 
+## Candidatos para uma espécie e vignette de desempenho (após 3.1.0)
+
+- Diogo confirmou que não há conjunto real multiespécies disponível.
+  O benchmark multiespécies desta etapa é explicitamente uma simulação,
+  não validação empírica do FrogNet.
+- Implementado `calibration_models(single_species = TRUE)`: global,
+  intercepto de local, intercepto/inclinação de local e opção sem
+  correlação. A seleção automática de `calibrate()` e
+  `compare_calibration_models(models = NULL)` usa os níveis observados.
+  Uma espécie em um local usa só m0; várias espécies em um local omitem
+  os efeitos de local não estimáveis. A família multiespécies original e
+  sua ordem permanecem, e listas explícitas sobrescrevem a escolha da
+  comparação. A versão de desenvolvimento é `3.1.0.9000`.
+- Conferida a nova família automática no Curiango: três candidatos e zero
+  ajustes de fold falhos para cada classificador; métricas coincidem com
+  a família explícita do relatório a menos de 1e-15. Três repetições
+  mediram o tempo de cada comparação de cinco folds.
+- Executadas 60 simulações independentes (três cenários x 20 seeds,
+  2026–2045), seis locais, oito espécies, 24 noites de treino e 12 de
+  teste, duas janelas por célula-noite. Seleção em cinco folds de noites
+  do treino; noites de teste nunca entram na seleção ou no reajuste.
+  Resultados: 1.500 ajustes CV sem falhas, 120 desfechos finais por regra.
+- Cenário global: a nova regra escolheu m0 em 20/20 casos, AUC em 13/20;
+  log-loss média 0,462734 vs 0,462874 (nova vs AUC). Com diferenças entre
+  espécies, 0,460964 vs 0,457612; com local x espécie, 0,446650 vs
+  0,444250. Não há ganho consistente universal. Matriz MAE foi comparada
+  nos mesmos oito eixos; conjuntos núcleo foram avaliados separadamente.
+- Criada `vignettes/performance.Rmd`, no estilo do artigo de desempenho
+  do crywolf. Resume o relatório empírico anterior, intervalos e mudanças
+  de noites, regressões de células, nova família, simulações, tempos,
+  limitações e reprodução. Build não baixa dados nem ajusta modelos.
+- Scripts opt-in: `dev/benchmarks/curiango.R`, `curiango-native.R`,
+  `multispecies.R` e `check-results.R`. Caches pequenos e metadados de
+  proveniência ficam em `inst/benchmarks/` e são distribuídos com o pacote.
+- Testes locais desta etapa: 380 verificações passaram, zero falhas e
+  avisos; um teste Stan exige ativação e foi pulado. As seleções e perdas
+  pareadas dos caches foram conferidas independentemente; persistem as
+  12 regressões corrigidas de `cell_status()`.
+- `R CMD check` desta etapa (sem manual/compilação de vignettes):
+  zero erros, zero avisos e zero notas. A nova vignette foi renderizada
+  separadamente sem acesso a dados remotos. A página `performance` também
+  foi construída localmente com pkgdown.
+- HTML local da nova vignette:
+  `/Users/diogoborgesprovete/Documents/Codex/2026-10-22/como-x20/outputs/sheepdog-performance.html`.
+- Estas mudanças são posteriores à tag 3.1.0; uma nova publicação ainda
+  precisa incluir este desenvolvimento. Não confundir o HTML local com
+  um deploy já concluído do site público.
+
 ## Próximos passos pendentes
 
 - Conferir checks, cobertura e deploy do site da 3.1.0; a tag v3.0.0
@@ -127,8 +175,9 @@ preparada para a release 3.1.0 na etapa de publicação seguinte.
 - Conferir a distribuição no r-universe e o registro da versão no Zenodo;
   a release GitHub foi confirmada, mas esses serviços não foram validados.
 - Conferir os checks remotos e a cobertura antes de uma nova release.
-- Ainda não foram implementados candidatos automáticos para uma espécie.
-  A família adaptada do benchmark não foi acrescentada a `calibration_models()`.
-- Fazer benchmark multiespécies para avaliar a aplicação principal.
+- Candidatos automáticos e benchmark multiespécies simulado foram concluídos
+  nesta etapa; benchmark empírico multiespécies continua dependendo de dados
+  reais, que não estão disponíveis.
+- Revisar e publicar a nova API e a vignette de desempenho em versão futura.
 - CRAN e artigo de software permanecem decisões do Diogo, conforme o
   [roadmap](roadmap-v3.0.0.md).

@@ -31,6 +31,7 @@ reference:
       - precision_by_bin
       - suggest_thresholds
       - nightly_presence
+      - performance
       - retraining_clips
       - plot_precision
       - read_validation_tables

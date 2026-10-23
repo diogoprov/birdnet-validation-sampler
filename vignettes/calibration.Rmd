@@ -474,6 +474,25 @@ example, only clips that sounded clear, or only the nights of peak
 activity), or if the reviewed period differs from the scored one in noise
 or in species composition.
 
+## One species, or one site
+
+When `models` is omitted, `compare_calibration_models()` chooses the family
+from the observed levels. For one species at several sites it compares a
+global model, a site intercept and a site intercept/slope model. The same
+choice is automatic in `calibrate()`. One species at one site needs only
+the global model; multiple species at one site use the species-effect
+candidates without non-estimable site random effects. Unused factor levels
+do not count as observed species or sites.
+
+To construct the single-species family explicitly, use
+`calibration_models(single_species = TRUE)`. An explicit list overrides
+automatic choice in the comparison. The original multispecies family and
+its ordering remain available through `calibration_models()`.
+
+The [performance vignette](performance.html) documents the Curiango
+regression checks and the multispecies simulation; it distinguishes
+predictive performance from changes in detection histories.
+
 ## Keeping recordings and nights intact
 
 `fold_group = "source_audio"` keeps recordings together, and

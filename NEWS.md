@@ -1,3 +1,14 @@
+# sheepdog (development version)
+
+- `calibration_models(single_species = TRUE)` provides global and site-
+  effect candidates for one species, including an optional uncorrelated
+  site-slope model. `calibrate()` and `compare_calibration_models()`
+  automatically choose candidates from the observed species and sites;
+  explicit model lists still override automatic selection in the latter.
+  The multispecies candidate family and its ordering are unchanged.
+- New performance vignette summarises the Curiango benchmark, regression
+  checks and a reproducible multispecies simulation with held-out nights.
+
 # sheepdog 3.1.0
 
 - `cell_status()` includes both observed score endpoints in its grid and

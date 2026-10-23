@@ -1,0 +1,57 @@
+site,species,n_reviewed,n_tp,max_confidence,threshold,status,reason,classifier,scheme,rule,status_before,status_endpoint
+ARA,Nyctidromus_albicollis,592,552,0.9973,0.67,reliable,reaches p_min,BirdNET,night,best_auc,reliable,reliable
+BAI,Nyctidromus_albicollis,326,217,0.996,NA,unreliable,does not reach p_min within the reviewed scores,BirdNET,night,best_auc,unreliable,unreliable
+BEP,Nyctidromus_albicollis,130,93,0.8519,NA,unreliable,does not reach p_min within the reviewed scores,BirdNET,night,best_auc,unreliable,unreliable
+MIM,Nyctidromus_albicollis,81,64,0.9949,0.98,reliable,reaches p_min,BirdNET,night,best_auc,reliable,reliable
+REF,Nyctidromus_albicollis,698,629,0.999,0.93,reliable,reaches p_min,BirdNET,night,best_auc,reliable,reliable
+UEM,Nyctidromus_albicollis,476,340,0.9977,0.9977,reliable,reaches p_min,BirdNET,night,best_auc,unreliable,reliable
+XAR,Nyctidromus_albicollis,636,447,0.9996,0.9996,reliable,reaches p_min,BirdNET,night,best_auc,unreliable,reliable
+ARA,Nyctidromus_albicollis,592,552,0.9973,0.9973,reliable,reaches p_min,BirdNET,night,one_se_logloss,unreliable,reliable
+BAI,Nyctidromus_albicollis,326,217,0.996,0.996,reliable,reaches p_min,BirdNET,night,one_se_logloss,unreliable,reliable
+BEP,Nyctidromus_albicollis,130,93,0.8519,NA,unreliable,does not reach p_min within the reviewed scores,BirdNET,night,one_se_logloss,unreliable,unreliable
+MIM,Nyctidromus_albicollis,81,64,0.9949,0.9949,reliable,reaches p_min,BirdNET,night,one_se_logloss,unreliable,reliable
+REF,Nyctidromus_albicollis,698,629,0.999,0.999,reliable,reaches p_min,BirdNET,night,one_se_logloss,unreliable,reliable
+UEM,Nyctidromus_albicollis,476,340,0.9977,0.9977,reliable,reaches p_min,BirdNET,night,one_se_logloss,unreliable,reliable
+XAR,Nyctidromus_albicollis,636,447,0.9996,0.9996,reliable,reaches p_min,BirdNET,night,one_se_logloss,unreliable,reliable
+ARA,Nyctidromus_albicollis,592,552,0.9973,0.64,reliable,reaches p_min,BirdNET,clip_production,best_auc,reliable,reliable
+BAI,Nyctidromus_albicollis,326,217,0.996,NA,unreliable,does not reach p_min within the reviewed scores,BirdNET,clip_production,best_auc,unreliable,unreliable
+BEP,Nyctidromus_albicollis,130,93,0.8519,NA,unreliable,does not reach p_min within the reviewed scores,BirdNET,clip_production,best_auc,unreliable,unreliable
+MIM,Nyctidromus_albicollis,81,64,0.9949,0.97,reliable,reaches p_min,BirdNET,clip_production,best_auc,reliable,reliable
+REF,Nyctidromus_albicollis,698,629,0.999,0.91,reliable,reaches p_min,BirdNET,clip_production,best_auc,reliable,reliable
+UEM,Nyctidromus_albicollis,476,340,0.9977,0.9977,reliable,reaches p_min,BirdNET,clip_production,best_auc,unreliable,reliable
+XAR,Nyctidromus_albicollis,636,447,0.9996,0.9996,reliable,reaches p_min,BirdNET,clip_production,best_auc,unreliable,reliable
+ARA,Nyctidromus_albicollis,592,552,0.9973,0.67,reliable,reaches p_min,BirdNET,clip_production,one_se_logloss,reliable,reliable
+BAI,Nyctidromus_albicollis,326,217,0.996,NA,unreliable,does not reach p_min within the reviewed scores,BirdNET,clip_production,one_se_logloss,unreliable,unreliable
+BEP,Nyctidromus_albicollis,130,93,0.8519,NA,unreliable,does not reach p_min within the reviewed scores,BirdNET,clip_production,one_se_logloss,unreliable,unreliable
+MIM,Nyctidromus_albicollis,81,64,0.9949,0.98,reliable,reaches p_min,BirdNET,clip_production,one_se_logloss,reliable,reliable
+REF,Nyctidromus_albicollis,698,629,0.999,0.93,reliable,reaches p_min,BirdNET,clip_production,one_se_logloss,reliable,reliable
+UEM,Nyctidromus_albicollis,476,340,0.9977,0.9977,reliable,reaches p_min,BirdNET,clip_production,one_se_logloss,unreliable,reliable
+XAR,Nyctidromus_albicollis,636,447,0.9996,0.9996,reliable,reaches p_min,BirdNET,clip_production,one_se_logloss,unreliable,reliable
+ARA,Nyctidromus_albicollis,1685,720,0.9901,0.86,reliable,reaches p_min,Custom,night,best_auc,reliable,reliable
+BAI,Nyctidromus_albicollis,1083,305,0.9928,0.84,reliable,reaches p_min,Custom,night,best_auc,reliable,reliable
+BEP,Nyctidromus_albicollis,978,177,0.9255,0.85,reliable,reaches p_min,Custom,night,best_auc,reliable,reliable
+MIM,Nyctidromus_albicollis,567,202,0.99,0.74,reliable,reaches p_min,Custom,night,best_auc,reliable,reliable
+REF,Nyctidromus_albicollis,1513,710,0.995,0.84,reliable,reaches p_min,Custom,night,best_auc,reliable,reliable
+UEM,Nyctidromus_albicollis,908,384,0.9838,0.82,reliable,reaches p_min,Custom,night,best_auc,reliable,reliable
+XAR,Nyctidromus_albicollis,1298,515,0.9981,0.9,reliable,reaches p_min,Custom,night,best_auc,reliable,reliable
+ARA,Nyctidromus_albicollis,1685,720,0.9901,0.86,reliable,reaches p_min,Custom,night,one_se_logloss,reliable,reliable
+BAI,Nyctidromus_albicollis,1083,305,0.9928,0.86,reliable,reaches p_min,Custom,night,one_se_logloss,reliable,reliable
+BEP,Nyctidromus_albicollis,978,177,0.9255,0.86,reliable,reaches p_min,Custom,night,one_se_logloss,reliable,reliable
+MIM,Nyctidromus_albicollis,567,202,0.99,0.86,reliable,reaches p_min,Custom,night,one_se_logloss,reliable,reliable
+REF,Nyctidromus_albicollis,1513,710,0.995,0.86,reliable,reaches p_min,Custom,night,one_se_logloss,reliable,reliable
+UEM,Nyctidromus_albicollis,908,384,0.9838,0.86,reliable,reaches p_min,Custom,night,one_se_logloss,reliable,reliable
+XAR,Nyctidromus_albicollis,1298,515,0.9981,0.86,reliable,reaches p_min,Custom,night,one_se_logloss,reliable,reliable
+ARA,Nyctidromus_albicollis,1685,720,0.9901,0.8099999999999999,reliable,reaches p_min,Custom,clip_production,best_auc,reliable,reliable
+BAI,Nyctidromus_albicollis,1083,305,0.9928,0.82,reliable,reaches p_min,Custom,clip_production,best_auc,reliable,reliable
+BEP,Nyctidromus_albicollis,978,177,0.9255,0.84,reliable,reaches p_min,Custom,clip_production,best_auc,reliable,reliable
+MIM,Nyctidromus_albicollis,567,202,0.99,0.77,reliable,reaches p_min,Custom,clip_production,best_auc,reliable,reliable
+REF,Nyctidromus_albicollis,1513,710,0.995,0.8099999999999999,reliable,reaches p_min,Custom,clip_production,best_auc,reliable,reliable
+UEM,Nyctidromus_albicollis,908,384,0.9838,0.86,reliable,reaches p_min,Custom,clip_production,best_auc,reliable,reliable
+XAR,Nyctidromus_albicollis,1298,515,0.9981,0.95,reliable,reaches p_min,Custom,clip_production,best_auc,reliable,reliable
+ARA,Nyctidromus_albicollis,1685,720,0.9901,0.86,reliable,reaches p_min,Custom,clip_production,one_se_logloss,reliable,reliable
+BAI,Nyctidromus_albicollis,1083,305,0.9928,0.84,reliable,reaches p_min,Custom,clip_production,one_se_logloss,reliable,reliable
+BEP,Nyctidromus_albicollis,978,177,0.9255,0.85,reliable,reaches p_min,Custom,clip_production,one_se_logloss,reliable,reliable
+MIM,Nyctidromus_albicollis,567,202,0.99,0.74,reliable,reaches p_min,Custom,clip_production,one_se_logloss,reliable,reliable
+REF,Nyctidromus_albicollis,1513,710,0.995,0.84,reliable,reaches p_min,Custom,clip_production,one_se_logloss,reliable,reliable
+UEM,Nyctidromus_albicollis,908,384,0.9838,0.82,reliable,reaches p_min,Custom,clip_production,one_se_logloss,reliable,reliable
+XAR,Nyctidromus_albicollis,1298,515,0.9981,0.9,reliable,reaches p_min,Custom,clip_production,one_se_logloss,reliable,reliable

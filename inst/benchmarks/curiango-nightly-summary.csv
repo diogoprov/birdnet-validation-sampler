@@ -1,0 +1,5 @@
+classifier,scheme,site_nights,presences_auc,presences_logloss,changed,gained,lost,presences_auc_unreviewed,presences_logloss_unreviewed,changed_unreviewed
+BirdNET,clip_production,1753,139,125,14,0,14,136,122,14
+BirdNET,night,1753,125,45,116,18,98,122,35,111
+Custom,clip_production,1753,190,188,20,9,11,174,173,17
+Custom,night,1753,188,159,37,4,33,173,146,37
