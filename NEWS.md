@@ -1,4 +1,10 @@
-# sheepdog (development version)
+# sheepdog 2.9.0 (development version)
+
+## Model selection transition
+
+- `calibrate()` warns when `select` is omitted: the default will change
+  from `"best_auc"` to `"one_se_logloss"` in 3.0.0. Either rule can be
+  supplied explicitly to silence the warning.
 
 ## Documentation
 

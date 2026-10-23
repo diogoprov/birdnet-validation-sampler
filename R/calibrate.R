@@ -742,6 +742,11 @@ calibrate <- function(validation_files, prediction_tables, output_dir,
                       prior = NULL, brms_args = list(),
                       rule = c("mean", "probability"), prob_min = 0.9,
                       seed = 2026) {
+  if (missing(select)) {
+    warning('In sheepdog 3.0.0, the default model selection will change to ',
+            '"one_se_logloss". Set select = "one_se_logloss" to opt in, or ',
+            'select = "best_auc" to preserve the 2.x selection.', call. = FALSE)
+  }
   select <- match.arg(select)
   engine <- match.arg(engine)
   rule   <- match.arg(rule)
