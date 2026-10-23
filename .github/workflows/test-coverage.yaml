@@ -25,7 +25,7 @@ jobs:
           # Optional engines are exercised in R-CMD-check; coverage uses
           # the packages needed by the frequentist and plotting tests.
           dependencies: '"hard"'
-          extra-packages: any::covr, any::testthat, any::lme4, any::ggplot2
+          extra-packages: any::covr, any::DT, any::htmltools, any::testthat, any::lme4, any::ggplot2
       - name: Measure coverage
         shell: Rscript {0}
         run: |
