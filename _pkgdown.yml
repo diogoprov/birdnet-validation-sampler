@@ -31,7 +31,6 @@ reference:
       - precision_by_bin
       - suggest_thresholds
       - nightly_presence
-      - performance
       - retraining_clips
       - plot_precision
       - read_validation_tables
@@ -93,6 +92,7 @@ articles:
   - title: Beyond the three stages
     navbar: Beyond the three stages
     contents:
+      - performance
       - retraining
       - migration-3.0.0
       - crywolf-integration
