@@ -30,7 +30,7 @@ posição no ranking, seguidos do nome da gravação de origem e do início e
 fim do clipe:
 
 ![Os clipes de uma espécie, prontos para a
-revisão.](../gui-figures/01-clips-folder.png)
+revisão.](gui-figures/01-clips-folder.png)
 
 Os clipes de uma espécie, prontos para a revisão.
 
@@ -45,7 +45,7 @@ os contadores indicam os clipes ainda a revisar (*Todo*) e os já
 classificados como *Positive* (*Positivo*) ou *Negative* (*Negativo*):
 
 ![A aba Review (Revisão) com a lista de
-espécies.](../gui-figures/02-species-list.png)
+espécies.](gui-figures/02-species-list.png)
 
 A aba Review (Revisão) com a lista de espécies.
 
@@ -59,7 +59,7 @@ seguinte; *Undo* (*Desfazer*) desfaz a última decisão e *Skip* (*Pular*)
 avança sem classificar:
 
 ![Revisão de um clipe. O score deste clipe (0,992) é o primeiro campo de
-seu nome.](../gui-figures/03-reviewing-clip.webp)
+seu nome.](gui-figures/03-reviewing-clip.webp)
 
 Revisão de um clipe. O score deste clipe (0,992) é o primeiro campo de
 seu nome.
@@ -82,7 +82,7 @@ e 0,99:
 
 ![A aba Review (Revisão) após a revisão de uma espécie: 72 clipes
 positivos e 7 negativos, e a curva
-ajustada.](../gui-figures/04-regression.png)
+ajustada.](gui-figures/04-regression.png)
 
 A aba Review (Revisão) após a revisão de uma espécie: 72 clipes
 positivos e 7 negativos, e a curva ajustada.
@@ -103,7 +103,7 @@ A GUI move cada clipe classificado para uma subpasta `Positive` ou
 `Negative` da pasta da espécie:
 
 ![A pasta da espécie após a
-revisão.](../gui-figures/05-positive-negative.png)
+revisão.](gui-figures/05-positive-negative.png)
 
 A pasta da espécie após a revisão.
 
@@ -135,17 +135,16 @@ passam a ser *Positivo*, *Negativo*, *Desfazer* e *Pular*, e o painel de
 regressão, *Regressão*:
 
 ![A aba Review (Revisão) em
-português.](../gui-figures/06-portuguese-interface.webp)
+português.](gui-figures/06-portuguese-interface.webp)
 
 A aba Review (Revisão) em português.
 
-![A lista de espécies em
-português.](../gui-figures/07-species-list-pt.png)
+![A lista de espécies em português.](gui-figures/07-species-list-pt.png)
 
 A lista de espécies em português.
 
 ![Revisão de um clipe em
-português.](../gui-figures/08-reviewing-clip-pt.webp)
+português.](gui-figures/08-reviewing-clip-pt.webp)
 
 Revisão de um clipe em português.
 
@@ -162,7 +161,7 @@ no score 0,81, e 0,90 em 0,93, e as probabilidades mais altas não são
 atingidas dentro da amplitude de scores:
 
 ![O painel de regressão de uma espécie com mais falsos
-positivos.](../gui-figures/09-regression-pt.png)
+positivos.](gui-figures/09-regression-pt.png)
 
 O painel de regressão de uma espécie com mais falsos positivos.
 
