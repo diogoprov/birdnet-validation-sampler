@@ -1,4 +1,4 @@
-# sheepdog (development version)
+# sheepdog 3.2.0
 
 - `calibration_models(single_species = TRUE)` provides global and site-
   effect candidates for one species, including an optional uncorrelated

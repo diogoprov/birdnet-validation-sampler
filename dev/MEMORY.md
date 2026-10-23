@@ -132,7 +132,7 @@ preparada para a release 3.1.0 na etapa de publicação seguinte.
   Uma espécie em um local usa só m0; várias espécies em um local omitem
   os efeitos de local não estimáveis. A família multiespécies original e
   sua ordem permanecem, e listas explícitas sobrescrevem a escolha da
-  comparação. A versão de desenvolvimento é `3.1.0.9000`.
+  comparação. A implementação começou em `3.1.0.9000`.
 - Conferida a nova família automática no Curiango: três candidatos e zero
   ajustes de fold falhos para cada classificador; métricas coincidem com
   a família explícita do relatório a menos de 1e-15. Três repetições
@@ -181,3 +181,14 @@ preparada para a release 3.1.0 na etapa de publicação seguinte.
 - Revisar e publicar a nova API e a vignette de desempenho em versão futura.
 - CRAN e artigo de software permanecem decisões do Diogo, conforme o
   [roadmap](roadmap-v3.0.0.md).
+
+## Preparação da release 3.2.0
+
+- Diogo autorizou push e release para a seleção automática de uma espécie
+  e a vignette `performance`. Metadados preparados para 3.2.0.
+- Checks remotos da main anterior `dd46a93` confirmados: R-CMD-check,
+  cobertura e pkgdown concluídos com sucesso.
+- Testes do desenvolvimento: 380 verificações, um teste Stan opt-in pulado;
+  R CMD check sem erros, avisos ou notas. Benchmarks e artigo renderizados
+  na etapa anterior; esta preparação altera metadados e redação de versão.
+- URL prevista: https://github.com/diogoprov/sheepdog/releases/tag/v3.2.0.

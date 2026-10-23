@@ -1,6 +1,6 @@
 # Calibration benchmarks
 
-Run from a source checkout of sheepdog (development after 3.1.0).
+Run from a source checkout of sheepdog (3.2.0 or later).
 These scripts are opt-in; they are never sourced by vignette/site builds.
 The performance vignette reads small cached tables from `inst/benchmarks/`.
 Do not label the multispecies simulation as empirical FrogNet validation:

@@ -56,7 +56,7 @@ counting nightly detections. Counts are recordings, not raw table rows.
 
 Through 3.1.0, the default multispecies family left only the global model
 estimable for this one-species dataset; the four species-effect models
-failed. In the development version, `calibrate()` and
+failed. From 3.2.0, `calibrate()` and
 `compare_calibration_models()` choose the following family automatically
 when only one species is observed:
 
