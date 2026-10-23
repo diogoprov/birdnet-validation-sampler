@@ -27,8 +27,8 @@ test_that("calibrate() reproduces v1.2.0", {
   saida <- withr::local_tempdir()
   # o m4 refeito sobre estes dados e singular; o aviso e testado a parte
   res <- withCallingHandlers(
-    rodar_calibracao(saida, effort_curve = TRUE, effort_n = c(5, 10),
-                     effort_reps = 3),
+    rodar_calibracao(saida, select = "best_auc", effort_curve = TRUE,
+                     effort_n = c(5, 10), effort_reps = 3),
     warning = function(w) {
       if (grepl("Singular fit", conditionMessage(w))) {
         invokeRestart("muffleWarning")
@@ -248,4 +248,29 @@ test_that("fit_model() passes on messages other than singular fits", {
   expect_identical(attr(fit, "sheepdog_messages"), "some lme4 note")
   expect_length(testthat::capture_messages(
     sheepdog:::fit_model(tp ~ logit_conf + (1 | species), data.frame())), 0)
+})
+
+test_that("the default selection uses log-loss rather than AUC ranking", {
+  cv <- tibble::tibble(
+    model = c("m1_species_intercept", "m0_global"), auc_mean = c(0.95, 0.8),
+    logloss_mean = c(0.6, 0.4), logloss_sd = c(0.01, 0.01),
+    prop_singular = c(0, 0), complexity = c(2L, 1L))
+  expect_identical(select_calibration_model(cv), "m0_global")
+  expect_identical(select_calibration_model(cv, "best_auc"), "m1_species_intercept")
+
+  selected <- NULL
+  local_mocked_bindings(
+    read_validations = function(...) NULL,
+    compare_calibration_models = function(...) cv,
+    fit_calibration = function(validations, formula, ...) {
+      selected <<- formula
+      stop("stop after selection")
+    })
+  out <- withr::local_tempdir()
+  expect_error(suppressMessages(calibrate(NULL, NULL, out)),
+               "stop after selection")
+  expect_identical(selected, calibration_models()$m0_global)
+  expect_error(suppressMessages(calibrate(NULL, NULL, out, select = "best_auc")),
+               "stop after selection")
+  expect_identical(selected, calibration_models()$m1_species_intercept)
 })

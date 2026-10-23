@@ -6,7 +6,7 @@
 \usage{
 select_calibration_model(
   comparison,
-  rule = c("best_auc", "one_se_logloss"),
+  rule = c("one_se_logloss", "best_auc"),
   k_folds = 5
 )
 }
@@ -34,7 +34,6 @@ simplest (lowest \code{complexity}); models singular in most folds are left
 out, unless all are, which raises a warning. The log-loss rewards
 correct probabilities, not only their ranking, and the one-standard-
 error rule prefers the simpler model when the data cannot tell the
-candidates apart. This rule will be the default of \code{\link[=calibrate]{calibrate()}} in
-3.0.0.
+candidates apart. This is the default of \code{\link[=calibrate]{calibrate()}} since 3.0.0.
 }
 }

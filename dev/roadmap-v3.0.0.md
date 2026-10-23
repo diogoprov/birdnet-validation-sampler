@@ -24,15 +24,15 @@ para o DOI do Zenodo acompanhar as vignettes novas.
   repos = c("https://diogoprov.r-universe.dev", "https://cloud.r-project.org"))`
   como instalação principal, `remotes::install_github()` como alternativa,
   e badge do r-universe. *(Feito: 2.1.0, PR #21.)*
-- [ ] **crywolf:** trocar `Remotes: diogoprov/sheepdog` por
+- [x] **crywolf:** trocar `Remotes: diogoprov/sheepdog` por
   `https://diogoprov.r-universe.dev` em `Additional_repositories` (formato
-  aceito pelo CRAN para Suggests fora dele). PR no repositório do crywolf.
+  aceito pelo CRAN para Suggests fora dele). PR no repositório do crywolf. *(Concluído, confirmado por Diogo em 2026-10-22.)*
 - [x] **NEWS:** fechar a seção "development version" como 2.1.0; atualizar
   `CITATION.cff` (versão, data); release no GitHub (gera o DOI da versão). *(Feito: 2.1.0, PR #22.)*
 
 ## 1. Mudanças que quebram compatibilidade (definem a 3.0.0)
 
-- [ ] **Seleção do modelo de calibração em `calibrate()`** (decidido; a regra já existe desde a 2.2.0, PR #23, como `select = "one_se_logloss"`; falta torná-la o padrão na 3.0.0).
+- [x] **Seleção do modelo de calibração em `calibrate()`** (implementado para a 3.0.0; a regra já existia desde a 2.2.0, PR #23, como `select = "one_se_logloss"`; agora é o padrão também em `select_calibration_model()`).
   Hoje: maior AUC médio (`cv$model[1]`), mesmo que o ajuste seja singular e
   que a diferença para um modelo mais simples seja menor que `auc_sd`. O
   AUC mede discriminação, mas o que vai para o histórico é a probabilidade
@@ -44,7 +44,10 @@ para o DOI do Zenodo acompanhar as vignettes novas.
   3. excluir ajustes singulares, a menos que todos sejam (aí, avisar);
   4. `select = c("one_se_logloss", "best_auc")`; `"best_auc"` reproduz a
      2.x. A tabela de comparação reporta todas as métricas.
-  Na 2.9.x, avisar que o padrão vai mudar.
+  Transição 2.9.0 registrada em commit anterior: aviso quando `select` é omitido.
+  Na 3.0.0, o novo padrão dispensa o aviso; `best_auc` continua disponível.
+  A regra existente exclui candidatos singulares na maioria dos folds;
+  o reajuste final ainda pode ser singular e emitir aviso.
 - [x] ~~Remover a leitura dos arquivos da v1.2.0~~: **fica** (decidido). Os
   testes de reprodução da v1.2.0 também ficam.
 
@@ -129,31 +132,36 @@ para o DOI do Zenodo acompanhar as vignettes novas.
 
 ## 6. Documentação
 
-- [ ] **Vignette da revisão na GUI do BirdNET**, com as capturas de tela da
-  Liliana (pedido enviado). Link para a documentação oficial da GUI.
+- [x] **Vignette da revisão na GUI do BirdNET**, com capturas de tela e
+  link para a documentação oficial. Publicada em
+  https://provetelab.org/sheepdog/articles/reviewing-in-the-gui.html
+  (confirmado por Diogo em 2026-10-22).
 - [x] **README**: listar `summarise_history()` e as funções novas; revisar a
   tabela de funções após a 3.0.0. *(Feito: 2.2.0.)*
-- [ ] **Guia de migração 2.x → 3.0.0** (critério de seleção do modelo).
+- [x] **Guia de migração 2.x → 3.0.0**: `vignettes/migration-3.0.0.Rmd`,
+  com exemplos, seleção legada e revisão dos resultados posteriores.
 
 ## 7. Infraestrutura
 
 - [x] **r-universe verde** em todas as plataformas (depende do build da
   `main` atual). *(Feito: 2.1.0.)*
-- [ ] **Cobertura de testes** (`covr`) no CI.
+- [x] **Cobertura de testes** (`covr`) no CI: workflow dedicado, resumo
+  percentual e artefatos HTML e Cobertura XML; execução remota pendente.
 - [ ] **CRAN** **[decidir]**: viável depois da 3.0.0. Pontos a resolver: o
   crywolf em Suggests fora do CRAN (aceito com `Additional_repositories`),
   tempo das vignettes (lme4, gllvm) e tamanho de `inst/extdata` (1,7 MB).
 - [ ] **Artigo de software** **[decidir]** (ex.: *Methods in Ecology and
   Evolution* Applications ou JOSS), junto com o crywolf ou separado.
 
-## Ordem sugerida
+## Ordem de implementação atualizada (2026-10-22)
 
-1. 2.1.0: README/r-universe, crywolf `Additional_repositories`, release.
-2. 2.2.0: itens não quebradores de calibração (variante sem correlação,
-   mensagens, medida de calibração), amostragem (estratos, pesos,
-   proveniência), `build_training_set()`, helpers das matrizes, vignette da
-   GUI.
-3. 2.9.x: aviso de que o critério padrão de seleção vai mudar.
-4. 3.0.0: novo padrão de seleção (log-loss + 1 EP, sem singulares) e guia
-   de migração; `brms` e vários revisores, se não tiverem entrado antes;
-   avaliar CRAN e artigo.
+1. Transição 2.9.0: aviso de mudança do padrão quando `select` é omitido
+   (registrada em commit próprio; ainda sem publicação).
+2. 3.0.0: novo padrão de seleção e guia de migração implementados;
+   preservados os testes de reprodução da v1.2.0 com `best_auc` explícito.
+3. Cobertura de testes no CI configurada; validar a execução no GitHub
+   depois do envio dos commits.
+4. Publicação das versões: os commits locais não criam releases nem DOI.
+   Se houver release de transição, publicar a 2.9.0 antes da 3.0.0.
+5. Decidir submissão ao CRAN e formato do artigo de software. Estes itens
+   continuam pendentes de decisão do Diogo.

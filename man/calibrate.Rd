@@ -14,7 +14,7 @@ calibrate(
   min_detections_night = 1,
   dawn_hour = 12,
   k_folds = 5,
-  select = c("best_auc", "one_se_logloss"),
+  select = c("one_se_logloss", "best_auc"),
   uncorrelated = FALSE,
   effort_curve = FALSE,
   effort_n = c(5, 10, 15, 20, 25, 30),
@@ -120,9 +120,10 @@ installed;
 }
 \details{
 The model is chosen by \code{\link[=select_calibration_model]{select_calibration_model()}} with the rule
-\code{select}: the highest mean AUC by default, or the simplest model within
-one standard error of the lowest log-loss, leaving out singular fits
-(\code{"one_se_logloss"}, the default from 3.0.0). When the refit is singular,
+\code{select}: by default, the simplest model within one standard error of
+the lowest log-loss, leaving out models singular in most folds
+(\code{"one_se_logloss"}). Use \code{select = "best_auc"} to reproduce the 2.x
+selection by highest mean AUC. When the refit is singular,
 \code{\link[=fit_calibration]{fit_calibration()}} warns; read \code{calibration_model.txt} and the
 comparison before using the probabilities.
 

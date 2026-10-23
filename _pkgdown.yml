@@ -92,5 +92,6 @@ articles:
     navbar: Beyond the three stages
     contents:
       - retraining
+      - migration-3.0.0
       - crywolf-integration
       - frognet-workflow

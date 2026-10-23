@@ -197,8 +197,7 @@ score_probabilities <- function(tp, p) {
 #'   out, unless all are, which raises a warning. The log-loss rewards
 #'   correct probabilities, not only their ranking, and the one-standard-
 #'   error rule prefers the simpler model when the data cannot tell the
-#'   candidates apart. This rule will be the default of [calibrate()] in
-#'   3.0.0.
+#'   candidates apart. This is the default of [calibrate()] since 3.0.0.
 #'
 #' @param comparison Table returned by [compare_calibration_models()].
 #' @param rule Selection rule.
@@ -208,7 +207,7 @@ score_probabilities <- function(tp, p) {
 #' @return The name of the selected model.
 #' @export
 select_calibration_model <- function(comparison,
-                                     rule = c("best_auc", "one_se_logloss"),
+                                     rule = c("one_se_logloss", "best_auc"),
                                      k_folds = 5) {
   rule <- match.arg(rule)
   if (rule == "best_auc") {
@@ -682,9 +681,10 @@ plot_calibration <- function(fit, validations, min_confidence = 0.1,
 #' * `detection_summary.csv` ([summarise_history()]).
 #'
 #' The model is chosen by [select_calibration_model()] with the rule
-#' `select`: the highest mean AUC by default, or the simplest model within
-#' one standard error of the lowest log-loss, leaving out singular fits
-#' (`"one_se_logloss"`, the default from 3.0.0). When the refit is singular,
+#' `select`: by default, the simplest model within one standard error of
+#' the lowest log-loss, leaving out models singular in most folds
+#' (`"one_se_logloss"`). Use `select = "best_auc"` to reproduce the 2.x
+#' selection by highest mean AUC. When the refit is singular,
 #' [fit_calibration()] warns; read `calibration_model.txt` and the
 #' comparison before using the probabilities.
 #'
@@ -735,18 +735,13 @@ calibrate <- function(validation_files, prediction_tables, output_dir,
                       site_map = NULL, min_confidence = 0.1, p_min = 0.95,
                       min_detections_night = 1, dawn_hour = 12,
                       k_folds = 5,
-                      select = c("best_auc", "one_se_logloss"),
+                      select = c("one_se_logloss", "best_auc"),
                       uncorrelated = FALSE, effort_curve = FALSE,
                       effort_n = c(5, 10, 15, 20, 25, 30),
                       effort_reps = 50, engine = c("lme4", "brms"),
                       prior = NULL, brms_args = list(),
                       rule = c("mean", "probability"), prob_min = 0.9,
                       seed = 2026) {
-  if (missing(select)) {
-    warning('In sheepdog 3.0.0, the default model selection will change to ',
-            '"one_se_logloss". Set select = "one_se_logloss" to opt in, or ',
-            'select = "best_auc" to preserve the 2.x selection.', call. = FALSE)
-  }
   select <- match.arg(select)
   engine <- match.arg(engine)
   rule   <- match.arg(rule)
